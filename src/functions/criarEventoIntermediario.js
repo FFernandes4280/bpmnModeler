@@ -44,7 +44,7 @@ export default function criarEventoIntermediario(
   // Define os limites do evento intermediário
   const eventBounds = {
     x: sourceBounds.x + 150, // Deslocamento horizontal
-    y: laneY + laneHeight / 2 - 18, // Centraliza verticalmente na lane
+    y: laneY + laneHeight / 2 - 18 + sourceBounds.yOffset, // Centraliza verticalmente na lane
     width: 36,
     height: 36,
   };
@@ -75,9 +75,13 @@ export default function criarEventoIntermediario(
   const targetX = eventBounds.x;
   const targetY = eventBounds.y + eventBounds.height / 2;
 
+  const middleX = targetX;
+  const middleY = sourceY;
+
   // Define os waypoints para o fluxo de sequência
   const sequenceFlowWaypoints = [
     moddle.create('dc:Point', { x: sourceX, y: sourceY }), // Saída do elemento anterior
+    moddle.create('dc:Point', { x: middleX, y: middleY }), // Ponto intermediário
     moddle.create('dc:Point', { x: targetX, y: targetY }), // Entrada no evento intermediário
   ];
 
@@ -91,5 +95,8 @@ export default function criarEventoIntermediario(
   // Adiciona o edge ao BPMNPlane
   bpmnPlane.planeElement.push(sequenceFlowEdge);
 
-  return intermediateEvent; // Retorna o evento intermediário criado
+  return {
+    intermediateEvent, // Retorna o evento intermediário criado
+    intermediateEventShape, // Retorna o shape do evento intermediário
+  }; // Retorna o evento intermediário criado
 }

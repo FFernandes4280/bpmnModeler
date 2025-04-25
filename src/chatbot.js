@@ -2,6 +2,7 @@ import BpmnModdle from 'bpmn-moddle';
 import criarAtividade from './functions/criarAtividade.js';
 import criarEventoIntermediario from './functions/criarEventoIntermediario.js';
 import criarGatewayExclusivo from './functions/criarGatewayExclusivo.js';
+import criarGatewayParalelo from './functions/criarGatewayParalelo.js';
 import criarEventoFinal from './functions/criarEventoFinal.js';
 
 const moddle = new BpmnModdle();
@@ -16,43 +17,53 @@ const xmlStart =
                      'targetNamespace="http://bpmn.io/schema/bpmn">' +
   '</bpmn2:definitions>';
 
-async function generateDiagram() {
+async function generateDiagramFromInput(processName, participantsInput, hasExternalParticipants, initialEventName, initialEventLane, elements) {
   const { rootElement: definitions } = await moddle.fromXML(xmlStart);
 
   // Create the process
   const bpmnProcess = moddle.create('bpmn:Process', { id: 'Process', isExecutable: false });
   definitions.get('rootElements').push(bpmnProcess);
-  
+
   // Create the lane set
   const laneSet = moddle.create('bpmn:LaneSet', { id: 'LaneSet' });
   bpmnProcess.get('laneSets').push(laneSet);
 
+  const externalLaneSet = moddle.create('bpmn:LaneSet', { id: 'ExternalLaneSet' });
+  if (hasExternalParticipants === 'Sim') {
+    bpmnProcess.get('laneSets').push(externalLaneSet);
+  }
+
   // Define project name and participants
-  let projectName = "Processo de Teste";
-  let participants = [];
-  let participantNumber = 2;
+  let projectName = processName;
+  let participants = participantsInput;
+  let participantNumber = participants.length;
+
+  let externalParticipants = [];
+  let externalParticipantsNumber = hasExternalParticipants === 'Sim' ? 1 : 0;
 
   // Create collaboration and participant
   const collaboration = moddle.create('bpmn:Collaboration', { id: 'Collaboration' });
+
   const participant = moddle.create('bpmn:Participant', {
     id: 'Participant',
     name: projectName,
     processRef: bpmnProcess,
   });
   collaboration.get('participants').push(participant);
+
   definitions.get('rootElements').push(collaboration);
 
   // Create the BPMNDiagram and BPMNPlane
   const bpmnDiagram = moddle.create('bpmndi:BPMNDiagram', { id: 'BPMNDiagram' });
   const bpmnPlane = moddle.create('bpmndi:BPMNPlane', { id: 'BPMNPlane', bpmnElement: collaboration });
   bpmnPlane.planeElement = [];
-    
+
   // Define participant bounds
   const participantBounds = {
     x: 160,
     y: 80,
     width: 1800,
-    height: 570,
+    height: participantNumber * 200,
   };
 
   // Create a participant shape for the process
@@ -69,46 +80,40 @@ async function generateDiagram() {
 
   // Create lanes and their shapes
   for (let i = 0; i < participantNumber; i++) {
-    participants.push(`Participante ${i + 1}`);
     const lane = moddle.create('bpmn:Lane', {
-      id: `Lane_${i + 1}`, 
+      id: `Lane_${i + 1}`,
       name: participants[i],
       flowNodeRef: [],
     });
     laneSet.get('lanes').push(lane);
 
-    // Create BPMNShape for the lane
     const laneShape = moddle.create('bpmndi:BPMNShape', {
       id: `Lane_${i + 1}_di`,
       bpmnElement: lane,
       isHorizontal: true,
       bounds: moddle.create('dc:Bounds', {
-        x: participantBounds.x + 30, 
+        x: participantBounds.x + 30,
         y: participantBounds.y + i * laneHeight,
-        width: participantBounds.width - 30, 
+        width: participantBounds.width - 30,
         height: laneHeight,
       }),
     });
 
-    // Add BPMNLabel to the lane shape
-    laneShape.label = moddle.create('bpmndi:BPMNLabel', {});
-
     bpmnPlane.planeElement.push(laneShape);
   }
 
-  const initialEventLane = 'Participante 1'; // Nome da lane onde o evento inicial será posicionado
   // Create the initial start event
   const initialEventBounds = {
     x: participantBounds.x + 80,
-    y: participantBounds.y + participants.indexOf(initialEventLane) * laneHeight + laneHeight / 2 - 18, 
+    y: participantBounds.y + participants.indexOf(initialEventLane) * laneHeight + laneHeight / 2 - 18,
     width: 35,
     height: 35,
   };
 
   const initialEvent = moddle.create('bpmn:StartEvent', {
     id: 'StartEvent_1',
-    name: 'Evento Inicial',
-    isInterrupting: true
+    name: initialEventName,
+    isInterrupting: true,
   });
 
   bpmnProcess.get('flowElements').push(initialEvent);
@@ -121,103 +126,221 @@ async function generateDiagram() {
 
   bpmnPlane.planeElement.push(initialEventShape);
 
-  let previousElement = initialEvent;
-  let previousBounds = initialEventBounds;
+  // Initialize stacks for elements and bounds
+  let previousElements = [initialEvent];
+  let previousBounds = [initialEventBounds];
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  // Example: Switch to create different BPMN elements
-  let elementList = ['activity', 'gateway', 'activity', 'activity', 'gateway', 'event', 'event', 'activity', 'event'];
-  let laneList = ['Participante 1', 'Participante 1', 'Participante 1', 'Participante 2', 'Participante 2', 'Participante 2', 'Participante 2', 'Participante 1', 'Participante 1'];
-  for (let i = 0; i <= 10; i++) {
-    const elementType = elementList[i];
-    let elementName;
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  for (const element of elements) {
+    const { type, name, lane, diverge } = element;
+    const currentElement = previousElements.pop();
+    const currentBounds = previousBounds.pop();
 
-    switch (elementType) {
-      case 'gateway':
-        elementName = `Gateway ${i}`;
-        break;
-      case 'event':
-        elementName = `Evento Intermediário ${i}`;
-        break;
-      case 'activity':
-        elementName = `Atividade ${i}`;
-        break;
-      default:
-        console.error('Tipo de elemento desconhecido:', elementType);
-        continue;
-    }
-
-    switch (elementType) {
-      case 'gateway':
-        previousElement = criarGatewayExclusivo(
+    switch (type) {
+      case 'Atividade':
+        const activityElement = criarAtividade(
           moddle,
           bpmnProcess,
           bpmnPlane,
-          previousElement,
-          previousBounds,
+          currentElement,
+          currentBounds,
           participantBounds,
           participants,
           laneHeight,
-          elementName,
-          laneList[i]
+          name,
+          lane
         );
-        previousBounds = {
-          x: previousBounds.x + 150,
-          y: participantBounds.y + participants.indexOf(laneList[i]) * laneHeight + laneHeight / 2 - 18, 
-          width: 35,
-          height: 35,
-        };
+        previousElements.push(activityElement);
+        previousBounds.push({
+          x: currentBounds.x + 150,
+          y: participantBounds.y + participants.indexOf(lane) * laneHeight + laneHeight / 2 - 18,
+          width: 100,
+          height: 40,
+        });
         break;
 
-      case 'event':
-        previousElement = criarEventoIntermediario(
+      case 'Evento Intermediario':
+        const intermediateEvent = criarEventoIntermediario(
           moddle,
           bpmnProcess,
           bpmnPlane,
-          previousElement,
-          previousBounds,
+          currentElement,
+          currentBounds,
           participantBounds,
           participants,
           laneHeight,
-          elementName,
-          laneList[i]
+          name,
+          lane
         );
-        previousBounds = {
-          x: previousBounds.x + 150,
-          y: participantBounds.y + participants.indexOf(laneList[i]) * laneHeight + laneHeight / 2 - 18, 
-          width: 35,
-          height: 35,
-        };
+        previousElements.push(intermediateEvent.intermediateEvent);
+        previousBounds.push(intermediateEvent.intermediateEventShape.bounds);
         break;
 
-        case 'activity':
-          previousElement = criarAtividade(
+      case 'Gateway Exclusivo':
+        // Verifica se já existe um gateway com o mesmo nome
+        const existingExclusiveGateway = bpmnPlane.planeElement.find(
+          (e) => e.bpmnElement.name === name && e.bpmnElement.$type === 'bpmn:ExclusiveGateway'
+        );
+
+        if (existingExclusiveGateway) {
+          // Cria apenas o sequence flow entre o elemento anterior e o gateway existente
+          const sequenceFlow = moddle.create('bpmn:SequenceFlow', {
+            id: `SequenceFlow_${currentElement.id}_to_${existingExclusiveGateway.bpmnElement.id}`, // ID único para o fluxo
+            sourceRef: currentElement, // Referência ao elemento anterior
+            targetRef: existingExclusiveGateway.bpmnElement, // Referência ao gateway existente
+          });
+
+          // Adiciona o fluxo de sequência ao processo
+          bpmnProcess.get('flowElements').push(sequenceFlow);
+
+          const sourceX = currentBounds.x + currentBounds.width;
+          const sourceY = currentBounds.y + currentBounds.height / 2;
+
+          const targetX = existingExclusiveGateway.bounds.x;
+          const targetY = existingExclusiveGateway.bounds.y + existingExclusiveGateway.bounds.height / 2;
+
+          const middleX = targetX;
+          const middleY = sourceY;
+          // Define os waypoints para o fluxo de sequência
+          const sequenceFlowWaypoints = [
+            moddle.create('dc:Point', { x: sourceX, y: sourceY }), // Saída do elemento anterior
+            moddle.create('dc:Point', { x: middleX, y: middleY }), // Ponto intermediário
+            moddle.create('dc:Point', { x: targetX, y: targetY }), // Entrada no gateway existente
+          ];
+
+          // Cria o BPMNEdge para o fluxo de sequência
+          const sequenceFlowEdge = moddle.create('bpmndi:BPMNEdge', {
+            id: `SequenceFlow_${currentElement.id}_to_${existingExclusiveGateway.bpmnElement.id}_di`, // ID único para o edge
+            bpmnElement: sequenceFlow, // Referência ao fluxo de sequência
+            waypoint: sequenceFlowWaypoints, // Define os waypoints
+          });
+
+          // Adiciona o edge ao BPMNPlane
+          bpmnPlane.planeElement.push(sequenceFlowEdge);
+        } else {
+          // Cria um novo gateway exclusivo
+          const exclusiveGateway = criarGatewayExclusivo(
             moddle,
             bpmnProcess,
             bpmnPlane,
-            previousElement,
-            previousBounds,
+            currentElement,
+            currentBounds,
             participantBounds,
             participants,
             laneHeight,
-            elementName,
-            laneList[i]
+            name,
+            lane
           );
-          previousBounds = {
-            x: previousBounds.x + 150,
-            y: participantBounds.y + participants.indexOf(laneList[i]) * laneHeight + laneHeight / 2 - 18, 
-            width: 100,
-            height: 40,
-          };
-          break;
+          for(let i = 0; i < diverge; i++){
+            const yOffset = (i - (diverge - 1) / 2) * (laneHeight / diverge); 
+            previousElements.push(exclusiveGateway);
+            previousBounds.push({
+              x: currentBounds.x + 150,
+              y: participantBounds.y + participants.indexOf(lane) * laneHeight + laneHeight / 2 - 18,
+              width: 35,
+              height: 35,
+              yOffset: yOffset,
+            });
+          }
+        }
+        break;
+
+      case 'Gateway Paralelo':
+        // Verifica se já existe um gateway com o mesmo nome
+        const existingParallelGateway = bpmnPlane.planeElement.find(
+          (e) => e.bpmnElement.name === name && e.bpmnElement.$type === 'bpmn:ParallelGateway'
+        );
+
+        if (existingParallelGateway) {
+          // Cria apenas o sequence flow entre o elemento anterior e o gateway existente
+          const sequenceFlow = moddle.create('bpmn:SequenceFlow', {
+            id: `SequenceFlow_${currentElement.id}_to_${existingParallelGateway.bpmnElement.id}`, // ID único para o fluxo
+            sourceRef: currentElement, // Referência ao elemento anterior
+            targetRef: existingParallelGateway.bpmnElement, // Referência ao gateway existente
+          });
+
+          // Adiciona o fluxo de sequência ao processo
+          bpmnProcess.get('flowElements').push(sequenceFlow);
+
+          const sourceX = currentBounds.x + currentBounds.width;
+          const sourceY = currentBounds.y + currentBounds.height / 2;
+
+          const targetX = existingParallelGateway.bounds.x;
+          const targetY = existingParallelGateway.bounds.y + existingParallelGateway.bounds.height / 2;
+
+          // Define os waypoints para o fluxo de sequência
+          const sequenceFlowWaypoints = [
+            moddle.create('dc:Point', { x: sourceX, y: sourceY }), // Saída do elemento anterior
+            moddle.create('dc:Point', { x: targetX, y: targetY }), // Entrada no gateway existente
+          ];
+
+          // Cria o BPMNEdge para o fluxo de sequência
+          const sequenceFlowEdge = moddle.create('bpmndi:BPMNEdge', {
+            id: `SequenceFlow_${currentElement.id}_to_${existingParallelGateway.bpmnElement.id}_di`, // ID único para o edge
+            bpmnElement: sequenceFlow, // Referência ao fluxo de sequência
+            waypoint: sequenceFlowWaypoints, // Define os waypoints
+          });
+
+          // Adiciona o edge ao BPMNPlane
+          bpmnPlane.planeElement.push(sequenceFlowEdge);
+        } else {
+          // Cria um novo gateway paralelo
+          const parallelGateway = criarGatewayParalelo(
+            moddle,
+            bpmnProcess,
+            bpmnPlane,
+            currentElement,
+            currentBounds,
+            participantBounds,
+            participants,
+            laneHeight,
+            name,
+            lane
+          );
+          
+          for(let i = 0; i < diverge; i++){
+            const yOffset = (i - (diverge - 1) / 2) * (laneHeight / diverge); 
+            previousElements.push(parallelGateway);
+            previousBounds.push({
+              x: currentBounds.x + 150,
+              y: participantBounds.y + participants.indexOf(lane) * laneHeight + laneHeight / 2 - 18,
+              width: 35,
+              height: 35,
+              yOffset: yOffset,
+            });
+        }
+        }
+        break;
+
+      case 'Fim':
+        const endEvent = criarEventoFinal(
+          moddle,
+          bpmnProcess,
+          bpmnPlane,
+          currentElement,
+          currentBounds,
+          participantBounds,
+          participants,
+          laneHeight,
+          name,
+          lane
+        );
+        previousElements.push(endEvent);
+        previousBounds.push({
+          x: currentBounds.x + 150,
+          y: participantBounds.y + participants.indexOf(lane) * laneHeight + laneHeight / 2 - 18,
+          width: 35,
+          height: 35,
+        });
+        break;
 
       default:
-        console.error('Tipo de elemento desconhecido em:' + elementType);
+        console.error('Unknown element type:', type);
     }
   }
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  bpmnDiagram.plane = bpmnPlane; 
+  // Finalize the diagram
+  bpmnDiagram.plane = bpmnPlane;
   definitions.get('diagrams').push(bpmnDiagram);
 
   const { xml: xmlStrUpdated } = await moddle.toXML(definitions);
@@ -225,6 +348,65 @@ async function generateDiagram() {
   return xmlStrUpdated;
 }
 
-// Generate the BPMN diagram and export it
-export const diagram = await generateDiagram();
-// console.log(diagram);
+// const processName = 'Montagem do kit';
+// const participantsInput = ['Produção', 'Qualidade'];
+// const hasExternalParticipants = 'Não';
+// const initialEventName = 'Kit Recebido';
+// const initialEventLane = 'Produção';
+// const elements = [
+//   { type: 'Atividade', name: 'Separar as Peças', lane: 'Produção' },
+//   { type: 'Gateway Exclusivo', name: 'A', lane: 'Produção', diverge: '1' },
+//   { type: 'Atividade', name: 'Montar o Kit', lane: 'Produção' },
+//   { type: 'Atividade', name: 'Inspecionar', lane: 'Qualidade' },
+//   { type: 'Gateway Exclusivo', name: 'B', lane: 'Qualidade', diverge: '2' },
+//   { type: 'Evento Intermediario', name: 'Kit rejeitado', lane: 'Qualidade' },
+//   { type: 'Gateway Exclusivo', name: 'A', lane: 'Produção' },//Acaba porque volta a um elemento existente
+//   { type: 'Evento Intermediario', name: 'Kit aprovado', lane: 'Qualidade' },
+//   { type: 'Atividade', name: 'Embalar', lane: 'Produção' },
+//   { type: 'Fim', name: 'Produto embalado', lane: 'Produção' }, //Acaba porque é fim
+// ];
+
+// const processName = 'Aprovação de Documentos';
+// const participantsInput = ['Administração', 'Gerência'];
+// const hasExternalParticipants = 'Não';
+// const initialEventName = 'Receber Documento';
+// const initialEventLane = 'Administração';
+
+// const elements = [
+//   { type: 'Atividade', name: 'Receber Documento', lane: 'Administração' },
+//   { type: 'Gateway Exclusivo', name: 'Aprovação Inicial', lane: 'Administração', diverge: '2' },
+//   { type: 'Atividade', name: 'Revisar Documento', lane: 'Administração' },
+//   { type: 'Evento Intermediario', name: 'Documento Rejeitado', lane: 'Administração' },
+//   { type: 'Atividade', name: 'Aprovar Documento', lane: 'Gerência' },
+//   { type: 'Gateway Exclusivo', name: 'Aprovação Final', lane: 'Gerência', diverge: '2' },
+//   { type: 'Evento Intermediario', name: 'Documento Rejeitado', lane: 'Gerência' },
+//   { type: 'Evento Intermediario', name: 'Documento Aprovado', lane: 'Gerência' },
+//   { type: 'Fim', name: 'Processo Concluído', lane: 'Administração' },
+// ];
+
+const processName = 'Atendimento ao Cliente';
+const participantsInput = ['Atendimento', 'Suporte Técnico', 'Vendas'];
+const hasExternalParticipants = 'Não';
+const initialEventName = 'Receber Solicitação';
+const initialEventLane = 'Atendimento';
+
+const elements = [
+  { type: 'Atividade', name: 'Receber Solicitação', lane: 'Atendimento' },
+  { type: 'Gateway Exclusivo', name: 'Tipo de Solicitação', lane: 'Atendimento', diverge: '2' },
+  { type: 'Atividade', name: 'Resolver Problema Técnico', lane: 'Suporte Técnico' },
+  { type: 'Atividade', name: 'Encaminhar para Vendas', lane: 'Vendas' },
+  { type: 'Gateway Exclusivo', name: 'Problema Resolvido?', lane: 'Suporte Técnico', diverge: '2' },
+  { type: 'Evento Intermediario', name: 'Problema Não Resolvido', lane: 'Suporte Técnico' },
+  { type: 'Evento Intermediario', name: 'Problema Resolvido', lane: 'Suporte Técnico' },
+  { type: 'Atividade', name: 'Finalizar Atendimento', lane: 'Atendimento' },
+  { type: 'Fim', name: 'Atendimento Concluído', lane: 'Atendimento' },
+];
+
+export const diagram = await generateDiagramFromInput(
+  processName,
+  participantsInput,
+  hasExternalParticipants,
+  initialEventName,
+  initialEventLane,
+  elements
+);

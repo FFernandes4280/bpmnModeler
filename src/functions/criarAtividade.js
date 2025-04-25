@@ -78,9 +78,13 @@ export default function criarAtividade(
   const targetX = activityBounds.x;
   const targetY = activityBounds.y + activityBounds.height / 2;
 
+  const middleX = targetX;
+  const middleY = sourceY;
+
   // Define os waypoints para o fluxo de sequência
   const sequenceFlowWaypoints = [
     moddle.create('dc:Point', { x: sourceX, y: sourceY }), // Saída do elemento anterior
+    moddle.create('dc:Point', { x: middleX, y: middleY }), // Ponto intermediário
     moddle.create('dc:Point', { x: targetX, y: targetY }), // Entrada na atividade
   ];
 
