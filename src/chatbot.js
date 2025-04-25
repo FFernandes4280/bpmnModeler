@@ -150,13 +150,8 @@ async function generateDiagramFromInput(processName, participantsInput, hasExter
           name,
           lane
         );
-        previousElements.push(activityElement);
-        previousBounds.push({
-          x: currentBounds.x + 150,
-          y: participantBounds.y + participants.indexOf(lane) * laneHeight + laneHeight / 2 - 18,
-          width: 100,
-          height: 40,
-        });
+        previousElements.push(activityElement.activity);
+        previousBounds.push(activityElement.activityShape.bounds);
         break;
 
       case 'Evento Intermediario':
@@ -325,13 +320,6 @@ async function generateDiagramFromInput(processName, participantsInput, hasExter
           name,
           lane
         );
-        previousElements.push(endEvent);
-        previousBounds.push({
-          x: currentBounds.x + 150,
-          y: participantBounds.y + participants.indexOf(lane) * laneHeight + laneHeight / 2 - 18,
-          width: 35,
-          height: 35,
-        });
         break;
 
       default:
@@ -394,12 +382,16 @@ const elements = [
   { type: 'Atividade', name: 'Receber Solicitação', lane: 'Atendimento' },
   { type: 'Gateway Exclusivo', name: 'Tipo de Solicitação', lane: 'Atendimento', diverge: '2' },
   { type: 'Atividade', name: 'Resolver Problema Técnico', lane: 'Suporte Técnico' },
-  { type: 'Atividade', name: 'Encaminhar para Vendas', lane: 'Vendas' },
   { type: 'Gateway Exclusivo', name: 'Problema Resolvido?', lane: 'Suporte Técnico', diverge: '2' },
-  { type: 'Evento Intermediario', name: 'Problema Não Resolvido', lane: 'Suporte Técnico' },
   { type: 'Evento Intermediario', name: 'Problema Resolvido', lane: 'Suporte Técnico' },
-  { type: 'Atividade', name: 'Finalizar Atendimento', lane: 'Atendimento' },
+  { type: 'Atividade', name: 'Encaminhar para Vendas', lane: 'Vendas' },
   { type: 'Fim', name: 'Atendimento Concluído', lane: 'Atendimento' },
+  { type: 'Evento Intermediario', name: 'Problema Não Resolvido', lane: 'Suporte Técnico' },
+  { type: 'Fim', name: 'Finalizar Atendimento B', lane: 'Atendimento'},
+  { type: 'Atividade', name: 'Registrar Chamado', lane: 'Atendimento' },
+  { type: 'Fim', name: 'Finalizar Atendimento A', lane: 'Atendimento'},
+
+
 ];
 
 export const diagram = await generateDiagramFromInput(

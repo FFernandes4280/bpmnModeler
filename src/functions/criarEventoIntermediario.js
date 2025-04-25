@@ -41,6 +41,7 @@ export default function criarEventoIntermediario(
   const laneIndex = participants.indexOf(eventLane);
   const laneY = participantBounds.y + laneIndex * laneHeight;
 
+  if(!sourceBounds.yOffset) sourceBounds.yOffset = 0;
   // Define os limites do evento intermediário
   const eventBounds = {
     x: sourceBounds.x + 150, // Deslocamento horizontal

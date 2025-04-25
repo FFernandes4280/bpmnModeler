@@ -43,11 +43,11 @@ export default function criarAtividade(
     throw new Error(`Participante "${activityLane}" não foi declarado`);
   }
   const laneY = participantBounds.y + laneIndex * laneHeight;
-
+  if(!sourceBounds.yOffset) sourceBounds.yOffset = 0;
   // Define os limites da atividade
   const activityBounds = {
     x: sourceBounds.x + 150, // Deslocamento horizontal
-    y: laneY + (laneHeight - 80) / 2, // Centraliza verticalmente na lane
+    y: laneY + (laneHeight - 80) / 2 + sourceBounds.yOffset, // Centraliza verticalmente na lane
     width: 100,
     height: 80,
   };
@@ -98,5 +98,8 @@ export default function criarAtividade(
   // Adiciona o edge ao BPMNPlane
   bpmnPlane.planeElement.push(sequenceFlowEdge);
 
-  return activity; // Retorna a atividade criada
+  return {
+    activity, // Retorna a atividade criada
+    activityShape, // Retorna o shape da atividade
+  }; // Retorna a atividade criada
 }
