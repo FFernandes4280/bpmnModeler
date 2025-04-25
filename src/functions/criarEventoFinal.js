@@ -33,7 +33,7 @@ export default function criarEventoFinal(
   const laneIndex = participants.indexOf(laneName); // Obtém o índice da lane
   const finalEventBounds = {
     x: sourceBounds.x + 150, // Posiciona o evento final à direita do elemento anterior
-    y: participantBounds.y + laneIndex * laneHeight + laneHeight / 2 - 18, // Centraliza na lane
+    y: participantBounds.y + laneIndex * laneHeight + laneHeight / 2 - 18 + sourceBounds.yOffset, // Centraliza na lane
     width: 35,
     height: 35,
   };

@@ -49,13 +49,13 @@ export default function criarEventoIntermediario(
     width: 36,
     height: 36,
   };
-
   // Cria o BPMNShape para o evento intermediário
   const intermediateEventShape = moddle.create('bpmndi:BPMNShape', {
     id: `IntermediateThrowEvent_${normalizedId}_di`, // ID único para o shape do evento
     bpmnElement: intermediateEvent, // Referência ao elemento BPMN do evento
     bounds: moddle.create('dc:Bounds', eventBounds), // Define os limites do evento
   });
+  intermediateEventShape.bounds.yOffset = sourceBounds.yOffset;
 
   // Adiciona o shape do evento ao BPMNPlane
   bpmnPlane.planeElement.push(intermediateEventShape);

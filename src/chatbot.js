@@ -17,7 +17,7 @@ const xmlStart =
                      'targetNamespace="http://bpmn.io/schema/bpmn">' +
   '</bpmn2:definitions>';
 
-async function generateDiagramFromInput(processName, participantsInput, hasExternalParticipants, initialEventName, initialEventLane, elements) {
+async function generateDiagramFromInput(processName, participantsInput, hasExternalParticipants, externalParticipantsInput, initialEventName, initialEventLane, elements) {
   const { rootElement: definitions } = await moddle.fromXML(xmlStart);
 
   // Create the process
@@ -38,8 +38,8 @@ async function generateDiagramFromInput(processName, participantsInput, hasExter
   let participants = participantsInput;
   let participantNumber = participants.length;
 
-  let externalParticipants = [];
-  let externalParticipantsNumber = hasExternalParticipants === 'Sim' ? 1 : 0;
+  let externalParticipants = externalParticipantsInput;
+  let externalParticipantsNumber = hasExternalParticipants === 'Sim' ? externalParticipants.length : 0;
 
   // Create collaboration and participant
   const collaboration = moddle.create('bpmn:Collaboration', { id: 'Collaboration' });
@@ -77,6 +77,7 @@ async function generateDiagramFromInput(processName, participantsInput, hasExter
 
   // Calculate lane height
   const laneHeight = participantBounds.height / participantNumber;
+  const externalLaneHeight = participantBounds.height / externalParticipantsNumber;
 
   // Create lanes and their shapes
   for (let i = 0; i < participantNumber; i++) {
@@ -102,6 +103,29 @@ async function generateDiagramFromInput(processName, participantsInput, hasExter
     bpmnPlane.planeElement.push(laneShape);
   }
 
+  //Create external lanes and their shapes
+  for (let i = 0; i < externalParticipantsNumber; i++) {
+    const externalLane = moddle.create('bpmn:Lane', {
+      id: `ExternalLane_${i + 1}`,
+      name: externalParticipants[i],
+      flowNodeRef: [],
+    });
+    externalLaneSet.get('lanes').push(externalLane);
+
+    const externalLaneShape = moddle.create('bpmndi:BPMNShape', {
+      id: `ExternalLane_${i + 1}_di`,
+      bpmnElement: externalLane,
+      isHorizontal: true,
+      bounds: moddle.create('dc:Bounds', {
+        x: participantBounds.x + 30,
+        y: participantBounds.y + participantNumber * laneHeight + i * externalLaneHeight + 40,
+        width: participantBounds.width - 30,
+        height: externalLaneHeight,
+      }),
+    });
+
+    bpmnPlane.planeElement.push(externalLaneShape);
+  }
   // Create the initial start event
   const initialEventBounds = {
     x: participantBounds.x + 80,
@@ -169,6 +193,7 @@ async function generateDiagramFromInput(processName, participantsInput, hasExter
         );
         previousElements.push(intermediateEvent.intermediateEvent);
         previousBounds.push(intermediateEvent.intermediateEventShape.bounds);
+        console.log(intermediateEvent.intermediateEventShape.bounds);
         break;
 
       case 'Gateway Exclusivo':
@@ -263,9 +288,13 @@ async function generateDiagramFromInput(processName, participantsInput, hasExter
           const targetX = existingParallelGateway.bounds.x;
           const targetY = existingParallelGateway.bounds.y + existingParallelGateway.bounds.height / 2;
 
+          const middleX = targetX;
+          const middleY = sourceY;
+
           // Define os waypoints para o fluxo de sequência
           const sequenceFlowWaypoints = [
             moddle.create('dc:Point', { x: sourceX, y: sourceY }), // Saída do elemento anterior
+            moddle.create('dc:Point', { x: middleX, y: middleY }), // Ponto intermediário
             moddle.create('dc:Point', { x: targetX, y: targetY }), // Entrada no gateway existente
           ];
 
@@ -336,68 +365,78 @@ async function generateDiagramFromInput(processName, participantsInput, hasExter
   return xmlStrUpdated;
 }
 
-// const processName = 'Montagem do kit';
-// const participantsInput = ['Produção', 'Qualidade'];
-// const hasExternalParticipants = 'Não';
-// const initialEventName = 'Kit Recebido';
-// const initialEventLane = 'Produção';
-// const elements = [
-//   { type: 'Atividade', name: 'Separar as Peças', lane: 'Produção' },
-//   { type: 'Gateway Exclusivo', name: 'A', lane: 'Produção', diverge: '1' },
-//   { type: 'Atividade', name: 'Montar o Kit', lane: 'Produção' },
-//   { type: 'Atividade', name: 'Inspecionar', lane: 'Qualidade' },
-//   { type: 'Gateway Exclusivo', name: 'B', lane: 'Qualidade', diverge: '2' },
-//   { type: 'Evento Intermediario', name: 'Kit rejeitado', lane: 'Qualidade' },
-//   { type: 'Gateway Exclusivo', name: 'A', lane: 'Produção' },//Acaba porque volta a um elemento existente
-//   { type: 'Evento Intermediario', name: 'Kit aprovado', lane: 'Qualidade' },
-//   { type: 'Atividade', name: 'Embalar', lane: 'Produção' },
-//   { type: 'Fim', name: 'Produto embalado', lane: 'Produção' }, //Acaba porque é fim
-// ];
-
-// const processName = 'Aprovação de Documentos';
-// const participantsInput = ['Administração', 'Gerência'];
-// const hasExternalParticipants = 'Não';
-// const initialEventName = 'Receber Documento';
-// const initialEventLane = 'Administração';
-
-// const elements = [
-//   { type: 'Atividade', name: 'Receber Documento', lane: 'Administração' },
-//   { type: 'Gateway Exclusivo', name: 'Aprovação Inicial', lane: 'Administração', diverge: '2' },
-//   { type: 'Atividade', name: 'Revisar Documento', lane: 'Administração' },
-//   { type: 'Evento Intermediario', name: 'Documento Rejeitado', lane: 'Administração' },
-//   { type: 'Atividade', name: 'Aprovar Documento', lane: 'Gerência' },
-//   { type: 'Gateway Exclusivo', name: 'Aprovação Final', lane: 'Gerência', diverge: '2' },
-//   { type: 'Evento Intermediario', name: 'Documento Rejeitado', lane: 'Gerência' },
-//   { type: 'Evento Intermediario', name: 'Documento Aprovado', lane: 'Gerência' },
-//   { type: 'Fim', name: 'Processo Concluído', lane: 'Administração' },
-// ];
-
-const processName = 'Atendimento ao Cliente';
-const participantsInput = ['Atendimento', 'Suporte Técnico', 'Vendas'];
+const processName = 'Montagem do kit';
+const participantsInput = ['Produção', 'Qualidade'];
 const hasExternalParticipants = 'Não';
-const initialEventName = 'Receber Solicitação';
-const initialEventLane = 'Atendimento';
-
+const externalParticipantsInput = [];
+const initialEventName = 'Kit Recebido';
+const initialEventLane = 'Produção';
 const elements = [
-  { type: 'Atividade', name: 'Receber Solicitação', lane: 'Atendimento' },
-  { type: 'Gateway Exclusivo', name: 'Tipo de Solicitação', lane: 'Atendimento', diverge: '2' },
-  { type: 'Atividade', name: 'Resolver Problema Técnico', lane: 'Suporte Técnico' },
-  { type: 'Gateway Exclusivo', name: 'Problema Resolvido?', lane: 'Suporte Técnico', diverge: '2' },
-  { type: 'Evento Intermediario', name: 'Problema Resolvido', lane: 'Suporte Técnico' },
-  { type: 'Atividade', name: 'Encaminhar para Vendas', lane: 'Vendas' },
-  { type: 'Fim', name: 'Atendimento Concluído', lane: 'Atendimento' },
-  { type: 'Evento Intermediario', name: 'Problema Não Resolvido', lane: 'Suporte Técnico' },
-  { type: 'Fim', name: 'Finalizar Atendimento B', lane: 'Atendimento'},
-  { type: 'Atividade', name: 'Registrar Chamado', lane: 'Atendimento' },
-  { type: 'Fim', name: 'Finalizar Atendimento A', lane: 'Atendimento'},
-
-
+  { type: 'Atividade', name: 'Separar as Peças', lane: 'Produção' },
+  { type: 'Gateway Exclusivo', name: 'A', lane: 'Produção', diverge: '1' },
+  { type: 'Atividade', name: 'Montar o Kit', lane: 'Produção' },
+  { type: 'Atividade', name: 'Inspecionar', lane: 'Qualidade' },
+  { type: 'Gateway Exclusivo', name: 'B', lane: 'Qualidade', diverge: '2' },
+  { type: 'Evento Intermediario', name: 'Kit rejeitado', lane: 'Qualidade' },
+  { type: 'Gateway Exclusivo', name: 'A', lane: 'Produção' },//Acaba porque volta a um elemento existente
+  { type: 'Evento Intermediario', name: 'Kit aprovado', lane: 'Qualidade' },
+  { type: 'Atividade', name: 'Embalar', lane: 'Produção' },
+  { type: 'Fim', name: 'Produto embalado', lane: 'Produção' }, //Acaba porque é fim
 ];
+
+// const processName = 'Atendimento ao Cliente';
+// const participantsInput = ['Atendimento', 'Suporte Técnico', 'Vendas'];
+// const hasExternalParticipants = 'Não';
+// const externalParticipantsInput = [];
+// const initialEventName = 'Receber Solicitação';
+// const initialEventLane = 'Atendimento';
+
+// const elements = [
+//   { type: 'Atividade', name: 'Receber Solicitação', lane: 'Atendimento' },
+//   { type: 'Gateway Exclusivo', name: 'Tipo de Solicitação', lane: 'Atendimento', diverge: '2' },
+//   { type: 'Atividade', name: 'Resolver Problema Técnico', lane: 'Suporte Técnico' },
+//   { type: 'Gateway Exclusivo', name: 'Problema Resolvido?', lane: 'Suporte Técnico', diverge: '2' },
+//   { type: 'Evento Intermediario', name: 'Problema Resolvido', lane: 'Suporte Técnico' },
+//   { type: 'Atividade', name: 'Encaminhar para Vendas', lane: 'Vendas' },
+//   { type: 'Fim', name: 'Atendimento Concluído', lane: 'Atendimento' },
+//   { type: 'Evento Intermediario', name: 'Problema Não Resolvido', lane: 'Suporte Técnico' },
+//   { type: 'Fim', name: 'Finalizar Atendimento B', lane: 'Atendimento'},
+//   { type: 'Atividade', name: 'Registrar Chamado', lane: 'Atendimento' },
+//   { type: 'Fim', name: 'Finalizar Atendimento A', lane: 'Atendimento'},
+// ];
+
+// const processName = 'Ordem de Estoque e Envio';
+// const participantsInput = ['Estoque final', 'Expedição'];
+// const hasExternalParticipants = 'Não';
+// const externalParticipantsInput = [];
+// const initialEventName = 'Ordem recebida';
+// const initialEventLane = 'Estoque final';
+// const elements = [
+//   { type: 'Atividade', name: 'Checar disponibilidade no estoque', lane: 'Estoque final' },
+//   { type: 'Gateway Exclusivo', name: 'A', lane: 'Estoque final', diverge: '2' },
+//   { type: 'Evento Intermediario', name: 'Produto disponibilizado', lane: 'Estoque final' },
+//   { type: 'Atividade', name: 'Pegar produto no estoque', lane: 'Estoque final' },
+//   { type: 'Atividade', name: 'Confirmar a ordem', lane: 'Estoque final' },
+//   { type: 'Gateway Paralelo', name: 'B', lane: 'Estoque final', diverge: '2' },
+//   { type: 'Atividade', name: 'Emitir fatura', lane: 'Estoque final' },
+//   { type: 'Atividade', name: 'Receber pagamento', lane: 'Estoque final' },
+//   { type: 'Gateway Paralelo', name: 'C', lane: 'Estoque final', diverge: '1' },
+//   { type: 'Atividade', name: 'Arquivar a ordem', lane: 'Estoque final' },
+//   { type: 'Fim', name: 'Ordem completada', lane: 'Estoque final' },
+//   { type: 'Atividade', name: 'Obter endereço para envio', lane: 'Expedição' },
+//   { type: 'Atividade', name: 'Enviar o produto', lane: 'Expedição' },
+//   { type: 'Gateway Paralelo', name: 'C', lane: 'Estoque final', diverge: '1' },
+//   { type: 'Evento Intermediario', name: 'Produto não disponibilizado', lane: 'Estoque final' },
+//   { type: 'Atividade', name: 'Rejeitar a ordem', lane: 'Estoque final' },
+//   { type: 'Fim', name: 'Ordem cancelada', lane: 'Estoque final' },
+// ];
+
 
 export const diagram = await generateDiagramFromInput(
   processName,
   participantsInput,
   hasExternalParticipants,
+  externalParticipantsInput,
   initialEventName,
   initialEventLane,
   elements

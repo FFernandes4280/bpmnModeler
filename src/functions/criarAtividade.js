@@ -58,6 +58,7 @@ export default function criarAtividade(
     bpmnElement: activity, // Referência ao elemento BPMN da atividade
     bounds: moddle.create('dc:Bounds', activityBounds), // Define os limites da atividade
   });
+  activityShape.bounds.yOffset = sourceBounds.yOffset; // Adiciona o offset vertical
 
   // Adiciona o shape da atividade ao BPMNPlane
   bpmnPlane.planeElement.push(activityShape);
