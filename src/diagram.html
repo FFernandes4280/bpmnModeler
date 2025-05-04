@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style type="text/css">
+    html, body, #canvas, #canvas > div {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden; 
+    }
+  </style>
+
+  <!-- required viewer styles -->
+  <link rel="stylesheet" href="https://unpkg.com/bpmn-js@15.0.1/dist/assets/bpmn-js.css">
+
+  <title>BPMN Modeler</title>
+</head>
+<body>
+  <div id="canvas"></div>
+
+  <script type="module">
+    import BpmnViewer from 'bpmn-js';
+
+    // Obtém o sessionNumber da URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionNumber = urlParams.get('session');
+
+    if (!sessionNumber) {
+      alert('Session number is missing!');
+      throw new Error('Session number is required to load the diagram.');
+    }
+
+    // Carrega o arquivo BPMN correspondente
+    const response = await fetch(`../sessions/${sessionNumber}.bpmn`);
+    console.log(response);
+    if (!response.ok) {
+      alert('Failed to load the diagram!');
+      throw new Error(`Failed to load diagram for session ${sessionNumber}`);
+    }
+
+    const diagramXML = await response.text();
+
+    // Inicializa o visualizador BPMN
+    const viewer = new BpmnViewer({
+      container: '#canvas',
+    });
+
+    // Importa o XML no visualizador
+    viewer.importXML(diagramXML).then(function (result) {
+      const { warnings } = result;
+      console.log('Diagram loaded successfully!', warnings);
+
+      const canvas = viewer.get('canvas');
+
+      // Define um zoom inicial
+      canvas.zoom('fit-viewport');
+
+      // Habilita o comportamento de arrastar
+      let isPanning = false;
+      let lastMousePosition = { x: 0, y: 0 };
+
+      const canvasElement = document.querySelector('#canvas');
+
+      canvasElement.addEventListener('mousedown', (event) => {
+        isPanning = true;
+        lastMousePosition = { x: event.clientX, y: event.clientY };
+      });
+
+      canvasElement.addEventListener('mousemove', (event) => {
+        if (!isPanning) return;
+
+        const deltaX = event.clientX - lastMousePosition.x;
+        const deltaY = event.clientY - lastMousePosition.y;
+
+        canvas.scroll({
+          dx: deltaX,
+          dy: deltaY,
+        });
+
+        lastMousePosition = { x: event.clientX, y: event.clientY };
+      });
+
+      canvasElement.addEventListener('mouseup', () => {
+        isPanning = false;
+      });
+
+      canvasElement.addEventListener('mouseleave', () => {
+        isPanning = false;
+      });
+    }).catch(function (err) {
+      console.error('Failed to load diagram:', err);
+    });
+  </script>
+</body>
+</html>
+

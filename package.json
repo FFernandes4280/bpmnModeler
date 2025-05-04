@@ -1,24 +1,22 @@
 {
-  "name": "bpmnmodeler",
+  "name": "bpmnmodelerweb",
   "version": "1.0.0",
+  "type": "module",
   "main": "index.js",
   "scripts": {
-    "start": "webpack serve --open",
-    "build": "webpack --mode production"
+    "start": "vite"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
-  "devDependencies": {
-    "html-webpack-plugin": "^5.6.3",
-    "raw-loader": "^4.0.2",
-    "webpack": "^5.98.0",
-    "webpack-cli": "^6.0.1",
-    "webpack-dev-server": "^5.2.1"
-  },
   "dependencies": {
-    "bpmn-js": "^18.4.0",
-    "bpmn-moddle": "^9.0.1"
+    "bpmn-js": "^18.6.1",
+    "bpmn-moddle": "^9.0.1",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10",
+    "vite": "^6.3.4"
   }
 }
