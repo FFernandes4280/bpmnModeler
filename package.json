@@ -2,9 +2,9 @@
   "name": "bpmnmodelerweb",
   "version": "1.0.0",
   "type": "module",
-  "main": "index.js",
+  "main": "index.html",
   "scripts": {
-    "start": "vite"
+    "start": "vite --host" 
   },
   "keywords": [],
   "author": "",
