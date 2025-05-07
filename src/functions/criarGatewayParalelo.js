@@ -1,18 +1,4 @@
-/**
- * Cria um gateway paralelo no diagrama BPMN.
- * 
- * @param {Object} moddle - Instância do BpmnModdle.
- * @param {Object} bpmnProcess - Processo BPMN ao qual o gateway será adicionado.
- * @param {Object} bpmnPlane - Plano BPMN onde o shape será adicionado.
- * @param {Object} sourceElement - Elemento BPMN anterior (para criar o fluxo de sequência).
- * @param {Object} sourceBounds - Limites do elemento anterior.
- * @param {Object} participantBounds - Limites do participante.
- * @param {Array} participants - Lista de participantes.
- * @param {number} laneHeight - Altura de cada lane.
- * @param {string} gatewayName - Nome do gateway.
- * @param {string} gatewayLane - Nome do participante associado ao gateway.
- * @returns {Object} - Retorna o gateway paralelo criado.
- */
+
 export default function criarGatewayParalelo(
     moddle,
     bpmnProcess,
@@ -42,8 +28,7 @@ export default function criarGatewayParalelo(
   
     // Cria o gateway como um elemento BPMN
     const gateway = moddle.create('bpmn:ParallelGateway', {
-      id: `ParallelGateway_${gatewayName.replace(/\s+/g, '_')}`, // ID único para o gateway
-      name: gatewayName, // Nome do gateway
+      id: `ParallelGateway_${gatewayName}`, // ID único para o gateway
     });
   
     // Adiciona o gateway ao processo
@@ -51,7 +36,7 @@ export default function criarGatewayParalelo(
   
     // Cria o BPMNShape para o gateway
     const gatewayShape = moddle.create('bpmndi:BPMNShape', {
-      id: `ParallelGateway_${gatewayName.replace(/\s+/g, '_')}_di`, // ID único para o shape do gateway
+      id: `ParallelGateway_${gatewayName}_di`, // ID único para o shape do gateway
       bpmnElement: gateway, // Referência ao elemento BPMN do gateway
       bounds: moddle.create('dc:Bounds', gatewayBounds), // Define os limites do gateway
       isMarkerVisible: true, // Torna o marcador visível

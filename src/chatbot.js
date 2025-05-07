@@ -154,9 +154,11 @@ export async function generateDiagramFromInput(processName, participantsInput, h
   let previousElements = [initialEvent];
   let previousBounds = [initialEventBounds];
 
+  let gatewayCount = 0;
+
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   for (const element of elements) {
-    const { type, name, lane, diverge } = element;
+    let { type, name, lane} = element;
     const currentElement = previousElements.pop();
     const currentBounds = previousBounds.pop();
 
@@ -247,11 +249,12 @@ export async function generateDiagramFromInput(processName, participantsInput, h
             participantBounds,
             participants,
             laneHeight,
-            name,
+            gatewayCount,
             lane
           );
-          for(let i = 0; i < diverge; i++){
-            const yOffset = (i - (diverge - 1) / 2) * (laneHeight / diverge); 
+          gatewayCount++;
+          for(let i = 0; i < name; i++){
+            const yOffset = (i - (name - 1) / 2) * (laneHeight / name); 
             previousElements.push(exclusiveGateway);
             previousBounds.push({
               x: currentBounds.x + 150,
@@ -317,12 +320,13 @@ export async function generateDiagramFromInput(processName, participantsInput, h
             participantBounds,
             participants,
             laneHeight,
-            name,
+            gatewayCount,
             lane
           );
           
-          for(let i = 0; i < diverge; i++){
-            const yOffset = (i - (diverge - 1) / 2) * (laneHeight / diverge); 
+          gatewayCount++;
+          for(let i = 0; i < name; i++){
+            const yOffset = (i - (name - 1) / 2) * (laneHeight / name); 
             previousElements.push(parallelGateway);
             previousBounds.push({
               x: currentBounds.x + 150,
