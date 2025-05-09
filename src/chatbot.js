@@ -153,12 +153,9 @@ export async function generateDiagramFromInput(processName, participantsInput, h
   // Initialize stacks for elements and bounds
   let previousElements = [initialEvent];
   let previousBounds = [initialEventBounds];
-
-  let gatewayCount = 0;
-
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   for (const element of elements) {
-    let { type, name, lane} = element;
+    let { type, name, lane, diverge} = element;
     const currentElement = previousElements.pop();
     const currentBounds = previousBounds.pop();
 
@@ -200,9 +197,8 @@ export async function generateDiagramFromInput(processName, participantsInput, h
       case 'Gateway Exclusivo':
         // Verifica se já existe um gateway com o mesmo nome
         const existingExclusiveGateway = bpmnPlane.planeElement.find(
-          (e) => e.bpmnElement.name === name && e.bpmnElement.$type === 'bpmn:ExclusiveGateway'
+          (e) => e.bpmnElement.id === `ExclusiveGateway_${name}` && e.bpmnElement.$type === 'bpmn:ExclusiveGateway'
         );
-
         if (existingExclusiveGateway) {
           // Cria apenas o sequence flow entre o elemento anterior e o gateway existente
           const sequenceFlow = moddle.create('bpmn:SequenceFlow', {
@@ -249,12 +245,11 @@ export async function generateDiagramFromInput(processName, participantsInput, h
             participantBounds,
             participants,
             laneHeight,
-            gatewayCount,
+            name,
             lane
           );
-          gatewayCount++;
-          for(let i = 0; i < name; i++){
-            const yOffset = (i - (name - 1) / 2) * (laneHeight / name); 
+          for(let i = 0; i < diverge; i++){
+            const yOffset = (i - (diverge - 1) / 2) * (laneHeight / diverge); 
             previousElements.push(exclusiveGateway);
             previousBounds.push({
               x: currentBounds.x + 150,
@@ -270,7 +265,7 @@ export async function generateDiagramFromInput(processName, participantsInput, h
       case 'Gateway Paralelo':
         // Verifica se já existe um gateway com o mesmo nome
         const existingParallelGateway = bpmnPlane.planeElement.find(
-          (e) => e.bpmnElement.name === name && e.bpmnElement.$type === 'bpmn:ParallelGateway'
+          (e) => e.bpmnElement.id === `ParallelGateway_${name}` && e.bpmnElement.$type === 'bpmn:ParallelGateway'
         );
 
         if (existingParallelGateway) {
@@ -320,13 +315,12 @@ export async function generateDiagramFromInput(processName, participantsInput, h
             participantBounds,
             participants,
             laneHeight,
-            gatewayCount,
+            name,
             lane
           );
           
-          gatewayCount++;
-          for(let i = 0; i < name; i++){
-            const yOffset = (i - (name - 1) / 2) * (laneHeight / name); 
+          for(let i = 0; i < diverge; i++){
+            const yOffset = (i - (diverge - 1) / 2) * (laneHeight / diverge); 
             previousElements.push(parallelGateway);
             previousBounds.push({
               x: currentBounds.x + 150,
