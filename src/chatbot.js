@@ -28,11 +28,6 @@ export async function generateDiagramFromInput(processName, participantsInput, h
   const laneSet = moddle.create('bpmn:LaneSet', { id: 'LaneSet' });
   bpmnProcess.get('laneSets').push(laneSet);
 
-  const externalLaneSet = moddle.create('bpmn:LaneSet', { id: 'ExternalLaneSet' });
-  if (hasExternalParticipants === 'Sim') {
-    bpmnProcess.get('laneSets').push(externalLaneSet);
-  }
-
   // Define project name and participants
   let projectName = processName;
   let participants = participantsInput;
@@ -50,7 +45,6 @@ export async function generateDiagramFromInput(processName, participantsInput, h
     processRef: bpmnProcess,
   });
   collaboration.get('participants').push(participant);
-
   definitions.get('rootElements').push(collaboration);
 
   // Create the BPMNDiagram and BPMNPlane
@@ -62,7 +56,7 @@ export async function generateDiagramFromInput(processName, participantsInput, h
   const participantBounds = {
     x: 160,
     y: 80,
-    width: 1800,
+    width: elements.length * 200 + 200,
     height: participantNumber * 200,
   };
 
@@ -74,6 +68,33 @@ export async function generateDiagramFromInput(processName, participantsInput, h
     bounds: moddle.create('dc:Bounds', participantBounds),
   });
   bpmnPlane.planeElement.push(participantShape);
+
+  if (hasExternalParticipants === 'Sim') {
+    externalParticipants.forEach((externalParticipant, index) => {
+      const externalParticipantElement = moddle.create('bpmn:Participant', {
+        id: `ExternalParticipant_${index + 1}`,
+        name: externalParticipant,
+        processRef: bpmnProcess,
+      });
+      collaboration.get('participants').push(externalParticipantElement);
+
+      const externalParticipantBounds = {
+        x: 160,
+        y: participantBounds.y + index * 200 + 250,
+        width: 200,
+        height: 150,
+      };
+
+      const externalParticipantShape = moddle.create('bpmndi:BPMNShape', {
+        id: `ExternalParticipant_${index + 1}_di`,
+        bpmnElement: externalParticipantElement,
+        isHorizontal: true,
+        bounds: moddle.create('dc:Bounds', externalParticipantBounds),
+      });
+
+      bpmnPlane.planeElement.push(externalParticipantShape);
+    });
+  }
 
   // Calculate lane height
   const laneHeight = participantBounds.height / participantNumber;
@@ -103,29 +124,6 @@ export async function generateDiagramFromInput(processName, participantsInput, h
     bpmnPlane.planeElement.push(laneShape);
   }
 
-  //Create external lanes and their shapes
-  for (let i = 0; i < externalParticipantsNumber; i++) {
-    const externalLane = moddle.create('bpmn:Lane', {
-      id: `ExternalLane_${i + 1}`,
-      name: externalParticipants[i],
-      flowNodeRef: [],
-    });
-    externalLaneSet.get('lanes').push(externalLane);
-
-    const externalLaneShape = moddle.create('bpmndi:BPMNShape', {
-      id: `ExternalLane_${i + 1}_di`,
-      bpmnElement: externalLane,
-      isHorizontal: true,
-      bounds: moddle.create('dc:Bounds', {
-        x: participantBounds.x + 30,
-        y: participantBounds.y + participantNumber * laneHeight + i * externalLaneHeight + 40,
-        width: participantBounds.width - 30,
-        height: externalLaneHeight,
-      }),
-    });
-
-    bpmnPlane.planeElement.push(externalLaneShape);
-  }
   // Create the initial start event
   const initialEventBounds = {
     x: participantBounds.x + 80,
