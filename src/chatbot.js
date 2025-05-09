@@ -81,7 +81,7 @@ export async function generateDiagramFromInput(processName, participantsInput, h
       const externalParticipantBounds = {
         x: 160,
         y: participantBounds.y + index * 200 + 250,
-        width: 200,
+        width: participantBounds.width,
         height: 150,
       };
 
