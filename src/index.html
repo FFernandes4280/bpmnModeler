@@ -28,7 +28,7 @@
 
     #canvas {
       width: 100%;
-      height: 100%;
+      height: 90%;
     }
 
     label {
@@ -97,7 +97,7 @@
 <body>
   <div id="form-container">
     <form id="bpmnForm">
-      <label for="session">ID da sessão para restreabilidade:</label>
+      <label for="session">ID da sessão para rastreabilidade:</label>
       <input type="text" id="session" name="session" required>
 
       <label for="processName">Nome do processo:</label>
@@ -120,9 +120,9 @@
       <label for="initialEventName">Nome do evento inicial:</label>
       <input type="text" id="initialEventName" name="initialEventName" required>
 
-      <label for="initialEventLane">Lane do evento inicial:</label>
-      <input type="text" id="initialEventLane" name="initialEventLane" required>
-
+      <label for="initialEventLane">Participante do evento inicial:</label>
+      <select id="initialEventLane" name="initialEventLane" required>
+      </select>
       <label for="elements">Elementos:</label>
       <div id="elementsContainer">
       </div>
@@ -131,7 +131,9 @@
   </div>
 
   <div id="diagram-container">
-    <div id="canvas"></div>
+    <div id="canvas">
+      <button type="button" id="returnHomeButton">Return Home</button>
+    </div>
   </div>
 
   <script type="module">
@@ -190,6 +192,15 @@
     // Adiciona uma nova linha ao clicar no botão
     addElementRowButton.addEventListener('click', addElementRow);
 
+    const initialEventLaneSelect = document.getElementById('initialEventLane');
+
+    participantsInput.addEventListener('input', () => {
+      const participantsOptions = getParticipantsOptions()
+        .map(participant => `<option value="${participant}">${participant}</option>`)
+        .join('');
+
+      initialEventLaneSelect.innerHTML = participantsOptions;
+    });
     // Atualiza as opções de lane ao alterar os participantes
     participantsInput.addEventListener('input', () => {
       const rows = elementsContainer.querySelectorAll('.element-row');
@@ -251,7 +262,8 @@
           previousName = name;
           return { type, name, lane };
         }
-        const name = "following" + previousName;
+        let normalizedName = previousName.replace(/\s+/g, '');
+        const name = "following" + normalizedName;
         const diverge = row.querySelector('.element-name').value;
         return { type, name, lane, diverge };
       });
@@ -267,10 +279,10 @@
         indexesList.push(...duplicates);
 
         if (duplicates.length <= 1) return; 
-
+        let normalizedName = element.name.replace(/\s+/g, '');
         const gateway = {
           type: "Gateway Exclusivo",
-          name: "followedBy" + element.name,
+          name: "followedBy" + normalizedName,
           lane: element.lane,
           diverge: 1
         };
@@ -330,6 +342,10 @@
 
         canvasElement.addEventListener('mouseleave', () => {
           isPanning = false;
+        });
+
+        document.getElementById('returnHomeButton').addEventListener('click', () => {
+          canvas.viewbox({ x: 0, y: 0, width: 700, height: 700 }); // Ajuste os valores conforme necessário
         });
       
         // Save the diagram to the server
