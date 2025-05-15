@@ -21,7 +21,7 @@ export async function generateDiagramFromInput(processName, participantsInput, h
   const { rootElement: definitions } = await moddle.fromXML(xmlStart);
 
   // Create the process
-  const bpmnProcess = moddle.create('bpmn:Process', { id: 'Process', isExecutable: false });
+  const bpmnProcess = moddle.create('bpmn:Process', { id: 'mainProcess', isExecutable: false });
   definitions.get('rootElements').push(bpmnProcess);
 
   // Create the lane set
@@ -34,7 +34,6 @@ export async function generateDiagramFromInput(processName, participantsInput, h
   let participantNumber = participants.length;
 
   let externalParticipants = externalParticipantsInput;
-  let externalParticipantsNumber = hasExternalParticipants === 'Sim' ? externalParticipants.length : 0;
 
   // Create collaboration and participant
   const collaboration = moddle.create('bpmn:Collaboration', { id: 'Collaboration' });
@@ -71,10 +70,12 @@ export async function generateDiagramFromInput(processName, participantsInput, h
 
   if (hasExternalParticipants === 'Sim') {
     externalParticipants.forEach((externalParticipant, index) => {
+      const blackBoxBPMNProcess = moddle.create('bpmn:Process', { id: `blackBox_${index}`, isExecutable: false })
+      definitions.get('rootElements').push(blackBoxBPMNProcess);
       const externalParticipantElement = moddle.create('bpmn:Participant', {
         id: `ExternalParticipant_${index + 1}`,
         name: externalParticipant,
-        processRef: bpmnProcess,
+        processRef: blackBoxBPMNProcess,
       });
       collaboration.get('participants').push(externalParticipantElement);
 
@@ -98,7 +99,6 @@ export async function generateDiagramFromInput(processName, participantsInput, h
 
   // Calculate lane height
   const laneHeight = participantBounds.height / participantNumber;
-  const externalLaneHeight = participantBounds.height / externalParticipantsNumber;
 
   // Create lanes and their shapes
   for (let i = 0; i < participantNumber; i++) {
@@ -158,6 +158,58 @@ export async function generateDiagramFromInput(processName, participantsInput, h
     const currentBounds = previousBounds.pop();
 
     switch (type) {
+      case 'Mensagem':
+        if (name === 'Envio' || name === 'Recebimento') {
+          const externalParticipant = collaboration.get('participants').find(
+            (participant) => participant.name === lane
+          );
+          if (!externalParticipant) {
+            console.error(`Participante externo "${lane}" não encontrado.`);
+            break;
+          }
+          const messageFlow = moddle.create('bpmn:MessageFlow', {
+            id: `MessageFlow_${currentElement.id}_to_${externalParticipant.id}`,
+            sourceRef: name === 'Envio' ? currentElement : externalParticipant,
+            targetRef: name === 'Envio' ? externalParticipant : currentElement,
+          });
+
+          if (!collaboration.get('messageFlows')) {
+            collaboration.set('messageFlows', []);
+          }
+          collaboration.get('messageFlows').push(messageFlow);
+
+          // Define os waypoints para o Message Flow
+          const elementX = currentBounds.x + currentBounds.width / 2;
+          const elementY = currentBounds.y + currentBounds.height;
+
+          const targetParticipantIndex = externalParticipants.indexOf(lane);
+
+          const participantY = participantBounds.y + targetParticipantIndex * 200 + participantBounds.height + 50;
+          const participantX = elementX;
+
+          const messageFlowWaypoints = [
+            moddle.create('dc:Point', { x: name === 'Envio' ? elementX : participantX,
+                                        y: name === 'Envio' ? elementY : participantY }),
+            moddle.create('dc:Point', { x: name === 'Envio' ? participantX : elementX,
+                                        y: name === 'Envio' ? participantY : elementY }),
+          ];
+
+          // Cria o BPMNEdge para o Message Flow
+          const messageFlowEdge = moddle.create('bpmndi:BPMNEdge', {
+            id: `MessageFlow_${currentElement.id}_to_${externalParticipant.id}_di`,
+            bpmnElement: messageFlow,
+            waypoint: messageFlowWaypoints,
+          });
+
+          // Adiciona o edge ao BPMNPlane
+          bpmnPlane.planeElement.push(messageFlowEdge);
+        } else {
+          console.error(`Nome de mensagem inválido: "${name}". Use "Envio" ou "Recebimento".`);
+        }
+        previousElements.push(currentElement);
+        previousBounds.push(currentBounds);
+        break;
+
       case 'Atividade':
         const activityElement = criarAtividade(
           moddle,

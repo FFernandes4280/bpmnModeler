@@ -132,8 +132,8 @@
 
   <div id="diagram-container">
     <div id="canvas">
-      <button type="button" id="returnHomeButton">Return Home</button>
     </div>
+    <button type="button" id="returnHomeButton">Return Home</button>
   </div>
 
   <script type="module">
@@ -166,9 +166,18 @@
         .map(participant => `<option value="${participant}">${participant}</option>`)
         .join('');
 
+      const externalParticipantsOptions = document
+        .getElementById('externalParticipants')
+        .value.split(',')
+        .map(participant => participant.trim())
+        .filter(participant => participant !== '')
+        .map(participant => `<option value="${participant}">${participant}</option>`)
+        .join('');
+
       row.innerHTML = `
         <select class="element-type">
           <option value="Atividade">Atividade</option>
+          <option value="Mensagem">Mensagem</option>
           <option value="Gateway Exclusivo">Gateway Exclusivo</option>
           <option value="Gateway Paralelo">Gateway Paralelo</option>
           <option value="Evento Intermediario">Evento Intermediário</option>
@@ -181,7 +190,40 @@
         <button type="button" class="removeElementRow">X</button>
       `;
 
-      // Adiciona o evento de remoção ao botão "X"
+      // Add event listener to update element-lane options based on element-type
+      const elementTypeSelect = row.querySelector('.element-type');
+      const elementLaneSelect = row.querySelector('.element-lane');
+      const elementNameInput = row.querySelector('.element-name');
+
+      elementTypeSelect.addEventListener('change', () => {
+        if (elementTypeSelect.value === 'Mensagem') {
+          // Substitui o campo de entrada por um select com opções "Envio" e "Recebimento"
+          const nameSelect = document.createElement('select');
+          nameSelect.className = 'element-name';
+          nameSelect.innerHTML = `
+            <option value="Envio">Envio</option>
+            <option value="Recebimento">Recebimento</option>
+          `;
+          row.replaceChild(nameSelect, elementNameInput);
+        } else {
+          // Substitui o select por um campo de entrada de texto
+          const nameInput = document.createElement('input');
+          nameInput.type = 'text';
+          nameInput.className = 'element-name';
+          nameInput.placeholder = 'Nome ou Divergência';
+          row.replaceChild(nameInput, elementNameInput);
+        }
+      });
+
+      elementTypeSelect.addEventListener('change', () => {
+        if (elementTypeSelect.value === 'Mensagem') {
+          elementLaneSelect.innerHTML = externalParticipantsOptions;
+        } else {
+          elementLaneSelect.innerHTML = participantsOptions;
+        }
+      });
+
+      // Add event listener to remove the row
       row.querySelector('.removeElementRow').addEventListener('click', () => {
         row.remove();
       });
@@ -294,8 +336,6 @@
           elements[idx + 1] = gateway;
         });
       });
-      
-      console.log(elements);
 
       try {
         const diagramXML = await generateDiagramFromInput(
