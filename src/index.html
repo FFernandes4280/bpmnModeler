@@ -120,6 +120,15 @@
       <label for="initialEventName">Nome do evento inicial:</label>
       <input type="text" id="initialEventName" name="initialEventName" required>
 
+
+      <label for="initialEventType">Tipo do evento inicial:</label>
+      <select id="initialEventType" name="initialEventType">
+        <option value="Padrão">Início</option>
+        <option value="Mensagem">Mensagem</option>
+        <option value="Timer">Timer</option>
+        <option value="Sinal">Sinal</option>
+      <select>
+
       <label for="initialEventLane">Participante do evento inicial:</label>
       <select id="initialEventLane" name="initialEventLane" required>
       </select>
@@ -289,6 +298,7 @@
       const hasExternalParticipants = document.getElementById('hasExternalParticipants').value;
       const externalParticipants = document.getElementById('externalParticipants').value.split(',').map(participant => participant.trim());
       const initialEventName = document.getElementById('initialEventName').value;
+      const initialEventType = document.getElementById('initialEventType').value;
       const initialEventLane = document.getElementById('initialEventLane').value;
       if(!processName || !participants.length || !initialEventName || !initialEventLane) {
         console.error('Preencha todos os campos obrigatórios.');
@@ -344,6 +354,7 @@
           hasExternalParticipants,
           externalParticipants,
           initialEventName,
+          initialEventType,
           initialEventLane,
           elements
         );
@@ -385,7 +396,7 @@
         });
 
         document.getElementById('returnHomeButton').addEventListener('click', () => {
-          canvas.viewbox({ x: 0, y: 0, width: 700, height: 700 }); // Ajuste os valores conforme necessário
+          canvas.viewbox({ x: 0, y: 0, width: 600, height: 600 }); // Ajuste os valores conforme necessário
         });
       
         // Save the diagram to the server

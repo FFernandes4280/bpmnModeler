@@ -17,7 +17,7 @@ const xmlStart =
                      'targetNamespace="http://bpmn.io/schema/bpmn">' +
   '</bpmn2:definitions>';
 
-export async function generateDiagramFromInput(processName, participantsInput, hasExternalParticipants, externalParticipantsInput, initialEventName, initialEventLane, elements) {
+export async function generateDiagramFromInput(processName, participantsInput, hasExternalParticipants, externalParticipantsInput, initialEventName, initialEventType, initialEventLane, elements) {
   const { rootElement: definitions } = await moddle.fromXML(xmlStart);
 
   // Create the process
@@ -137,6 +137,21 @@ export async function generateDiagramFromInput(processName, participantsInput, h
     name: initialEventName,
     isInterrupting: true,
   });
+
+  if(initialEventType === 'Timer') {
+    const timerEventDefinition = moddle.create('bpmn:TimerEventDefinition');
+    initialEvent.eventDefinitions = [timerEventDefinition];
+  }
+
+  if(initialEventType === 'Mensagem') {
+    const messageEventDefinition = moddle.create('bpmn:MessageEventDefinition');
+    initialEvent.eventDefinitions = [messageEventDefinition];
+  }
+
+  if(initialEventType === 'Sinal') {
+    const signalEventDefinition = moddle.create('bpmn:SignalEventDefinition');
+    initialEvent.eventDefinitions = [signalEventDefinition];
+  }
 
   bpmnProcess.get('flowElements').push(initialEvent);
 
