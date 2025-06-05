@@ -56,7 +56,7 @@ export async function generateDiagramFromInput(processName, participantsInput, h
     x: 160,
     y: 80,
     width: elements.length * 200 + 200,
-    height: participantNumber * 200,
+    height: participantNumber * 200 + 200,
   };
 
   // Create a participant shape for the process
@@ -278,18 +278,39 @@ export async function generateDiagramFromInput(processName, participantsInput, h
           // Adiciona o fluxo de sequência ao processo
           bpmnProcess.get('flowElements').push(sequenceFlow);
 
-          const sourceX = currentBounds.x + currentBounds.width;
-          const sourceY = currentBounds.y + currentBounds.height / 2;
+          // Verifica se há outro gateway exclusivo na pilha
+          const hasAnotherExclusiveGateway = previousElements.some(
+            el => el && el.$type === 'bpmn:ExclusiveGateway'
+          );
 
-          const targetX = existingExclusiveGateway.bounds.x;
-          const targetY = existingExclusiveGateway.bounds.y + existingExclusiveGateway.bounds.height / 2;
+          const sourceX = currentBounds.x + currentBounds.width/2;
+          const targetX = existingExclusiveGateway.bounds.x + existingExclusiveGateway.bounds.width/2;
 
-          const middleX = targetX;
-          const middleY = sourceY;
+          // Se for o último gateway, inverte o sentido do Y
+          let intermediateY;
+          let sourceY;
+          let targetY;
+          if (hasAnotherExclusiveGateway) {
+            sourceY = currentBounds.y + currentBounds.height;
+            targetY = existingExclusiveGateway.bounds.y + existingExclusiveGateway.bounds.height;
+            intermediateY = sourceY + currentBounds.height / 4;
+          } else {
+            sourceY = currentBounds.y;
+            targetY = existingExclusiveGateway.bounds.y;
+            intermediateY = sourceY - currentBounds.height / 4;
+          }
+
+          const intermediateX_A = sourceX; 
+          const intermediateY_A = intermediateY;
+
+          const intermediateX_B = targetX;
+          const intermediateY_B = intermediateY;
+
           // Define os waypoints para o fluxo de sequência
           const sequenceFlowWaypoints = [
             moddle.create('dc:Point', { x: sourceX, y: sourceY }), // Saída do elemento anterior
-            moddle.create('dc:Point', { x: middleX, y: middleY }), // Ponto intermediário
+            moddle.create('dc:Point', { x: intermediateX_A, y: intermediateY_A }), // Ponto intermediário A
+            moddle.create('dc:Point', { x: intermediateX_B, y: intermediateY_B }), // Ponto intermediário B
             moddle.create('dc:Point', { x: targetX, y: targetY }), // Entrada no gateway existente
           ];
 
