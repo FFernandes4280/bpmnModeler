@@ -243,6 +243,8 @@ export async function generateDiagramFromInput(processName, participantsInput, h
         break;
 
       case 'Evento Intermediario':
+        const eventType = name.split('_')[0]; // Extrai o tipo do evento (e.g., "Timer", "Mensagem", "Sinal")
+        name = name.split('_')[1];
         const intermediateEvent = criarEventoIntermediario(
           moddle,
           bpmnProcess,
@@ -253,6 +255,7 @@ export async function generateDiagramFromInput(processName, participantsInput, h
           participants,
           laneHeight,
           name,
+          eventType,
           lane
         );
         previousElements.push(intermediateEvent.intermediateEvent);

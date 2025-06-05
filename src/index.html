@@ -189,7 +189,7 @@
           <option value="Mensagem">Mensagem</option>
           <option value="Gateway Exclusivo">Gateway Exclusivo</option>
           <option value="Gateway Paralelo">Gateway Paralelo</option>
-          <option value="Evento Intermediario">Evento Intermediário</option>
+          <option value="Evento Intermediario">Evento Intermediario</option>
           <option value="Fim">Fim</option>
         </select>
         <input type="text" class="element-name" placeholder="Nome ou Divergência" />
@@ -199,12 +199,32 @@
         <button type="button" class="removeElementRow">X</button>
       `;
 
+      const eventTypeSelect = document.createElement('select');
+      eventTypeSelect.className = 'element-eventType';
+      eventTypeSelect.innerHTML = `
+        <option value="Padrão">Padrão</option>
+        <option value="Mensagem">Mensagem</option>
+        <option value="Timer">Timer</option>
+        <option value="Sinal">Sinal</option>
+      `;
+
       // Add event listener to update element-lane options based on element-type
       const elementTypeSelect = row.querySelector('.element-type');
       const elementLaneSelect = row.querySelector('.element-lane');
-      const elementNameInput = row.querySelector('.element-name');
+      let elementNameInput = row.querySelector('.element-name');
 
       elementTypeSelect.addEventListener('change', () => {
+        // Evento Intermediario: adiciona o select de eventType
+        if (elementTypeSelect.value === 'Evento Intermediario') {
+          if (!row.querySelector('.element-eventType')) {
+            row.insertBefore(eventTypeSelect, elementNameInput);
+          }
+        } else {
+          if (row.querySelector('.element-eventType')) {
+            row.removeChild(eventTypeSelect);
+          }
+        }
+
         if (elementTypeSelect.value === 'Mensagem') {
           // Substitui o campo de entrada por um select com opções "Envio" e "Recebimento"
           const nameSelect = document.createElement('select');
@@ -214,17 +234,19 @@
             <option value="Recebimento">Recebimento</option>
           `;
           row.replaceChild(nameSelect, elementNameInput);
+          elementNameInput = nameSelect;
         } else {
           // Substitui o select por um campo de entrada de texto
-          const nameInput = document.createElement('input');
-          nameInput.type = 'text';
-          nameInput.className = 'element-name';
-          nameInput.placeholder = 'Nome ou Divergência';
-          row.replaceChild(nameInput, elementNameInput);
+          if (elementNameInput.tagName.toLowerCase() !== 'input') {
+            const nameInput = document.createElement('input');
+            nameInput.type = 'text';
+            nameInput.className = 'element-name';
+            nameInput.placeholder = 'Nome ou Divergência';
+            row.replaceChild(nameInput, elementNameInput);
+            elementNameInput = nameInput;
+          }
         }
-      });
 
-      elementTypeSelect.addEventListener('change', () => {
         if (elementTypeSelect.value === 'Mensagem') {
           elementLaneSelect.innerHTML = externalParticipantsOptions;
         } else {
@@ -272,26 +294,8 @@
       });
     });
 
-
-    async function loadExistingDiagram(session) {
-      try {
-        const response = await fetch(`/sessions/${session}.bpmn`);
-        if (response.ok) {
-          const diagramXML = await response.text();
-          await viewer.importXML(diagramXML);
-          console.log('Diagram loaded successfully');
-        } else {
-          console.log('No existing diagram found for this session');
-        }
-      } catch (error) {
-        console.error('Error loading existing diagram:', error);
-      }
-    }
-
     async function updateDiagram() {
       const session = document.getElementById('session').value;
-
-      await loadExistingDiagram(session);
 
       const processName = document.getElementById('processName').value;
       const participants = getParticipantsOptions();
@@ -310,11 +314,18 @@
         const type = row.querySelector('.element-type').value;
         const lane = row.querySelector('.element-lane').value;
         if(type !== 'Gateway Exclusivo' && type !== 'Gateway Paralelo') {
-          const name = row.querySelector('.element-name').value;
+          let name = row.querySelector('.element-name').value;
+          if(type === 'Evento Intermediario') {
+            const eventType = row.querySelector('.element-eventType').value;
+            name = eventType + '_' + name;
+            previousName = name;
+            return { type, name, lane };
+          }
           previousName = name;
           return { type, name, lane };
         }
-        let normalizedName = previousName.replace(/\s+/g, '');
+        
+        let normalizedName = previousName.replace(/\s+/g, '_').replace(/[^\w]/g, '');
         const name = "following" + normalizedName;
         const diverge = row.querySelector('.element-name').value;
         return { type, name, lane, diverge };
@@ -323,7 +334,7 @@
       elements.forEach((element, index) => {
         if (indexesList.includes(index)) return;
         indexesList.push(index);
-        if (element.type === 'Gateway Exclusivo' && element.type === 'Gateway Paralelo') return;
+        if (element.type === 'Gateway Exclusivo' || element.type === 'Gateway Paralelo' || element.type === 'Mensagem') return;
         const duplicates = elements
           .map((el, idx) => (el.name === element.name ? idx : -1))
           .filter(idx => idx !== -1);
@@ -331,7 +342,7 @@
         indexesList.push(...duplicates);
 
         if (duplicates.length <= 1) return; 
-        let normalizedName = element.name.replace(/\s+/g, '');
+        let normalizedName = element.name.replace(/\s+/g, '_').replace(/[^\w]/g, '');
         const gateway = {
           type: "Gateway Exclusivo",
           name: "followedBy" + normalizedName,
@@ -398,23 +409,6 @@
         document.getElementById('returnHomeButton').addEventListener('click', () => {
           canvas.viewbox({ x: 0, y: 0, width: 600, height: 600 }); // Ajuste os valores conforme necessário
         });
-      
-        // Save the diagram to the server
-        const response = await fetch('/save-diagram', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            sessionNumber: session,
-            diagramXML,
-          }),
-        });
-        if (!response.ok) {
-          throw new Error('Failed to save diagram');
-        }
-        const result = await response.json();
-        console.log('Diagram saved successfully:', result);
       } catch (error) {
         console.error('Error generating diagram:', error);
       }

@@ -1,18 +1,3 @@
-/**
- * Cria um evento intermediário no diagrama BPMN.
- * 
- * @param {Object} moddle - Instância do BpmnModdle.
- * @param {Object} bpmnProcess - Processo BPMN ao qual o evento será adicionado.
- * @param {Object} bpmnPlane - Plano BPMN onde o shape será adicionado.
- * @param {Object} sourceElement - Elemento BPMN anterior (para criar o fluxo de sequência).
- * @param {Object} sourceBounds - Limites do elemento anterior.
- * @param {Object} participantBounds - Limites do participante.
- * @param {Array} participants - Lista de participantes.
- * @param {number} laneHeight - Altura de cada lane.
- * @param {string} eventName - Nome do evento intermediário.
- * @param {string} eventLane - Nome do participante associado ao evento.
- * @returns {Object} - Retorna o evento intermediário criado.
- */
 export default function criarEventoIntermediario(
   moddle,
   bpmnProcess,
@@ -23,6 +8,7 @@ export default function criarEventoIntermediario(
   participants,
   laneHeight,
   eventName,
+  eventType,
   eventLane
 ) {
   // Normaliza o ID removendo espaços e caracteres especiais
@@ -33,6 +19,21 @@ export default function criarEventoIntermediario(
     id: `IntermediateThrowEvent_${normalizedId}`, // ID único para o evento
     name: eventName, // Nome do evento
   });
+
+  if(eventType === 'Timer') {
+    const timerEventDefinition = moddle.create('bpmn:TimerEventDefinition');
+    intermediateEvent.eventDefinitions = [timerEventDefinition];
+  }
+
+  if(eventType === 'Mensagem') {
+    const messageEventDefinition = moddle.create('bpmn:MessageEventDefinition');
+    intermediateEvent.eventDefinitions = [messageEventDefinition];
+  }
+
+  if(eventType === 'Sinal') {
+    const signalEventDefinition = moddle.create('bpmn:SignalEventDefinition');
+    intermediateEvent.eventDefinitions = [signalEventDefinition];
+  }
 
   // Adiciona o evento intermediário ao processo
   bpmnProcess.get('flowElements').push(intermediateEvent);
