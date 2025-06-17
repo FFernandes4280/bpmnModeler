@@ -11,11 +11,11 @@ const moddle = new BpmnModdle();
 const xmlStart =
   '<?xml version="1.0" encoding="UTF-8"?>' +
   '<bpmn2:definitions xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL" ' +
-                     'xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" ' +
-                     'xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" ' +
-                     'xmlns:di="http://www.omg.org/spec/DD/20100524/DI" ' +
-                     'id="Definitions_1a88msi" ' +
-                     'targetNamespace="http://bpmn.io/schema/bpmn">' +
+  'xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" ' +
+  'xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" ' +
+  'xmlns:di="http://www.omg.org/spec/DD/20100524/DI" ' +
+  'id="Definitions_1a88msi" ' +
+  'targetNamespace="http://bpmn.io/schema/bpmn">' +
   '</bpmn2:definitions>';
 
 export async function generateDiagramFromInput(processName, participantsInput, hasExternalParticipants, externalParticipantsInput, initialEventName, initialEventType, initialEventLane, elements) {
@@ -139,17 +139,17 @@ export async function generateDiagramFromInput(processName, participantsInput, h
     isInterrupting: true,
   });
 
-  if(initialEventType === 'Timer') {
+  if (initialEventType === 'Timer') {
     const timerEventDefinition = moddle.create('bpmn:TimerEventDefinition');
     initialEvent.eventDefinitions = [timerEventDefinition];
   }
 
-  if(initialEventType === 'Mensagem') {
+  if (initialEventType === 'Mensagem') {
     const messageEventDefinition = moddle.create('bpmn:MessageEventDefinition');
     initialEvent.eventDefinitions = [messageEventDefinition];
   }
 
-  if(initialEventType === 'Sinal') {
+  if (initialEventType === 'Sinal') {
     const signalEventDefinition = moddle.create('bpmn:SignalEventDefinition');
     initialEvent.eventDefinitions = [signalEventDefinition];
   }
@@ -169,7 +169,7 @@ export async function generateDiagramFromInput(processName, participantsInput, h
   let previousBounds = [initialEventBounds];
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   for (const element of elements) {
-    let { type, name, lane, diverge} = element;
+    let { type, name, lane, diverge } = element;
     let eventType = '';
     const currentElement = previousElements.pop();
     const currentBounds = previousBounds.pop();
@@ -205,10 +205,14 @@ export async function generateDiagramFromInput(processName, participantsInput, h
           const participantX = elementX;
 
           const messageFlowWaypoints = [
-            moddle.create('dc:Point', { x: name === 'Envio' ? elementX : participantX,
-                                        y: name === 'Envio' ? elementY : participantY }),
-            moddle.create('dc:Point', { x: name === 'Envio' ? participantX : elementX,
-                                        y: name === 'Envio' ? participantY : elementY }),
+            moddle.create('dc:Point', {
+              x: name === 'Envio' ? elementX : participantX,
+              y: name === 'Envio' ? elementY : participantY
+            }),
+            moddle.create('dc:Point', {
+              x: name === 'Envio' ? participantX : elementX,
+              y: name === 'Envio' ? participantY : elementY
+            }),
           ];
 
           // Cria o BPMNEdge para o Message Flow
@@ -286,8 +290,8 @@ export async function generateDiagramFromInput(processName, participantsInput, h
             el => el && el.$type === 'bpmn:ExclusiveGateway'
           );
 
-          const sourceX = currentBounds.x + currentBounds.width/2;
-          const targetX = existingExclusiveGateway.bounds.x + existingExclusiveGateway.bounds.width/2;
+          const sourceX = currentBounds.x + currentBounds.width / 2;
+          const targetX = existingExclusiveGateway.bounds.x + existingExclusiveGateway.bounds.width / 2;
 
           // Se for o último gateway, inverte o sentido do Y
           let intermediateY;
@@ -303,7 +307,7 @@ export async function generateDiagramFromInput(processName, participantsInput, h
             intermediateY = sourceY - currentBounds.height / 4;
           }
 
-          const intermediateX_A = sourceX; 
+          const intermediateX_A = sourceX;
           const intermediateY_A = intermediateY;
 
           const intermediateX_B = targetX;
@@ -340,16 +344,96 @@ export async function generateDiagramFromInput(processName, participantsInput, h
             name,
             lane
           );
-          for(let i = 0; i < diverge; i++){
-            const yOffset = (i - (diverge - 1) / 2) * (laneHeight / diverge); 
+
+          for (let i = 0; i < diverge; i++) {
+            const yOffset = (i - (diverge - 1) / 2) * (laneHeight / diverge);
             previousElements.push(exclusiveGateway);
-            previousBounds.push({
-              x: currentBounds.x + 150,
-              y: participantBounds.y + participants.indexOf(lane) * laneHeight + laneHeight / 2 - 18,
-              width: 35,
-              height: 35,
-              yOffset: yOffset,
-            });
+
+            const baseX = currentBounds.x + 150;
+            const baseY = participantBounds.y + participants.indexOf(lane) * laneHeight + laneHeight / 2 - 18;
+
+            if (diverge === 1) {
+              // Apenas meio
+              previousBounds.push({
+                x: baseX,
+                y: baseY,
+                width: 35,
+                height: 35,
+                yOffset: yOffset,
+              });
+            } else if (diverge === 2) {
+              // Apenas cima e baixo
+              const isTop = i === 0;
+              const yAdjust = isTop ? -17.5 : +17.5;
+
+              previousBounds.push({
+                x: baseX - 17.5,
+                y: baseY + yAdjust,
+                width: 35,
+                height: 35,
+                yOffset: yOffset,
+              });
+            } else if (diverge === 3) {
+              // Cima, meio e baixo
+              if (i === 0) {
+                // Cima
+                previousBounds.push({
+                  x: baseX - 17.5,
+                  y: baseY - 17.5,
+                  width: 35,
+                  height: 35,
+                  yOffset: yOffset,
+                });
+              } else if (i === 1) {
+                // Meio
+                previousBounds.push({
+                  x: baseX,
+                  y: baseY,
+                  width: 35,
+                  height: 35,
+                  yOffset: yOffset,
+                });
+              } else if (i === 2) {
+                // Baixo
+                previousBounds.push({
+                  x: baseX - 17.5,
+                  y: baseY + 17.5,
+                  width: 35,
+                  height: 35,
+                  yOffset: yOffset,
+                });
+              }
+            } else {
+              // diverge > 3
+              if (i === 0) {
+                // Cima
+                previousBounds.push({
+                  x: baseX - 17.5,
+                  y: baseY - 17.5,
+                  width: 35,
+                  height: 35,
+                  yOffset: yOffset,
+                });
+              } else if (i === diverge - 1) {
+                // Baixo
+                previousBounds.push({
+                  x: baseX - 17.5,
+                  y: baseY + 17.5,
+                  width: 35,
+                  height: 35,
+                  yOffset: yOffset,
+                });
+              } else {
+                // Meio
+                previousBounds.push({
+                  x: baseX,
+                  y: baseY,
+                  width: 35,
+                  height: 35,
+                  yOffset: yOffset,
+                });
+              }
+            }
           }
         }
         break;
@@ -410,18 +494,96 @@ export async function generateDiagramFromInput(processName, participantsInput, h
             name,
             lane
           );
-          
-          for(let i = 0; i < diverge; i++){
-            const yOffset = (i - (diverge - 1) / 2) * (laneHeight / diverge); 
+          for (let i = 0; i < diverge; i++) {
+            const yOffset = (i - (diverge - 1) / 2) * (laneHeight / diverge);
             previousElements.push(parallelGateway);
-            previousBounds.push({
-              x: currentBounds.x + 150,
-              y: participantBounds.y + participants.indexOf(lane) * laneHeight + laneHeight / 2 - 18,
-              width: 35,
-              height: 35,
-              yOffset: yOffset,
-            });
-        }
+
+            const baseX = currentBounds.x + 150;
+            const baseY = participantBounds.y + participants.indexOf(lane) * laneHeight + laneHeight / 2 - 18;
+
+            if (diverge === 1) {
+              // Apenas meio
+              previousBounds.push({
+                x: baseX,
+                y: baseY,
+                width: 35,
+                height: 35,
+                yOffset: yOffset,
+              });
+            } else if (diverge === 2) {
+              // Apenas cima e baixo
+              const isTop = i === 0;
+              const yAdjust = isTop ? -17.5 : +17.5;
+
+              previousBounds.push({
+                x: baseX - 17.5,
+                y: baseY + yAdjust,
+                width: 35,
+                height: 35,
+                yOffset: yOffset,
+              });
+            } else if (diverge === 3) {
+              // Cima, meio e baixo
+              if (i === 0) {
+                // Cima
+                previousBounds.push({
+                  x: baseX - 17.5,
+                  y: baseY - 17.5,
+                  width: 35,
+                  height: 35,
+                  yOffset: yOffset,
+                });
+              } else if (i === 1) {
+                // Meio
+                previousBounds.push({
+                  x: baseX,
+                  y: baseY,
+                  width: 35,
+                  height: 35,
+                  yOffset: yOffset,
+                });
+              } else if (i === 2) {
+                // Baixo
+                previousBounds.push({
+                  x: baseX - 17.5,
+                  y: baseY + 17.5,
+                  width: 35,
+                  height: 35,
+                  yOffset: yOffset,
+                });
+              }
+            } else {
+              // diverge > 3
+              if (i === 0) {
+                // Cima
+                previousBounds.push({
+                  x: baseX - 17.5,
+                  y: baseY - 17.5,
+                  width: 35,
+                  height: 35,
+                  yOffset: yOffset,
+                });
+              } else if (i === diverge - 1) {
+                // Baixo
+                previousBounds.push({
+                  x: baseX - 17.5,
+                  y: baseY + 17.5,
+                  width: 35,
+                  height: 35,
+                  yOffset: yOffset,
+                });
+              } else {
+                // Meio
+                previousBounds.push({
+                  x: baseX,
+                  y: baseY,
+                  width: 35,
+                  height: 35,
+                  yOffset: yOffset,
+                });
+              }
+            }
+          }
         }
         break;
 
@@ -467,7 +629,7 @@ export async function generateDiagramFromInput(processName, participantsInput, h
 
   const { xml: xmlStrUpdated } = await moddle.toXML(definitions);
   console.log(xmlStrUpdated);
-  
+
   return xmlStrUpdated;
 }
 
