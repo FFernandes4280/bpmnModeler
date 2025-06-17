@@ -1,18 +1,3 @@
-/**
- * Cria um evento final no diagrama BPMN.
- * 
- * @param {Object} moddle - Instância do BpmnModdle.
- * @param {Object} bpmnProcess - Processo BPMN ao qual o evento será adicionado.
- * @param {Object} bpmnPlane - Plano BPMN onde o shape será adicionado.
- * @param {Object} sourceElement - Elemento BPMN anterior (para criar o fluxo de sequência).
- * @param {Object} sourceBounds - Limites do elemento anterior.
- * @param {Object} participantBounds - Limites do participante.
- * @param {Array} participants - Lista de participantes.
- * @param {number} laneHeight - Altura de cada lane.
- * @param {string} eventName - Nome do evento final.
- * @param {string} laneName - Nome da lane onde o evento será posicionado.
- * @returns {Object} - Retorna o evento final criado.
- */
 export default function criarEventoFinal(
   moddle,
   bpmnProcess,
@@ -22,6 +7,7 @@ export default function criarEventoFinal(
   participantBounds,
   participants,
   laneHeight,
+  finalEventType,
   eventName,
   laneName
 ) {
@@ -56,6 +42,39 @@ export default function criarEventoFinal(
 
   // Adiciona o shape do evento ao BPMNPlane
   bpmnPlane.planeElement.push(finalEventShape);
+
+  if (finalEventType === 'Timer') {
+    const timerEventDefinition = moddle.create('bpmn:TimerEventDefinition');
+    finalEvent.eventDefinitions = [timerEventDefinition];
+  }
+  if (finalEventType === 'Mensagem' || finalEventType === 'Message') {
+    const messageEventDefinition = moddle.create('bpmn:MessageEventDefinition');
+    finalEvent.eventDefinitions = [messageEventDefinition];
+  }
+  if (finalEventType === 'Sinal' || finalEventType === 'Signal') {
+    const signalEventDefinition = moddle.create('bpmn:SignalEventDefinition');
+    finalEvent.eventDefinitions = [signalEventDefinition];
+  }
+  if (finalEventType === 'Erro' || finalEventType === 'Error') {
+    const errorEventDefinition = moddle.create('bpmn:ErrorEventDefinition');
+    finalEvent.eventDefinitions = [errorEventDefinition];
+  }
+  if (finalEventType === 'Cancelamento' || finalEventType === 'Cancel') {
+    const cancelEventDefinition = moddle.create('bpmn:CancelEventDefinition');
+    finalEvent.eventDefinitions = [cancelEventDefinition];
+  }
+  if (finalEventType === 'Compensação' || finalEventType === 'Compensation') {
+    const compensateEventDefinition = moddle.create('bpmn:CompensateEventDefinition');
+    finalEvent.eventDefinitions = [compensateEventDefinition];
+  }
+  if (finalEventType === 'Escalation' || finalEventType === 'Escalonamento') {
+    const escalationEventDefinition = moddle.create('bpmn:EscalationEventDefinition');
+    finalEvent.eventDefinitions = [escalationEventDefinition];
+  }
+  if (finalEventType === 'Terminar' || finalEventType === 'Terminate') {
+    const terminateEventDefinition = moddle.create('bpmn:TerminateEventDefinition');
+    finalEvent.eventDefinitions = [terminateEventDefinition];
+  }
 
   // Cria o fluxo de sequência entre o elemento anterior e o evento final
   const sequenceFlow = moddle.create('bpmn:SequenceFlow', {

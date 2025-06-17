@@ -4,6 +4,7 @@ import criarEventoIntermediario from './functions/criarEventoIntermediario.js';
 import criarGatewayExclusivo from './functions/criarGatewayExclusivo.js';
 import criarGatewayParalelo from './functions/criarGatewayParalelo.js';
 import criarEventoFinal from './functions/criarEventoFinal.js';
+import criarDataObject from './functions/criarDataObject.js';
 
 const moddle = new BpmnModdle();
 
@@ -169,6 +170,7 @@ export async function generateDiagramFromInput(processName, participantsInput, h
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   for (const element of elements) {
     let { type, name, lane, diverge} = element;
+    let eventType = '';
     const currentElement = previousElements.pop();
     const currentBounds = previousBounds.pop();
 
@@ -235,6 +237,7 @@ export async function generateDiagramFromInput(processName, participantsInput, h
           participantBounds,
           participants,
           laneHeight,
+          null,
           name,
           lane
         );
@@ -243,7 +246,7 @@ export async function generateDiagramFromInput(processName, participantsInput, h
         break;
 
       case 'Evento Intermediario':
-        const eventType = name.split('_')[0]; // Extrai o tipo do evento (e.g., "Timer", "Mensagem", "Sinal")
+        eventType = name.split('_')[0]; // Extrai o tipo do evento (e.g., "Timer", "Mensagem", "Sinal")
         name = name.split('_')[1];
         const intermediateEvent = criarEventoIntermediario(
           moddle,
@@ -422,8 +425,23 @@ export async function generateDiagramFromInput(processName, participantsInput, h
         }
         break;
 
+      case 'Data Object':
+        criarDataObject(
+          moddle,
+          bpmnProcess,
+          bpmnPlane,
+          currentElement,
+          currentBounds,
+          name
+        );
+        previousElements.push(currentElement);
+        previousBounds.push(currentBounds);
+        break;
+
       case 'Fim':
-        const endEvent = criarEventoFinal(
+        eventType = name.split('_')[0]; // Extrai o tipo do evento (e.g., "Timer", "Mensagem", "Sinal")
+        name = name.split('_')[1];
+        criarEventoFinal(
           moddle,
           bpmnProcess,
           bpmnPlane,
@@ -432,6 +450,7 @@ export async function generateDiagramFromInput(processName, participantsInput, h
           participantBounds,
           participants,
           laneHeight,
+          eventType,
           name,
           lane
         );
@@ -447,7 +466,7 @@ export async function generateDiagramFromInput(processName, participantsInput, h
   definitions.get('diagrams').push(bpmnDiagram);
 
   const { xml: xmlStrUpdated } = await moddle.toXML(definitions);
-  // console.log(xmlStrUpdated);
+  console.log(xmlStrUpdated);
   
   return xmlStrUpdated;
 }

@@ -1,18 +1,3 @@
-/**
- * Cria uma atividade no diagrama BPMN.
- * 
- * @param {Object} moddle - Instância do BpmnModdle.
- * @param {Object} bpmnProcess - Processo BPMN ao qual a atividade será adicionada.
- * @param {Object} bpmnPlane - Plano BPMN onde o shape será adicionado.
- * @param {Object} sourceElement - Elemento BPMN anterior (para criar o fluxo de sequência).
- * @param {Object} sourceBounds - Limites do elemento anterior.
- * @param {Object} participantBounds - Limites do participante.
- * @param {Array} participants - Lista de participantes.
- * @param {number} laneHeight - Altura de cada lane.
- * @param {string} activityName - Nome da atividade.
- * @param {string} activityLane - Nome do participante associado à atividade.
- * @returns {Object} - Retorna a atividade criada.
- */
 export default function criarAtividade(
   moddle,
   bpmnProcess,
@@ -22,6 +7,7 @@ export default function criarAtividade(
   participantBounds,
   participants,
   laneHeight,
+  activityType,
   activityName,
   activityLane
 ) {

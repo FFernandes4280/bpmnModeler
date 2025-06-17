@@ -30,9 +30,9 @@ export default function criarEventoIntermediario(
     intermediateEvent.eventDefinitions = [messageEventDefinition];
   }
 
-  if(eventType === 'Sinal') {
-    const signalEventDefinition = moddle.create('bpmn:SignalEventDefinition');
-    intermediateEvent.eventDefinitions = [signalEventDefinition];
+  if(eventType === 'Erro') {
+    const errorEventDefinition = moddle.create('bpmn:ErrorEventDefinition');
+    intermediateEvent.eventDefinitions = [errorEventDefinition];
   }
 
   // Adiciona o evento intermediário ao processo

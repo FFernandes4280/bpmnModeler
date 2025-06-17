@@ -24,11 +24,13 @@
     #diagram-container {
       flex-grow: 1;
       position: relative;
+      height: 100vh;
+      overflow: hidden;
     }
 
     #canvas {
       width: 100%;
-      height: 90%;
+      height: calc(100% - 90px); 
     }
 
     label {
@@ -58,6 +60,7 @@
       color: white;
       border: none;
       cursor: pointer;
+      margin-bottom: 5px;
     }
 
     button:hover {
@@ -67,17 +70,17 @@
     .removeElementRow {
       width: 10%;
       margin-bottom: 10px;
-      background-color: #ff4d4d; /* Red background */
-      color: white; /* White text */
-      border: none; /* Remove border */
-      padding: 5px 10px; /* Smaller padding */
-      font-size: 12px; /* Smaller font size */
-      cursor: pointer; /* Pointer cursor on hover */
-      border-radius: 3px; /* Rounded corners */
+      background-color: #ff4d4d; 
+      color: white; 
+      border: none; 
+      padding: 5px 10px; 
+      font-size: 12px; 
+      cursor: pointer;
+      border-radius: 3px; 
     }
 
     .removeElementRow:hover {
-    background-color: #cc0000; /* Darker red on hover */
+    background-color: #cc0000; 
     }
 
     .element-row {
@@ -92,14 +95,13 @@
       padding: 8px;
       box-sizing: border-box;
     }
+
+
   </style>
 </head>
 <body>
   <div id="form-container">
     <form id="bpmnForm">
-      <label for="session">ID da sessão para rastreabilidade:</label>
-      <input type="text" id="session" name="session" required>
-
       <label for="processName">Nome do processo:</label>
       <input type="text" id="processName" name="processName" required>
 
@@ -142,6 +144,7 @@
   <div id="diagram-container">
     <div id="canvas">
     </div>
+    <button type="button" id="saveDiagramButton">Salvar Diagrama</button>
     <button type="button" id="returnHomeButton">Return Home</button>
   </div>
 
@@ -150,9 +153,6 @@
     import { generateDiagramFromInput } from './chatbot.js';
 
     const viewer = new BpmnViewer({ container: '#canvas' });
-
-    // Gera um ID de sessão aleatório
-    document.getElementById('session').value = Math.floor(Math.random() * 1000000);
 
     const elementsContainer = document.getElementById('elementsContainer');
     const addElementRowButton = document.getElementById('addElementRow');
@@ -187,6 +187,7 @@
         <select class="element-type">
           <option value="Atividade">Atividade</option>
           <option value="Mensagem">Mensagem</option>
+          <option value="Data Object">Data Object</option>
           <option value="Gateway Exclusivo">Gateway Exclusivo</option>
           <option value="Gateway Paralelo">Gateway Paralelo</option>
           <option value="Evento Intermediario">Evento Intermediario</option>
@@ -205,13 +206,66 @@
         <option value="Padrão">Padrão</option>
         <option value="Mensagem">Mensagem</option>
         <option value="Timer">Timer</option>
+        <option value="Erro">Erro</option>
+      `;
+
+      // Cria o select para o tipo do evento final
+      const finalEventTypeSelect = document.createElement('select');
+      finalEventTypeSelect.className = 'element-finalEventType';
+      finalEventTypeSelect.innerHTML = `
+        <option value="Padrão">Padrão</option>
+        <option value="Mensagem">Mensagem</option>
+        <option value="Timer">Timer</option>
+        <option value="Erro">Erro</option>
         <option value="Sinal">Sinal</option>
+        <option value="Cancelamento">Cancelamento</option>
+        <option value="Compensação">Compensação</option>
+        <option value="Escalonamento">Escalonamento</option>
+        <option value="Terminar">Terminar</option>
+        <option value="Link">Link</option>
       `;
 
       // Add event listener to update element-lane options based on element-type
       const elementTypeSelect = row.querySelector('.element-type');
       const elementLaneSelect = row.querySelector('.element-lane');
       let elementNameInput = row.querySelector('.element-name');
+
+      // Função para mostrar/ocultar campos conforme o tipo
+      function updateRowFields() {
+        if (elementTypeSelect.value === 'Data Object') {
+          elementLaneSelect.style.display = 'none';
+          if (row.querySelector('.element-eventType')) {
+            row.querySelector('.element-eventType').style.display = 'none';
+          }
+          if (row.querySelector('.element-finalEventType')) {
+            row.querySelector('.element-finalEventType').style.display = 'none';
+          }
+          elementNameInput.style.display = '';
+        } else if (elementTypeSelect.value === 'Fim') {
+          elementLaneSelect.style.display = '';
+          if (!row.querySelector('.element-finalEventType')) {
+            row.insertBefore(finalEventTypeSelect, elementNameInput);
+          }
+          finalEventTypeSelect.style.display = '';
+          if (row.querySelector('.element-eventType')) {
+            row.querySelector('.element-eventType').style.display = 'none';
+          }
+          elementNameInput.style.display = '';
+        } else {
+          elementLaneSelect.style.display = '';
+          if (row.querySelector('.element-finalEventType')) {
+            row.removeChild(finalEventTypeSelect);
+          }
+          if (row.querySelector('.element-eventType')) {
+            row.querySelector('.element-eventType').style.display = '';
+          }
+          elementNameInput.style.display = '';
+        }
+      }
+
+      // Chame ao iniciar e ao mudar o tipo
+      updateRowFields();
+      elementTypeSelect.addEventListener('change', updateRowFields);
 
       elementTypeSelect.addEventListener('change', () => {
         // Evento Intermediario: adiciona o select de eventType
@@ -294,9 +348,9 @@
       });
     });
 
-    async function updateDiagram() {
-      const session = document.getElementById('session').value;
+    let lastDiagramXML = ''; // Variável para armazenar o XML mais recente
 
+    async function updateDiagram() {
       const processName = document.getElementById('processName').value;
       const participants = getParticipantsOptions();
       const hasExternalParticipants = document.getElementById('hasExternalParticipants').value;
@@ -321,6 +375,12 @@
             previousName = name;
             return { type, name, lane };
           }
+          if(type === 'Fim') {
+            const finalEventType = row.querySelector('.element-finalEventType').value;
+            name = finalEventType + '_' + name;
+            previousName = name;
+            return { type, name, lane };
+        }
           previousName = name;
           return { type, name, lane };
         }
@@ -369,6 +429,8 @@
           initialEventLane,
           elements
         );
+
+        lastDiagramXML = diagramXML; // Salva o XML para download
 
         await viewer.importXML(diagramXML);
         const canvas = viewer.get('canvas');
@@ -426,6 +488,25 @@
         externalParticipantsContainer.style.display = 'none';
       }
     });
+
+    // Função para baixar o diagrama como arquivo .bpmn
+    function downloadDiagram() {
+      if (!lastDiagramXML) {
+        alert('Nenhum diagrama gerado para salvar.');
+        return;
+      }
+      const blob = new Blob([lastDiagramXML], { type: 'application/xml' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'diagrama.bpmn';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    document.getElementById('saveDiagramButton').addEventListener('click', downloadDiagram);
   </script>
 </body>
 </html>
