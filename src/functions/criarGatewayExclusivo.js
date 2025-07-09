@@ -1,3 +1,5 @@
+import calcularWaypointsSequenceFlow from './calcularWaypointsSequenceFlow.js';
+
 export default function criarGatewayExclusivo(
   moddle,
   bpmnProcess,
@@ -55,22 +57,12 @@ export default function criarGatewayExclusivo(
   // Adiciona o fluxo de sequência ao processo
   bpmnProcess.get('flowElements').push(sequenceFlow);
 
-  // Calcula as coordenadas de origem e destino
-  const sourceX = sourceBounds.x + sourceBounds.width;
-  const sourceY = sourceBounds.y + sourceBounds.height / 2;
-
-  const targetX = gatewayBounds.x;
-  const targetY = gatewayBounds.y + gatewayBounds.height / 2;
-
-  const middleX = targetX;
-  const middleY = sourceY;
-
-  // Define os waypoints para o fluxo de sequência
-  const sequenceFlowWaypoints = [
-    moddle.create('dc:Point', { x: sourceX, y: sourceY }), // Saída do elemento anterior
-    moddle.create('dc:Point', { x: middleX, y: middleY }), // Ponto intermediário
-    moddle.create('dc:Point', { x: targetX, y: targetY }), // Entrada no gateway
-  ];
+  // Calcula waypoints usando a nova função
+  const sequenceFlowWaypoints = calcularWaypointsSequenceFlow(
+    moddle,
+    sourceBounds,
+    gatewayBounds
+  );
 
   // Cria o BPMNEdge para o fluxo de sequência
   const sequenceFlowEdge = moddle.create('bpmndi:BPMNEdge', {

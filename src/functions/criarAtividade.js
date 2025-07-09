@@ -1,3 +1,5 @@
+import calcularWaypointsSequenceFlow from './calcularWaypointsSequenceFlow.js';
+
 export default function criarAtividade(
   moddle,
   bpmnProcess,
@@ -13,11 +15,20 @@ export default function criarAtividade(
 ) {
   // Normaliza o ID removendo espaços e caracteres especiais
   const normalizedId = activityName.replace(/\s+/g, '_').replace(/[^\w]/g, '');
+  
+  // mapa simples: Default, In ou Out
+  const taskTypeMap = {
+    'Default': 'bpmn:Task',
+    'Out':     'bpmn:SendTask',    // 📤 ícone "out"
+    'In':      'bpmn:ReceiveTask'  // 📨 ícone "in"
+  };
 
-  // Cria a atividade como um elemento BPMN
-  const activity = moddle.create('bpmn:Task', {
-    id: `Task_${normalizedId}`, // ID único para a atividade
-    name: activityName, // Nome da atividade
+  // mapeia o activityType para o tipo BPMN correspondente
+  const elementType = taskTypeMap[activityType] || 'bpmn:Task';
+
+  const activity = moddle.create(elementType, {
+    id:   `Task_${normalizedId}`,
+    name: activityName
   });
 
   // Adiciona a atividade ao processo
@@ -59,21 +70,12 @@ export default function criarAtividade(
   // Adiciona o fluxo de sequência ao processo
   bpmnProcess.get('flowElements').push(sequenceFlow);
 
-  const sourceX = sourceBounds.x + sourceBounds.width;
-  const sourceY = sourceBounds.y + sourceBounds.height / 2;
-
-  const targetX = activityBounds.x;
-  const targetY = activityBounds.y + activityBounds.height / 2;
-
-  const middleX = targetX;
-  const middleY = sourceY;
-
-  // Define os waypoints para o fluxo de sequência
-  const sequenceFlowWaypoints = [
-    moddle.create('dc:Point', { x: sourceX, y: sourceY }), // Saída do elemento anterior
-    moddle.create('dc:Point', { x: middleX, y: middleY }), // Ponto intermediário
-    moddle.create('dc:Point', { x: targetX, y: targetY }), // Entrada na atividade
-  ];
+  // Calcula waypoints usando a nova função
+  const sequenceFlowWaypoints = calcularWaypointsSequenceFlow(
+    moddle,
+    sourceBounds,
+    activityBounds
+  );
 
   // Cria o BPMNEdge para o fluxo de sequência
   const sequenceFlowEdge = moddle.create('bpmndi:BPMNEdge', {

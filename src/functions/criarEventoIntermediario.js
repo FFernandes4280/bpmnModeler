@@ -1,3 +1,5 @@
+import calcularWaypointsSequenceFlow from './calcularWaypointsSequenceFlow.js';
+
 export default function criarEventoIntermediario(
   moddle,
   bpmnProcess,
@@ -71,21 +73,12 @@ export default function criarEventoIntermediario(
   // Adiciona o fluxo de sequência ao processo
   bpmnProcess.get('flowElements').push(sequenceFlow);
 
-  const sourceX = sourceBounds.x + sourceBounds.width;
-  const sourceY = sourceBounds.y + sourceBounds.height / 2;
-
-  const targetX = eventBounds.x;
-  const targetY = eventBounds.y + eventBounds.height / 2;
-
-  const middleX = targetX;
-  const middleY = sourceY;
-
-  // Define os waypoints para o fluxo de sequência
-  const sequenceFlowWaypoints = [
-    moddle.create('dc:Point', { x: sourceX, y: sourceY }), // Saída do elemento anterior
-    moddle.create('dc:Point', { x: middleX, y: middleY }), // Ponto intermediário
-    moddle.create('dc:Point', { x: targetX, y: targetY }), // Entrada no evento intermediário
-  ];
+  // Calcula waypoints usando a nova função
+  const sequenceFlowWaypoints = calcularWaypointsSequenceFlow(
+    moddle,
+    sourceBounds,
+    eventBounds
+  );
 
   // Cria o BPMNEdge para o fluxo de sequência
   const sequenceFlowEdge = moddle.create('bpmndi:BPMNEdge', {

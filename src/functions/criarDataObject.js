@@ -4,7 +4,8 @@ export default function criarDataObject(
     bpmnPlane,
     currentElement,
     currentBounds,
-    name
+    name,
+    direction = 'Envio'
 ) {
     const dataObject = moddle.create('bpmn:DataObject', {
         id: `DataObject_${name.replace(/\s+/g, '_')}`,
@@ -21,7 +22,7 @@ export default function criarDataObject(
     bpmnProcess.get('flowElements').push(dataObjectRef);
 
     const dataObjectBounds = {
-        x: currentBounds.x,
+        x: currentBounds.x + (currentBounds.width - 36) / 2, 
         y: currentBounds.y - 70,
         width: 36,
         height: 48,
@@ -36,23 +37,61 @@ export default function criarDataObject(
 
     bpmnPlane.planeElement.push(dataObjectShape);
 
-
-    const dataAssociation = moddle.create('bpmn:DataOutputAssociation', {
-        id: `DataOutputAssociation_${currentElement.id}_to_${dataObjectRef.id}`,
-        targetRef: dataObjectRef,
-    });
-
-    if (!currentElement.dataOutputAssociations) {
-        currentElement.dataOutputAssociations = [];
+    // Cria a associação de dados baseada na direção
+    let dataAssociation;
+    if (direction === 'Envio') {
+        dataAssociation = moddle.create('bpmn:DataOutputAssociation', {
+            id: `DataOutputAssociation_${currentElement.id}_to_${dataObjectRef.id}`,
+            targetRef: dataObjectRef,
+        });
+        
+        if (!currentElement.dataOutputAssociations) {
+            currentElement.dataOutputAssociations = [];
+        }
+        currentElement.dataOutputAssociations.push(dataAssociation);
+    } else {
+        // Para DataInputAssociation, precisamos criar uma propriedade no elemento
+        const property = moddle.create('bpmn:Property', {
+            id: `Property_${currentElement.id}_${dataObjectRef.id}`,
+            name: '__targetRef_placeholder'
+        });
+        
+        // Adiciona a propriedade ao elemento
+        if (!currentElement.properties) {
+            currentElement.properties = [];
+        }
+        currentElement.properties.push(property);
+        
+        dataAssociation = moddle.create('bpmn:DataInputAssociation', {
+            id: `DataInputAssociation_${dataObjectRef.id}_to_${currentElement.id}`,
+            targetRef: property,
+        });
+        
+        // Define o sourceRef separadamente
+        dataAssociation.sourceRef = [dataObjectRef];
+        
+        if (!currentElement.dataInputAssociations) {
+            currentElement.dataInputAssociations = [];
+        }
+        currentElement.dataInputAssociations.push(dataAssociation);
     }
-    currentElement.dataOutputAssociations.push(dataAssociation);
 
-    const associationWaypoints = [
-        moddle.create('dc:Point', { x: currentBounds.x + currentBounds.width /2 , y: currentBounds.y}),
-        moddle.create('dc:Point', { x: dataObjectBounds.x + dataObjectBounds.width /2, y: dataObjectBounds.y + dataObjectBounds.height }),
-    ];
+    // Define os waypoints baseados na direção
+    let associationWaypoints;
+    if (direction === 'Envio') {
+        associationWaypoints = [
+            moddle.create('dc:Point', { x: currentBounds.x + currentBounds.width / 2, y: currentBounds.y }),
+            moddle.create('dc:Point', { x: dataObjectBounds.x + dataObjectBounds.width / 2, y: dataObjectBounds.y + dataObjectBounds.height }),
+        ];
+    } else {
+        associationWaypoints = [
+            moddle.create('dc:Point', { x: dataObjectBounds.x + dataObjectBounds.width / 2, y: dataObjectBounds.y + dataObjectBounds.height }),
+            moddle.create('dc:Point', { x: currentBounds.x + currentBounds.width / 2, y: currentBounds.y }),
+        ];
+    }
+
     const associationEdge = moddle.create('bpmndi:BPMNEdge', {
-        id: `DataOutputAssociation_${currentElement.id}_to_${dataObjectRef.id}_di`,
+        id: `${dataAssociation.id}_di`,
         bpmnElement: dataAssociation,
         waypoint: associationWaypoints,
     });

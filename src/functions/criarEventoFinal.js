@@ -1,3 +1,5 @@
+import calcularWaypointsSequenceFlow from './calcularWaypointsSequenceFlow.js';
+
 export default function criarEventoFinal(
   moddle,
   bpmnProcess,
@@ -86,22 +88,12 @@ export default function criarEventoFinal(
   // Adiciona o fluxo de sequência ao processo
   bpmnProcess.get('flowElements').push(sequenceFlow);
 
-  // Calcula as coordenadas de origem e destino
-  const sourceX = sourceBounds.x + sourceBounds.width;
-  const sourceY = sourceBounds.y + sourceBounds.height / 2;
-
-  const targetX = finalEventBounds.x;
-  const targetY = finalEventBounds.y + finalEventBounds.height / 2;
-
-  const middleX = targetX;
-  const middleY = sourceY;
-
-  // Define os waypoints para o fluxo de sequência
-  const sequenceFlowWaypoints = [
-    moddle.create('dc:Point', { x: sourceX, y: sourceY }), // Saída do elemento anterior
-    moddle.create('dc:Point', { x: middleX, y: middleY }), // Ponto intermediário
-    moddle.create('dc:Point', { x: targetX, y: targetY }), // Entrada no evento final
-  ];
+  // Calcula waypoints usando a nova função
+  const sequenceFlowWaypoints = calcularWaypointsSequenceFlow(
+    moddle,
+    sourceBounds,
+    finalEventBounds
+  );
 
   // Cria o BPMNEdge para o fluxo de sequência
   const sequenceFlowEdge = moddle.create('bpmndi:BPMNEdge', {
