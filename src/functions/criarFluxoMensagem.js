@@ -31,10 +31,11 @@ export default function criarFluxoMensagem(
 
   // Define os waypoints para o Message Flow
   const elementX = currentBounds.x + currentBounds.width / 2;
-  const elementY = currentBounds.y + currentBounds.height;
+  const elementY = currentBounds.y; // Sempre usar o topo do elemento
 
   const targetParticipantIndex = externalParticipants.indexOf(lane);
-  const participantY = participantBounds.y + targetParticipantIndex * 200 + participantBounds.height + 50;
+ 
+  const participantY = participantBounds.y - (externalParticipants.length - targetParticipantIndex) * 200 + 100;
   const participantX = elementX;
 
   const messageFlowWaypoints = [

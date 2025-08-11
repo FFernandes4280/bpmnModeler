@@ -50,9 +50,10 @@ export async function generateDiagramFromInput(processName, participantsInput, h
   bpmnPlane.planeElement = [];
 
   // Define participant bounds
+  const externalParticipantsCount = hasExternalParticipants === 'Sim' ? externalParticipants.length : 0;
   const participantBounds = {
     x: 160,
-    y: 80,
+    y: 80 + externalParticipantsCount * 200 + (externalParticipantsCount > 0 ? 50 : 0),
     width: elements.length * 200 + 200,
     height: participantNumber * 200 + 200,
   };

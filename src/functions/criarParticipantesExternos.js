@@ -26,7 +26,7 @@ export default function criarParticipantesExternos(
 
     const externalParticipantBounds = {
       x: 160,
-      y: participantBounds.y + index * 200 + participantBounds.height + 50,
+      y: participantBounds.y - (externalParticipants.length - index) * 200 - 50,
       width: participantBounds.width,
       height: 150,
     };

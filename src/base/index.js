@@ -33,6 +33,7 @@ function addElementRow() {
     .join('');
 
   row.innerHTML = `
+    <div class="element-number">1</div>
     <select class="element-type">
       <option value="Atividade">Atividade</option>
       <option value="Mensagem">Mensagem</option>
@@ -42,10 +43,14 @@ function addElementRow() {
       <option value="Evento Intermediario">Evento Intermediario</option>
       <option value="Fim">Fim</option>
     </select>
-    <input type="text" class="element-name" placeholder="Nome ou Divergência" />
+    <input type="text" class="element-name" placeholder="Nome" />
     <select class="element-lane">
       ${participantsOptions}
     </select>
+    <div class="element-controls">
+      <button type="button" class="move-button move-up">↑</button>
+      <button type="button" class="move-button move-down">↓</button>
+    </div>
     <button type="button" class="removeElementRow">X</button>
   `;
 
@@ -96,8 +101,57 @@ function addElementRow() {
     <option value="Recebimento">Recebimento</option>
   `;
 
+  // Cria o contador para gateways
+  const gatewayCounter = document.createElement('div');
+  gatewayCounter.className = 'gateway-counter';
+  gatewayCounter.innerHTML = `
+    <button type="button" class="counter-btn counter-decrease">-</button>
+    <span class="counter-value">Convergência</span>
+    <button type="button" class="counter-btn counter-increase">+</button>
+  `;
+
+  let counterValue = 0; // 0 = Convergência, 1+ = números
+
+  // Event listeners para o contador dos gateways
+  gatewayCounter.querySelector('.counter-decrease').addEventListener('click', () => {
+    if (counterValue > 0) {
+      counterValue--;
+      const valueSpan = gatewayCounter.querySelector('.counter-value');
+      if (counterValue === 0) {
+        valueSpan.textContent = 'Convergência';
+      } else {
+        valueSpan.textContent = counterValue + 1; // +1 porque começamos do 2
+      }
+    }
+  });
+
+  gatewayCounter.querySelector('.counter-increase').addEventListener('click', () => {
+    counterValue++;
+    const valueSpan = gatewayCounter.querySelector('.counter-value');
+    if (counterValue === 1) {
+      valueSpan.textContent = '2';
+    } else {
+      valueSpan.textContent = counterValue + 1;
+    }
+  });
+
   // Função para mostrar/ocultar campos conforme o tipo
   function updateRowFields() {
+    // Atualiza o placeholder baseado no tipo de elemento
+    if (elementTypeSelect.value === 'Gateway Exclusivo' || elementTypeSelect.value === 'Gateway Paralelo') {
+      elementNameInput.style.display = 'none';
+      if (!row.querySelector('.gateway-counter')) {
+        row.insertBefore(gatewayCounter, elementNameInput);
+      }
+      gatewayCounter.style.display = 'flex';
+    } else {
+      elementNameInput.placeholder = 'Nome';
+      elementNameInput.style.display = '';
+      if (row.querySelector('.gateway-counter')) {
+        gatewayCounter.style.display = 'none';
+      }
+    }
+
     if (elementTypeSelect.value === 'Data Object') {
       elementLaneSelect.style.display = 'none';
       if (!row.querySelector('.element-dataObjectDirection')) {
@@ -196,7 +250,12 @@ function addElementRow() {
         const nameInput = document.createElement('input');
         nameInput.type = 'text';
         nameInput.className = 'element-name';
-        nameInput.placeholder = 'Nome ou Divergência';
+        // Define o placeholder baseado no tipo de elemento
+        if (elementTypeSelect.value === 'Gateway Exclusivo' || elementTypeSelect.value === 'Gateway Paralelo') {
+          nameInput.placeholder = 'Número de divergências';
+        } else {
+          nameInput.placeholder = 'Nome';
+        }
         row.replaceChild(nameInput, elementNameInput);
         elementNameInput = nameInput;
       }
@@ -212,13 +271,27 @@ function addElementRow() {
   // Add event listener to remove the row
   row.querySelector('.removeElementRow').addEventListener('click', () => {
     row.remove();
+    updateElementNumbers();
+  });
+
+  // Add event listeners for move buttons
+  row.querySelector('.move-up').addEventListener('click', () => {
+    moveElementUp(row);
+  });
+
+  row.querySelector('.move-down').addEventListener('click', () => {
+    moveElementDown(row);
   });
 
   elementsContainer.appendChild(row);
+  updateElementNumbers();
+  updateElementNumbers();
 }
 
 // Adiciona uma nova linha ao clicar no botão
-addElementRowButton.addEventListener('click', addElementRow);
+addElementRowButton.addEventListener('click', () => {
+  addElementRow();
+});
 
 const initialEventLaneSelect = document.getElementById('initialEventLane');
 
@@ -301,7 +374,17 @@ async function updateDiagram() {
     
     let normalizedName = previousName.replace(/\s+/g, '_').replace(/[^\w]/g, '');
     const name = "following" + normalizedName;
-    const diverge = row.querySelector('.element-name').value;
+    
+    // Pega o valor do contador para gateways
+    const counterElement = row.querySelector('.counter-value');
+    let diverge;
+    if (counterElement) {
+      const counterText = counterElement.textContent;
+      diverge = counterText === 'Convergência' ? 'Convergência' : counterText;
+    } else {
+      diverge = row.querySelector('.element-name').value;
+    }
+    
     return { type, name, lane, diverge };
   });
   let indexesList = [];
@@ -347,44 +430,9 @@ async function updateDiagram() {
     lastDiagramXML = diagramXML; // Salva o XML para download
 
     await viewer.importXML(diagramXML);
-    const canvas = viewer.get('canvas');
     
-    // Implement drag behavior
-    let isPanning = false;
-    let lastMousePosition = { x: 0, y: 0 };
-
-    const canvasElement = document.querySelector('#canvas');
-
-    canvasElement.addEventListener('mousedown', (event) => {
-      isPanning = true;
-      lastMousePosition = { x: event.clientX, y: event.clientY };
-    });
-
-    canvasElement.addEventListener('mousemove', (event) => {
-      if (!isPanning) return;
-
-      const deltaX = event.clientX - lastMousePosition.x;
-      const deltaY = event.clientY - lastMousePosition.y;
-
-      canvas.scroll({
-        dx: deltaX,
-        dy: deltaY,
-      });
-
-      lastMousePosition = { x: event.clientX, y: event.clientY };
-    });
-
-    canvasElement.addEventListener('mouseup', () => {
-      isPanning = false;
-    });
-
-    canvasElement.addEventListener('mouseleave', () => {
-      isPanning = false;
-    });
-
-    document.getElementById('returnHomeButton').addEventListener('click', () => {
-      canvas.viewbox({ x: 0, y: 0, width: 600, height: 600 }); // Ajuste os valores conforme necessário
-    });
+    // Setup drag behavior only once
+    setupCanvasDragBehavior();
   } catch (error) {
     console.error('Error generating diagram:', error);
   }
@@ -421,3 +469,121 @@ function downloadDiagram() {
 }
 
 document.getElementById('saveDiagramButton').addEventListener('click', downloadDiagram);
+
+// Função para atualizar a numeração dos elementos
+function updateElementNumbers() {
+  const rows = elementsContainer.querySelectorAll('.element-row');
+  rows.forEach((row, index) => {
+    const numberElement = row.querySelector('.element-number');
+    if (numberElement) {
+      numberElement.textContent = index + 1;
+    }
+    
+    // Atualiza o estado dos botões de movimento
+    const moveUpBtn = row.querySelector('.move-up');
+    const moveDownBtn = row.querySelector('.move-down');
+    
+    if (moveUpBtn) {
+      moveUpBtn.disabled = index === 0;
+    }
+    if (moveDownBtn) {
+      moveDownBtn.disabled = index === rows.length - 1;
+    }
+  });
+}
+
+// Função para mover elemento para cima
+function moveElementUp(row) {
+  const previousRow = row.previousElementSibling;
+  if (previousRow) {
+    elementsContainer.insertBefore(row, previousRow);
+    updateElementNumbers();
+  }
+}
+
+// Função para mover elemento para baixo
+function moveElementDown(row) {
+  const nextRow = row.nextElementSibling;
+  if (nextRow) {
+    elementsContainer.insertBefore(nextRow, row);
+    updateElementNumbers();
+  }
+}
+
+let dragBehaviorSetup = false;
+
+// Setup canvas drag behavior only once
+function setupCanvasDragBehavior() {
+  if (dragBehaviorSetup) return;
+  
+  const canvas = viewer.get('canvas');
+  let isPanning = false;
+  let lastMousePosition = { x: 0, y: 0 };
+  let dragThreshold = 5; // Minimum distance to start dragging
+  let dragStartPosition = { x: 0, y: 0 };
+  let hasMoved = false;
+
+  const canvasElement = document.querySelector('#canvas');
+
+  canvasElement.addEventListener('mousedown', (event) => {
+    // Only start panning with left mouse button
+    if (event.button !== 0) return;
+    
+    isPanning = true;
+    hasMoved = false;
+    lastMousePosition = { x: event.clientX, y: event.clientY };
+    dragStartPosition = { x: event.clientX, y: event.clientY };
+    
+    // Prevent text selection during drag
+    event.preventDefault();
+  });
+
+  canvasElement.addEventListener('mousemove', (event) => {
+    if (!isPanning) return;
+
+    const deltaX = event.clientX - lastMousePosition.x;
+    const deltaY = event.clientY - lastMousePosition.y;
+    
+    // Check if we've moved enough to start dragging
+    const totalDistance = Math.sqrt(
+      Math.pow(event.clientX - dragStartPosition.x, 2) + 
+      Math.pow(event.clientY - dragStartPosition.y, 2)
+    );
+    
+    if (totalDistance > dragThreshold) {
+      hasMoved = true;
+      
+      // Apply damping factor to make dragging less sensitive
+      const dampingFactor = 0.8;
+      
+      canvas.scroll({
+        dx: deltaX * dampingFactor,
+        dy: deltaY * dampingFactor,
+      });
+    }
+
+    lastMousePosition = { x: event.clientX, y: event.clientY };
+  });
+
+  canvasElement.addEventListener('mouseup', () => {
+    isPanning = false;
+    hasMoved = false;
+  });
+
+  canvasElement.addEventListener('mouseleave', () => {
+    isPanning = false;
+    hasMoved = false;
+  });
+
+  // Prevent context menu on right click
+  canvasElement.addEventListener('contextmenu', (event) => {
+    event.preventDefault();
+  });
+
+  // Setup return home button functionality
+  document.getElementById('returnHomeButton').addEventListener('click', () => {
+    canvas.viewbox({ x: 0, y: 0, width: 600, height: 600 });
+  });
+  
+  dragBehaviorSetup = true;
+}
