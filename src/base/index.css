@@ -23,7 +23,7 @@ body {
 
 #canvas {
   width: 100%;
-  height: calc(100% - 90px); 
+  height: 100%; /* Agora ocupa toda a altura já que os botões estão posicionados absolutamente */
 }
 
 label {
@@ -193,4 +193,40 @@ background-color: #cc0000;
   font-weight: bold;
   padding: 0 8px;
   font-size: 12px;
+}
+
+/* Estilos para os controles do diagrama */
+#diagram-controls {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 8px;
+  z-index: 1000;
+}
+
+#saveDiagramButton,
+#returnHomeButton {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  margin-bottom: 0;
+  padding: 0;
+}
+
+#saveDiagramButton:hover,
+#returnHomeButton:hover {
+  background-color: #0056b3;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }

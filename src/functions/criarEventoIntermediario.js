@@ -74,10 +74,17 @@ export default function criarEventoIntermediario(
   bpmnProcess.get('flowElements').push(sequenceFlow);
 
   // Calcula waypoints usando a nova função
+  // Detecta se o elemento anterior é um gateway
+  const isFromGateway = sourceElement.id && (
+    sourceElement.id.includes('ExclusiveGateway') || 
+    sourceElement.id.includes('ParallelGateway')
+  );
+  
   const sequenceFlowWaypoints = calcularWaypointsSequenceFlow(
     moddle,
     sourceBounds,
-    eventBounds
+    eventBounds,
+    isFromGateway // Usa lógica de gateway se vem de um gateway
   );
 
   // Cria o BPMNEdge para o fluxo de sequência

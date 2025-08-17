@@ -9,7 +9,6 @@ export default function calcularPosicoesDivergencia(
   const positions = [];
   const baseX = currentBounds.x + 150;
   const baseY = participantBounds.y + participants.indexOf(lane) * laneHeight + laneHeight / 2 - 18;
-
   for (let i = 0; i < diverge; i++) {
     const yOffset = (i - (diverge - 1) / 2) * (laneHeight / diverge);
     let position;

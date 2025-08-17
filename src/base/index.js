@@ -139,12 +139,25 @@ function addElementRow() {
   function updateRowFields() {
     // Atualiza o placeholder baseado no tipo de elemento
     if (elementTypeSelect.value === 'Gateway Exclusivo' || elementTypeSelect.value === 'Gateway Paralelo') {
-      elementNameInput.style.display = 'none';
+      // Remove completamente o campo nome para gateways
+      if (elementNameInput && elementNameInput.parentNode) {
+        elementNameInput.parentNode.removeChild(elementNameInput);
+        elementNameInput = null;
+      }
       if (!row.querySelector('.gateway-counter')) {
-        row.insertBefore(gatewayCounter, elementNameInput);
+        row.insertBefore(gatewayCounter, row.querySelector('.element-lane'));
       }
       gatewayCounter.style.display = 'flex';
     } else {
+      // Garante que o campo nome existe para outros tipos
+      if (!elementNameInput) {
+        const nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.className = 'element-name';
+        nameInput.placeholder = 'Nome';
+        row.insertBefore(nameInput, row.querySelector('.element-lane'));
+        elementNameInput = nameInput;
+      }
       elementNameInput.placeholder = 'Nome';
       elementNameInput.style.display = '';
       if (row.querySelector('.gateway-counter')) {
@@ -380,7 +393,7 @@ async function updateDiagram() {
     let diverge;
     if (counterElement) {
       const counterText = counterElement.textContent;
-      diverge = counterText === 'Convergência' ? 'Convergência' : counterText;
+      diverge = counterText === 'Convergência' ? "1" : counterText;
     } else {
       diverge = row.querySelector('.element-name').value;
     }
@@ -431,7 +444,6 @@ async function updateDiagram() {
 
     await viewer.importXML(diagramXML);
     
-    // Setup drag behavior only once
     setupCanvasDragBehavior();
   } catch (error) {
     console.error('Error generating diagram:', error);
@@ -582,7 +594,7 @@ function setupCanvasDragBehavior() {
 
   // Setup return home button functionality
   document.getElementById('returnHomeButton').addEventListener('click', () => {
-    canvas.viewbox({ x: 0, y: 0, width: 600, height: 600 });
+    canvas.viewbox({ x: 0, y: 0, width: 650, height: 650 });
   });
   
   dragBehaviorSetup = true;

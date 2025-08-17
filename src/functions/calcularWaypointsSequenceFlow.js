@@ -2,26 +2,51 @@ export default function calcularWaypointsSequenceFlow(
   moddle,
   sourceBounds,
   targetBounds,
-  customSourceX = null,
-  customSourceY = null,
-  customTargetX = null,
-  customTargetY = null
+  isGatewayFlow = false
 ) {
-  // Calcula pontos de origem e destino
-  const sourceX = customSourceX || (sourceBounds.x + sourceBounds.width);
-  const sourceY = customSourceY || (sourceBounds.y + sourceBounds.height / 2);
+  // Para fluxos de gateway, usa lógica específica
+  if (isGatewayFlow) {
+    // Para gateways, sempre sai do centro direito do gateway
+    const sourceX = sourceBounds.x + sourceBounds.width;
+    const sourceY = sourceBounds.y + sourceBounds.height / 2;
+    
+    // E entra pela lateral esquerda do elemento alvo
+    const targetX = targetBounds.x;
+    const targetY = targetBounds.y + targetBounds.height / 2;
+    
+    const middleX = sourceX;
+    const middleY = targetY;
+    
+    return [
+      moddle.create('dc:Point', { x: sourceX, y: sourceY }),
+      moddle.create('dc:Point', { x: middleX, y: middleY }),
+      moddle.create('dc:Point', { x: targetX, y: targetY }),
+    ];
+  }
+
+  // Lógica original para elementos normais (com detecção de mudança de Y)
+  let sourceX = sourceBounds.x + sourceBounds.width;
+  let sourceY = sourceBounds.y + sourceBounds.height / 2;
+
+  let targetX = targetBounds.x;
+  let targetY = targetBounds.y + targetBounds.height / 2;
+
+  if(targetY > sourceY) { 
+    sourceX = sourceBounds.x + sourceBounds.width / 2;
+    sourceY = sourceBounds.y + sourceBounds.height;
+  }
+  if(targetY < sourceY) { 
+    sourceX = sourceBounds.x + sourceBounds.width / 2;
+    sourceY = sourceBounds.y;
+  }
+
+  let middleX = sourceX;
+  let middleY = targetY;
   
-  const targetX = customTargetX || targetBounds.x;
-  const targetY = customTargetY || (targetBounds.y + targetBounds.height / 2);
-  
-  // Novo padrão: X da origem, Y do destino
-  const middleX = sourceX;
-  const middleY = targetY;
-  
-  // Define os waypoints para o fluxo de sequência
   return [
     moddle.create('dc:Point', { x: sourceX, y: sourceY }),
     moddle.create('dc:Point', { x: middleX, y: middleY }),
     moddle.create('dc:Point', { x: targetX, y: targetY }),
   ];
 }
+

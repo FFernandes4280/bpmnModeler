@@ -61,7 +61,8 @@ export default function criarGatewayParalelo(
     const sequenceFlowWaypoints = calcularWaypointsSequenceFlow(
       moddle,
       sourceBounds,
-      gatewayBounds
+      gatewayBounds,
+      false // Fluxo PARA o gateway usa lógica normal
     );
   
     // Cria o BPMNEdge para o fluxo de sequência

@@ -16,12 +16,12 @@ export default function criarEventoFinal(
   // Normaliza o ID removendo espaços e caracteres especiais
   const normalizedId = eventName.replace(/\s+/g, '_').replace(/[^\w]/g, '');
 
-  
   // Calcula os bounds do evento final com base na lane correspondente
   const laneIndex = participants.indexOf(laneName); // Obtém o índice da lane
+  const laneY = participantBounds.y + laneIndex * laneHeight;
   const finalEventBounds = {
     x: sourceBounds.x + 150, // Posiciona o evento final à direita do elemento anterior
-    y: participantBounds.y + laneIndex * laneHeight + laneHeight / 2 - 18 + sourceBounds.yOffset, // Centraliza na lane
+    y: laneY + (laneHeight - 35) / 2, // Centraliza na lane
     width: 35,
     height: 35,
   };
@@ -89,10 +89,17 @@ export default function criarEventoFinal(
   bpmnProcess.get('flowElements').push(sequenceFlow);
 
   // Calcula waypoints usando a nova função
+  // Detecta se o elemento anterior é um gateway
+  const isFromGateway = sourceElement.id && (
+    sourceElement.id.includes('ExclusiveGateway') || 
+    sourceElement.id.includes('ParallelGateway')
+  );
+  
   const sequenceFlowWaypoints = calcularWaypointsSequenceFlow(
     moddle,
     sourceBounds,
-    finalEventBounds
+    finalEventBounds,
+    isFromGateway // Usa lógica de gateway se vem de um gateway
   );
 
   // Cria o BPMNEdge para o fluxo de sequência

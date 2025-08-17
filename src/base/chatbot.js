@@ -150,7 +150,7 @@ export async function generateDiagramFromInput(processName, participantsInput, h
   definitions.get('diagrams').push(bpmnDiagram);
 
   const { xml: xmlStrUpdated } = await moddle.toXML(definitions);
-  console.log(xmlStrUpdated);
+  // console.log(xmlStrUpdated);
 
   return xmlStrUpdated;
 }

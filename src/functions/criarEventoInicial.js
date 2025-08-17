@@ -10,9 +10,12 @@ export default function criarEventoInicial(
   initialEventLane
 ) {
   // Create the initial start event
+  const laneIndex = participants.indexOf(initialEventLane);
+  const laneY = participantBounds.y + laneIndex * laneHeight;
+  
   const initialEventBounds = {
     x: participantBounds.x + 80,
-    y: participantBounds.y + participants.indexOf(initialEventLane) * laneHeight + laneHeight / 2 - 18,
+    y: laneY + (laneHeight - 35) / 2, // Centraliza verticalmente na lane
     width: 35,
     height: 35,
   };
