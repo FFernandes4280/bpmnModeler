@@ -9,39 +9,21 @@ export default function conectarGatewayExclusivoExistente(
   existingGateway,
   previousElements
 ) {
-  // Verifica se há outro gateway exclusivo na pilha
-  const hasAnotherExclusiveGateway = previousElements.some(
-    el => el && el.$type === 'bpmn:ExclusiveGateway'
-  );
-
+  // Para conexões com gateways existentes, usa waypoints que contornam elementos
   const sourceX = currentBounds.x + currentBounds.width / 2;
-  const targetX = existingGateway.bounds.x + existingGateway.bounds.width / 2;
-
-  // Se for o último gateway, inverte o sentido do Y
-  let intermediateY;
-  let sourceY;
-  let targetY;
+  const sourceY = currentBounds.y;
   
-  if (hasAnotherExclusiveGateway) {
-    sourceY = currentBounds.y + currentBounds.height;
-    targetY = existingGateway.bounds.y + existingGateway.bounds.height;
-    intermediateY = sourceY + currentBounds.height / 4;
-  } else {
-    sourceY = currentBounds.y;
-    targetY = existingGateway.bounds.y;
-    intermediateY = sourceY - currentBounds.height / 4;
-  }
-
-  const intermediateX_A = sourceX;
-  const intermediateY_A = intermediateY;
-  const intermediateX_B = targetX;
-  const intermediateY_B = intermediateY;
-
-  // Define os waypoints para o fluxo de sequência
+  const targetX = existingGateway.bounds.x + existingGateway.bounds.width / 2;
+  const targetY = existingGateway.bounds.y;
+  
+  // Cria waypoints que passam por cima dos elementos intermediários
+  const offsetY = 60; // Espaço para passar por cima
+  const intermediateY = Math.min(sourceY, targetY) - offsetY;
+  
   const sequenceFlowWaypoints = [
     moddle.create('dc:Point', { x: sourceX, y: sourceY }),
-    moddle.create('dc:Point', { x: intermediateX_A, y: intermediateY_A }),
-    moddle.create('dc:Point', { x: intermediateX_B, y: intermediateY_B }),
+    moddle.create('dc:Point', { x: sourceX, y: intermediateY }),
+    moddle.create('dc:Point', { x: targetX, y: intermediateY }),
     moddle.create('dc:Point', { x: targetX, y: targetY }),
   ];
 

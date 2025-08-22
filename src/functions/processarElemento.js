@@ -103,6 +103,10 @@ export default function processarElemento(
           existingExclusiveGateway,
           previousElements
         );
+        
+        // Atualiza os arrays com o gateway existente para o próximo elemento
+        previousElements.push(existingExclusiveGateway.bpmnElement);
+        previousBounds.push(existingExclusiveGateway.bounds);
       } else {
         const exclusiveGateway = criarGatewayExclusivo(
           moddle,
@@ -145,6 +149,10 @@ export default function processarElemento(
           currentBounds,
           existingParallelGateway
         );
+        
+        // Atualiza os arrays com o gateway existente para o próximo elemento
+        previousElements.push(existingParallelGateway.bpmnElement);
+        previousBounds.push(existingParallelGateway.bounds);
       } else {
         const parallelGateway = criarGatewayParalelo(
           moddle,
