@@ -119,14 +119,36 @@ export async function generateDiagramFromInput(processName, participantsInput, h
     initialEventLane
   );
 
-  // Initialize stacks for elements and bounds
-  let previousElements = [initialEvent];
-  let previousBounds = [initialEventBounds];
+  // Initialize element and bounds tracking using Map
+  const elementTracker = new Map();
+  const boundsTracker = new Map();
+  
+  // Initialize with the initial event
+  elementTracker.set('current', initialEvent);
+  boundsTracker.set('current', initialEventBounds);
+  
+  // Track next available positions for multiple paths (used by gateways)
+  elementTracker.set('nextPositions', []);
+  boundsTracker.set('nextPositions', []);
   
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   for (const element of elements) {
-    const currentElement = previousElements.pop();
-    const currentBounds = previousBounds.pop();
+    // Get current element and bounds
+    let currentElement, currentBounds;
+    
+    // Check if there are multiple paths available (from gateways)
+    const nextPositionsElements = elementTracker.get('nextPositions');
+    const nextPositionsBounds = boundsTracker.get('nextPositions');
+    
+    if (nextPositionsElements.length > 0) {
+      // Use element from multiple paths
+      currentElement = nextPositionsElements.shift();
+      currentBounds = nextPositionsBounds.shift();
+    } else {
+      // Use current element
+      currentElement = elementTracker.get('current');
+      currentBounds = boundsTracker.get('current');
+    }
 
     processarElemento(
       element,
@@ -140,8 +162,8 @@ export async function generateDiagramFromInput(processName, participantsInput, h
       participants,
       laneHeight,
       externalParticipants,
-      previousElements,
-      previousBounds
+      elementTracker,
+      boundsTracker
     );
   }
 

@@ -22,9 +22,34 @@ export default function processarElemento(
   participants,
   laneHeight,
   externalParticipants,
-  previousElements,
-  previousBounds
+  elementTracker,
+  boundsTracker
 ) {
+  /**
+   * Helper function to update the current element and bounds in the trackers
+   * @param {Object} newElement - The new current element
+   * @param {Object} newBounds - The new current bounds
+   */
+  const updateCurrentState = (newElement, newBounds) => {
+    elementTracker.set('current', newElement);
+    boundsTracker.set('current', newBounds);
+  };
+
+  /**
+   * Helper function to add multiple positions for gateway divergence
+   * @param {Object} gatewayElement - The gateway element
+   * @param {Array} positions - Array of position bounds for each divergent path
+   */
+  const addMultiplePositions = (gatewayElement, positions) => {
+    const nextPositionsElements = elementTracker.get('nextPositions');
+    const nextPositionsBounds = boundsTracker.get('nextPositions');
+    
+    for (const position of positions) {
+      nextPositionsElements.push(gatewayElement);
+      nextPositionsBounds.push(position);
+    }
+  };
+
   let { type, name, lane, diverge } = element;
   let eventType = '';
   let activityType = '';
@@ -46,8 +71,7 @@ export default function processarElemento(
       } else {
         console.error(`Nome de mensagem inválido: "${name}". Use "Envio" ou "Recebimento".`);
       }
-      previousElements.push(currentElement);
-      previousBounds.push(currentBounds);
+      updateCurrentState(currentElement, currentBounds);
       break;
 
     case 'Atividade':
@@ -66,8 +90,7 @@ export default function processarElemento(
         name,
         lane
       );
-      previousElements.push(activityElement.activity);
-      previousBounds.push(activityElement.activityShape.bounds);
+      updateCurrentState(activityElement.activity, activityElement.activityShape.bounds);
       break;
 
     case 'Evento Intermediario':
@@ -86,8 +109,7 @@ export default function processarElemento(
         eventType,
         lane
       );
-      previousElements.push(intermediateEvent.intermediateEvent);
-      previousBounds.push(intermediateEvent.intermediateEventShape.bounds);
+      updateCurrentState(intermediateEvent.intermediateEvent, intermediateEvent.intermediateEventShape.bounds);
       break;
 
     case 'Gateway Exclusivo':
@@ -101,12 +123,11 @@ export default function processarElemento(
           currentElement,
           currentBounds,
           existingExclusiveGateway,
-          previousElements
+          elementTracker.get('nextPositions')
         );
         
-        // Atualiza os arrays com o gateway existente para o próximo elemento
-        previousElements.push(existingExclusiveGateway.bpmnElement);
-        previousBounds.push(existingExclusiveGateway.bounds);
+        // Update state with the existing gateway for the next element
+        updateCurrentState(existingExclusiveGateway.bpmnElement, existingExclusiveGateway.bounds);
       } else {
         const exclusiveGateway = criarGatewayExclusivo(
           moddle,
@@ -130,10 +151,7 @@ export default function processarElemento(
           lane
         );
 
-        for (let i = 0; i < diverge; i++) {
-          previousElements.push(exclusiveGateway);
-          previousBounds.push(positions[i]);
-        }
+        addMultiplePositions(exclusiveGateway, positions);
       }
       break;
 
@@ -150,9 +168,8 @@ export default function processarElemento(
           existingParallelGateway
         );
         
-        // Atualiza os arrays com o gateway existente para o próximo elemento
-        previousElements.push(existingParallelGateway.bpmnElement);
-        previousBounds.push(existingParallelGateway.bounds);
+        // Update state with the existing gateway for the next element
+        updateCurrentState(existingParallelGateway.bpmnElement, existingParallelGateway.bounds);
       } else {
         const parallelGateway = criarGatewayParalelo(
           moddle,
@@ -176,10 +193,7 @@ export default function processarElemento(
           lane
         );
 
-        for (let i = 0; i < diverge; i++) {
-          previousElements.push(parallelGateway);
-          previousBounds.push(positions[i]);
-        }
+        addMultiplePositions(parallelGateway, positions);
       }
       break;
 
@@ -195,8 +209,7 @@ export default function processarElemento(
         name,
         dataObjectDirection
       );
-      previousElements.push(currentElement);
-      previousBounds.push(currentBounds);
+      updateCurrentState(currentElement, currentBounds);
       break;
 
     case 'Fim':

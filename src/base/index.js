@@ -73,6 +73,12 @@ function moveElementDown(row) {
 
 // Função para baixar o diagrama como arquivo .bpmn
 function downloadDiagram() {
+  // Valida campos obrigatórios com mensagem de erro
+  if (!validateRequiredFields(true)) {
+    alert('Preencha todos os campos obrigatórios antes de salvar o diagrama.');
+    return;
+  }
+  
   if (!lastDiagramXML) {
     alert('Nenhum diagrama gerado para salvar.');
     return;
@@ -492,6 +498,8 @@ addElementRowButton.addEventListener('click', () => {
   addElementRow();
   // Atualiza os selects de gateways após adicionar novo elemento
   setTimeout(updateAllGatewaySelects, 100);
+  // Configura listeners para a nova linha
+  setTimeout(setupElementRowListeners, 100);
 });
 
 // Atualiza opções de participantes
@@ -537,8 +545,48 @@ document.getElementById('saveDiagramButton').addEventListener('click', downloadD
 // PROCESSAMENTO E ATUALIZAÇÃO DO DIAGRAMA
 // ===================================================================
 
+/**
+ * Valida se todos os campos obrigatórios estão preenchidos
+ * @param {boolean} showError - Se deve exibir erro no console
+ * @returns {boolean} - True se todos os campos estão válidos
+ */
+function validateRequiredFields(showError = false) {
+  const processName = document.getElementById('processName').value;
+  const participants = getParticipantsOptions();
+  const initialEventName = document.getElementById('initialEventName').value;
+  const initialEventLane = document.getElementById('initialEventLane').value;
+  
+  const isValid = !(!processName || !participants.length || !initialEventName || !initialEventLane);
+  
+  if (!isValid && showError) {
+    console.error('Preencha todos os campos obrigatórios.');
+  }
+  
+  return isValid;
+}
+
+// Variável para controle de debounce
+let updateTimeout;
+
 async function updateDiagram() {
-  // Validação dos campos obrigatórios
+  // Cancela o timeout anterior se existir
+  if (updateTimeout) {
+    clearTimeout(updateTimeout);
+  }
+  
+  // Define um novo timeout para executar a atualização após 300ms
+  updateTimeout = setTimeout(async () => {
+    await performDiagramUpdate();
+  }, 300);
+}
+
+async function performDiagramUpdate() {
+  // Verificação silenciosa - só atualiza se todos os campos estão preenchidos
+  if (!validateRequiredFields(false)) {
+    return; // Retorna silenciosamente sem exibir erro no console
+  }
+
+  // Obter valores dos campos
   const processName = document.getElementById('processName').value;
   const participants = getParticipantsOptions();
   const hasExternalParticipants = document.getElementById('hasExternalParticipants').value;
@@ -546,11 +594,6 @@ async function updateDiagram() {
   const initialEventName = document.getElementById('initialEventName').value;
   const initialEventType = document.getElementById('initialEventType').value;
   const initialEventLane = document.getElementById('initialEventLane').value;
-  
-  if (!processName || !participants.length || !initialEventName || !initialEventLane) {
-    console.error('Preencha todos os campos obrigatórios.');
-    return;
-  }
 
   // Processamento dos elementos
   const elements = processElementsFromUI();
@@ -672,8 +715,65 @@ function processDuplicateElements(elements) {
   return elements;
 }
 
-// Atualização automática do diagrama
-setInterval(updateDiagram, 2000);
+// ===================================================================
+// SISTEMA DE ATUALIZAÇÃO EM TEMPO REAL
+// ===================================================================
+
+// Função para configurar listeners de atualização em tempo real
+function setupRealtimeUpdate() {
+  // Campos principais do formulário
+  const fieldsToWatch = [
+    'processName',
+    'participants', 
+    'hasExternalParticipants',
+    'externalParticipants',
+    'initialEventName',
+    'initialEventType',
+    'initialEventLane'
+  ];
+
+  // Adiciona listeners para campos de texto e selects
+  fieldsToWatch.forEach(fieldId => {
+    const element = document.getElementById(fieldId);
+    if (element) {
+      element.addEventListener('input', updateDiagram);
+      element.addEventListener('change', updateDiagram);
+    }
+  });
+
+  // Observer para mudanças no container de elementos
+  const observer = new MutationObserver(() => {
+    updateDiagram();
+    setupElementRowListeners(); // Reconfigura listeners para novas linhas
+  });
+
+  observer.observe(elementsContainer, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['value']
+  });
+}
+
+// Função para configurar listeners nas linhas de elementos
+function setupElementRowListeners() {
+  const rows = elementsContainer.querySelectorAll('.element-row');
+  
+  rows.forEach(row => {
+    // Verifica se a linha já tem listeners configurados
+    if (row.dataset.listenersConfigured) return;
+    
+    // Marca a linha como configurada
+    row.dataset.listenersConfigured = 'true';
+    
+    // Adiciona listeners para todos os inputs e selects da linha
+    const inputs = row.querySelectorAll('input, select');
+    inputs.forEach(input => {
+      input.addEventListener('input', updateDiagram);
+      input.addEventListener('change', updateDiagram);
+    });
+  });
+}
 
 // Remove declarações duplicadas e organiza seções restantes
 
@@ -809,4 +909,25 @@ function setupCanvasDragBehavior() {
   });
 
   dragBehaviorSetup = true;
+}
+
+// ===================================================================
+// INICIALIZAÇÃO DO SISTEMA
+// ===================================================================
+
+// Inicializa o sistema de atualização em tempo real quando a página carrega
+document.addEventListener('DOMContentLoaded', () => {
+  setupRealtimeUpdate();
+  setupElementRowListeners();
+});
+
+// Fallback caso o DOMContentLoaded já tenha disparado
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    setupRealtimeUpdate();
+    setupElementRowListeners();
+  });
+} else {
+  setupRealtimeUpdate();
+  setupElementRowListeners();
 }

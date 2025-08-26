@@ -7,7 +7,7 @@ export default function conectarGatewayExclusivoExistente(
   currentElement,
   currentBounds,
   existingGateway,
-  previousElements
+  nextPositions
 ) {
   // Para conexões com gateways existentes, usa waypoints que contornam elementos
   const sourceX = currentBounds.x + currentBounds.width / 2;
