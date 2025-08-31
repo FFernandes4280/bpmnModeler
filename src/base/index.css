@@ -154,12 +154,13 @@ background-color: #cc0000;
   display: flex;
   align-items: center;
   background-color: white;
-  border: 1px solid #ccc;
+  border: 1px solid #dee2e6;
   border-radius: 4px;
   padding: 4px;
   flex: 1;
   height: 40px;
   box-sizing: border-box;
+  gap: 4px;
 }
 
 .counter-btn {
@@ -171,13 +172,15 @@ background-color: #cc0000;
   cursor: pointer;
   border-radius: 3px;
   font-size: 14px;
+  font-weight: bold;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0;
+  transition: background-color 0.2s ease;
 }
 
-.counter-btn:hover {
+.counter-btn:hover:not(:disabled) {
   background-color: #0056b3;
 }
 
@@ -193,6 +196,8 @@ background-color: #cc0000;
   font-weight: bold;
   padding: 0 8px;
   font-size: 12px;
+  color: #333;
+  min-width: 80px;
 }
 
 .gateway-select {
