@@ -13,17 +13,6 @@ import {
 } from './elementCreators.js';
 import { createGatewayCounter } from './gatewayCounter.js';
 
-// Variável global para armazenar o callback de atualização do diagrama
-let globalUpdateDiagramCallback = null;
-
-/**
- * Define o callback global de atualização do diagrama
- * @param {Function} callback - Função de atualização do diagrama
- */
-export function setUpdateDiagramCallback(callback) {
-  globalUpdateDiagramCallback = callback;
-}
-
 /**
  * Adiciona uma nova linha de elementos
  * @param {HTMLElement} elementsContainer - Container dos elementos
@@ -189,19 +178,15 @@ function setupRowFieldsVisibility(row, elementTypeSelect, elementLaneSelect, ele
       }
       activityTypeSelect.style.display = '';
       hideOtherSelects(row, ['eventType', 'finalEventType', 'dataObjectDirection', 'existingGatewayType', 'existingGatewaySelect']);
-    } else if (elementTypeSelect.value === 'Evento Intermediario') {
-      elementLaneSelect.style.display = '';
-      // Para Evento Intermediario, mantém o eventType visível se existir
-      if (row.querySelector('.element-eventType')) {
-        row.querySelector('.element-eventType').style.display = '';
-      }
-      hideOtherSelects(row, ['activityType', 'finalEventType', 'dataObjectDirection', 'existingGatewayType', 'existingGatewaySelect']);
     } else {
       elementLaneSelect.style.display = '';
       if (row.querySelector('.element-finalEventType')) {
         row.removeChild(finalEventTypeSelect);
       }
-      hideOtherSelects(row, ['eventType', 'activityType', 'finalEventType', 'dataObjectDirection', 'existingGatewayType', 'existingGatewaySelect']);
+      hideOtherSelects(row, ['activityType', 'finalEventType', 'dataObjectDirection', 'existingGatewayType', 'existingGatewaySelect']);
+      if (row.querySelector('.element-eventType')) {
+        row.querySelector('.element-eventType').style.display = '';
+      }
     }
   }
 
@@ -258,18 +243,9 @@ function setupRowEventListeners(row, elementTypeSelect, elementLaneSelect, eleme
   elementTypeSelect.addEventListener('change', () => {
     // Evento Intermediario: adiciona o select de eventType
     if (elementTypeSelect.value === 'Evento Intermediario') {
-      if (!row.querySelector('.element-eventType')) {
-        // Insere antes do campo nome se existir, senão antes do lane
-        const insertBefore = elementNameInput || row.querySelector('.element-lane');
-        row.insertBefore(eventTypeSelect, insertBefore);
-        
-        // MUDANÇA MÍNIMA: Adiciona listeners apenas para o eventType criado dinamicamente
-        if (globalUpdateDiagramCallback) {
-          eventTypeSelect.addEventListener('input', globalUpdateDiagramCallback);
-          eventTypeSelect.addEventListener('change', globalUpdateDiagramCallback);
-        }
+      if (!row.querySelector('.element-eventType') && elementNameInput) {
+        row.insertBefore(eventTypeSelect, elementNameInput);
       }
-      eventTypeSelect.style.display = '';
     } else {
       if (row.querySelector('.element-eventType')) {
         row.removeChild(eventTypeSelect);

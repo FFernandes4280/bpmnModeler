@@ -1,6 +1,6 @@
 import BpmnViewer from 'bpmn-js';
 import { generateDiagramFromInput } from './chatbot.js';
-import { addElementRow } from './modules/ui/rowManager.js';
+import { addElementRow, updateAllExistingGatewaySelects, setUpdateDiagramCallback } from './modules/ui/rowManager.js';
 import { createGatewayCounter, ensureGatewayCounterSeparation } from './modules/ui/gatewayCounter.js';
 import { updateDiagram } from './modules/diagram/diagramUpdater.js';
 import { setupRealtimeUpdate, setupElementRowListeners } from './modules/diagram/realtimeSystem.js';
@@ -35,9 +35,14 @@ const updateDiagramWrapper = () => updateDiagram(
   elementsContainer
 );
 
+// Define o callback global para elementos dinâmicos
+setUpdateDiagramCallback(updateDiagramWrapper);
+
 // Adiciona uma nova linha ao clicar no botão
 addElementRowButton.addEventListener('click', () => {
   addElementRow(elementsContainer, participantsInput);
+  // Atualiza selects de gateways existentes após adicionar novo elemento
+  setTimeout(updateAllExistingGatewaySelects, 100);
   // Garante separação visual dos elementos
   setTimeout(ensureGatewayCounterSeparation, 100);
   // Configura listeners para a nova linha

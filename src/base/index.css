@@ -200,6 +200,15 @@ background-color: #cc0000;
   min-width: 80px;
 }
 
+.element-existingGatewayType,
+.element-existingGatewaySelect {
+  flex: 1;
+  padding: 8px;
+  box-sizing: border-box;
+  height: 40px;
+  margin-bottom: 0;
+}
+
 .gateway-select {
   width: 100px !important;
   height: 25px;

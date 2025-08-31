@@ -68,3 +68,30 @@ export function createDataObjectDirectionSelect() {
   `;
   return dataObjectDirectionSelect;
 }
+
+/**
+ * Cria select para tipo de gateway existente
+ * @returns {HTMLSelectElement}
+ */
+export function createExistingGatewayTypeSelect() {
+  const gatewayTypeSelect = document.createElement('select');
+  gatewayTypeSelect.className = 'element-existingGatewayType';
+  gatewayTypeSelect.innerHTML = `
+    <option value="Gateway Exclusivo">Gateway Exclusivo</option>
+    <option value="Gateway Paralelo">Gateway Paralelo</option>
+  `;
+  return gatewayTypeSelect;
+}
+
+/**
+ * Cria select para escolher gateway existente
+ * @returns {HTMLSelectElement}
+ */
+export function createExistingGatewaySelect() {
+  const gatewaySelect = document.createElement('select');
+  gatewaySelect.className = 'element-existingGatewaySelect';
+  gatewaySelect.innerHTML = `
+    <option value="">Selecione um gateway</option>
+  `;
+  return gatewaySelect;
+}
