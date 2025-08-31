@@ -4,15 +4,20 @@ export default function criarEventoFinal(
   moddle,
   bpmnProcess,
   bpmnPlane,
-  sourceElement,
-  sourceBounds,
   participantBounds,
   participants,
   laneHeight,
   finalEventType,
   eventName,
-  laneName
+  laneName,
+  index,
+  elementsList
 ) {
+  // Recupera o elemento anterior da elementsList
+  const prevEntry = elementsList[index - 1];
+  const prevBounds = prevEntry.get("bounds");
+  const prevElement = prevEntry.get("element");
+
   // Normaliza o ID removendo espaços e caracteres especiais
   const normalizedId = eventName.replace(/\s+/g, '_').replace(/[^\w]/g, '');
 
@@ -20,7 +25,7 @@ export default function criarEventoFinal(
   const laneIndex = participants.indexOf(laneName); // Obtém o índice da lane
   const laneY = participantBounds.y + laneIndex * laneHeight;
   const finalEventBounds = {
-    x: sourceBounds.x + 150, // Posiciona o evento final à direita do elemento anterior
+    x: prevBounds.x + 150, // Posiciona o evento final à direita do elemento anterior
     y: laneY + (laneHeight - 35) / 2, // Centraliza na lane
     width: 35,
     height: 35,
@@ -80,8 +85,8 @@ export default function criarEventoFinal(
 
   // Cria o fluxo de sequência entre o elemento anterior e o evento final
   const sequenceFlow = moddle.create('bpmn:SequenceFlow', {
-    id: `SequenceFlow_${sourceElement.id}_EndEvent_${normalizedId}`, // ID único para o fluxo
-    sourceRef: sourceElement, // Referência ao elemento anterior
+    id: `SequenceFlow_${prevElement.id}_EndEvent_${normalizedId}`, // ID único para o fluxo
+    sourceRef: prevElement, // Referência ao elemento anterior
     targetRef: finalEvent, // Referência ao evento final
   });
 
@@ -90,21 +95,21 @@ export default function criarEventoFinal(
 
   // Calcula waypoints usando a nova função
   // Detecta se o elemento anterior é um gateway
-  const isFromGateway = sourceElement.id && (
-    sourceElement.id.includes('ExclusiveGateway') || 
-    sourceElement.id.includes('ParallelGateway')
+  const isFromGateway = prevElement.id && (
+    prevElement.id.includes('ExclusiveGateway') || 
+    prevElement.id.includes('ParallelGateway')
   );
   
   const sequenceFlowWaypoints = calcularWaypointsSequenceFlow(
     moddle,
-    sourceBounds,
+    prevBounds,
     finalEventBounds,
     isFromGateway // Usa lógica de gateway se vem de um gateway
   );
 
   // Cria o BPMNEdge para o fluxo de sequência
   const sequenceFlowEdge = moddle.create('bpmndi:BPMNEdge', {
-    id: `SequenceFlow_${sourceElement.id}_EndEvent_${normalizedId}_di`, // ID único para o edge
+    id: `SequenceFlow_${prevElement.id}_EndEvent_${normalizedId}_di`, // ID único para o edge
     bpmnElement: sequenceFlow, // Referência ao fluxo de sequência
     waypoint: sequenceFlowWaypoints, // Define os waypoints
   });
@@ -112,5 +117,14 @@ export default function criarEventoFinal(
   // Adiciona o edge ao BPMNPlane
   bpmnPlane.planeElement.push(sequenceFlowEdge);
 
-  return finalEvent; // Retorna o evento final criado
+  // Cria um Map para o elemento final
+  // const endEventEntry = new Map();
+  // endEventEntry.set("element", finalEvent);
+  // endEventEntry.set("bounds", finalEventBounds);
+  // endEventEntry.set("shape", finalEventShape);
+
+  // Adiciona o elemento à elementsList
+  // elementsList.push(endEventEntry);
+
+  // return elementsList;
 }

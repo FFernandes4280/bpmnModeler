@@ -6,13 +6,15 @@ export default function criarEventoInicial(
   participants,
   laneHeight,
   initialEventName,
-  initialEventType,
-  initialEventLane
+  initialEventLane,
+  elementsList
 ) {
   // Create the initial start event
   const laneIndex = participants.indexOf(initialEventLane);
   const laneY = participantBounds.y + laneIndex * laneHeight;
-  
+  const initialEventType = initialEventName.split('_')[0];
+  initialEventName = initialEventName.split('_')[1];
+
   const initialEventBounds = {
     x: participantBounds.x + 80,
     y: laneY + (laneHeight - 35) / 2, // Centraliza verticalmente na lane
@@ -51,9 +53,11 @@ export default function criarEventoInicial(
 
   bpmnPlane.planeElement.push(initialEventShape);
 
-  return {
-    initialEvent,
-    initialEventBounds,
-    initialEventShape
-  };
+  const dictEntry = new Map();
+  dictEntry.set('element', initialEvent);
+  dictEntry.set('bounds', initialEventBounds);
+  dictEntry.set('shape', initialEventShape);
+  
+  elementsList.push(dictEntry);
+  return elementsList;
 }

@@ -15,7 +15,7 @@ const xmlStart =
   'targetNamespace="http://bpmn.io/schema/bpmn">' +
   '</bpmn2:definitions>';
 
-export async function generateDiagramFromInput(processName, participantsInput, hasExternalParticipants, externalParticipantsInput, initialEventName, initialEventType, initialEventLane, elements) {
+export async function generateDiagramFromInput(processName, participantsInput, hasExternalParticipants, externalParticipantsInput, elements) {
   const { rootElement: definitions } = await moddle.fromXML(xmlStart);
 
   // Create the process
@@ -106,66 +106,24 @@ export async function generateDiagramFromInput(processName, participantsInput, h
     bpmnPlane.planeElement.push(laneShape);
   }
 
-  // Cria o evento inicial
-  const { initialEvent, initialEventBounds } = criarEventoInicial(
-    moddle,
-    bpmnProcess,
-    bpmnPlane,
-    participantBounds,
-    participants,
-    laneHeight,
-    initialEventName,
-    initialEventType,
-    initialEventLane
-  );
-
-  // Initialize element and bounds tracking using Map
-  const elementTracker = new Map();
-  const boundsTracker = new Map();
-  
-  // Initialize with the initial event
-  elementTracker.set('current', initialEvent);
-  boundsTracker.set('current', initialEventBounds);
-  
-  // Track next available positions for multiple paths (used by gateways)
-  elementTracker.set('nextPositions', []);
-  boundsTracker.set('nextPositions', []);
+  const elementsList = [];
   
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  for (const element of elements) {
-    // Get current element and bounds
-    let currentElement, currentBounds;
-    
-    // Check if there are multiple paths available (from gateways)
-    const nextPositionsElements = elementTracker.get('nextPositions');
-    const nextPositionsBounds = boundsTracker.get('nextPositions');
-    
-    if (nextPositionsElements.length > 0) {
-      // Use element from multiple paths
-      currentElement = nextPositionsElements.shift();
-      currentBounds = nextPositionsBounds.shift();
-    } else {
-      // Use current element
-      currentElement = elementTracker.get('current');
-      currentBounds = boundsTracker.get('current');
-    }
-
+  
+  elements.forEach(element => {
     processarElemento(
       element,
       moddle,
       bpmnProcess,
       bpmnPlane,
       collaboration,
-      currentElement,
-      currentBounds,
+      elementsList,
       participantBounds,
       participants,
       laneHeight,
-      externalParticipants,
-      elementTracker,
-      boundsTracker
+      externalParticipants
     );
-  }
+  });
 
   // Finalize the diagram
   bpmnDiagram.plane = bpmnPlane;

@@ -2,6 +2,7 @@ import criarAtividade from './criarAtividade.js';
 import criarEventoIntermediario from './criarEventoIntermediario.js';
 import criarGatewayExclusivo from './criarGatewayExclusivo.js';
 import criarGatewayParalelo from './criarGatewayParalelo.js';
+import criarEventoInicial from './criarEventoInicial.js';
 import criarEventoFinal from './criarEventoFinal.js';
 import criarDataObject from './criarDataObject.js';
 import criarFluxoMensagem from './criarFluxoMensagem.js';
@@ -16,201 +17,178 @@ export default function processarElemento(
   bpmnProcess,
   bpmnPlane,
   collaboration,
-  currentElement,
-  currentBounds,
+  elementsList,
   participantBounds,
   participants,
   laneHeight,
-  externalParticipants,
-  elementTracker,
-  boundsTracker
+  externalParticipants
 ) {
-  /**
-   * Helper function to update the current element and bounds in the trackers
-   * @param {Object} newElement - The new current element
-   * @param {Object} newBounds - The new current bounds
-   */
-  const updateCurrentState = (newElement, newBounds) => {
-    elementTracker.set('current', newElement);
-    boundsTracker.set('current', newBounds);
-  };
 
-  /**
-   * Helper function to add multiple positions for gateway divergence
-   * @param {Object} gatewayElement - The gateway element
-   * @param {Array} positions - Array of position bounds for each divergent path
-   */
-  const addMultiplePositions = (gatewayElement, positions) => {
-    const nextPositionsElements = elementTracker.get('nextPositions');
-    const nextPositionsBounds = boundsTracker.get('nextPositions');
-    
-    for (const position of positions) {
-      nextPositionsElements.push(gatewayElement);
-      nextPositionsBounds.push(position);
-    }
-  };
-
-  let { type, name, lane, diverge } = element;
+  let { index, type, name, lane, diverge } = element;
   let eventType = '';
   let activityType = '';
-
+  console.log(elementsList)
   switch (type) {
-    case 'Mensagem':
-      if (name === 'Envio' || name === 'Recebimento') {
-        criarFluxoMensagem(
-          moddle,
-          collaboration,
-          bpmnPlane,
-          currentElement,
-          currentBounds,
-          externalParticipants,
-          participantBounds,
-          name,
-          lane
-        );
-      } else {
-        console.error(`Nome de mensagem inválido: "${name}". Use "Envio" ou "Recebimento".`);
-      }
-      updateCurrentState(currentElement, currentBounds);
+    case 'Inicio':
+      criarEventoInicial(
+        moddle,
+        bpmnProcess,
+        bpmnPlane,
+        participantBounds,
+        participants,
+        laneHeight,
+        name,
+        lane,
+        elementsList
+      );
       break;
 
     case 'Atividade':
       activityType = name.split('_')[0];
       name = name.split('_')[1];
-      const activityElement = criarAtividade(
+      criarAtividade(
         moddle,
         bpmnProcess,
         bpmnPlane,
-        currentElement,
-        currentBounds,
         participantBounds,
         participants,
         laneHeight,
         activityType,
         name,
-        lane
+        lane,
+        index,
+        elementsList
       );
-      updateCurrentState(activityElement.activity, activityElement.activityShape.bounds);
       break;
 
     case 'Evento Intermediario':
       eventType = name.split('_')[0];
       name = name.split('_')[1];
-      const intermediateEvent = criarEventoIntermediario(
+      criarEventoIntermediario(
         moddle,
         bpmnProcess,
         bpmnPlane,
-        currentElement,
-        currentBounds,
         participantBounds,
         participants,
         laneHeight,
-        name,
         eventType,
-        lane
-      );
-      updateCurrentState(intermediateEvent.intermediateEvent, intermediateEvent.intermediateEventShape.bounds);
-      break;
-
-    case 'Gateway Exclusivo':
-      const existingExclusiveGateway = buscarGatewayExistente(bpmnPlane, 'ExclusiveGateway', name);
-
-      if (existingExclusiveGateway) {
-        conectarGatewayExclusivoExistente(
-          moddle,
-          bpmnProcess,
-          bpmnPlane,
-          currentElement,
-          currentBounds,
-          existingExclusiveGateway,
-          elementTracker.get('nextPositions')
-        );
-        
-        // Update state with the existing gateway for the next element
-        updateCurrentState(existingExclusiveGateway.bpmnElement, existingExclusiveGateway.bounds);
-      } else {
-        const exclusiveGateway = criarGatewayExclusivo(
-          moddle,
-          bpmnProcess,
-          bpmnPlane,
-          currentElement,
-          currentBounds,
-          participantBounds,
-          participants,
-          laneHeight,
-          name,
-          lane
-        );
-
-        const positions = calcularPosicoesDivergencia(
-          diverge,
-          currentBounds,
-          participantBounds,
-          participants,
-          laneHeight,
-          lane
-        );
-
-        addMultiplePositions(exclusiveGateway, positions);
-      }
-      break;
-
-    case 'Gateway Paralelo':
-      const existingParallelGateway = buscarGatewayExistente(bpmnPlane, 'ParallelGateway', name);
-
-      if (existingParallelGateway) {
-        conectarGatewayParaleloExistente(
-          moddle,
-          bpmnProcess,
-          bpmnPlane,
-          currentElement,
-          currentBounds,
-          existingParallelGateway
-        );
-        
-        // Update state with the existing gateway for the next element
-        updateCurrentState(existingParallelGateway.bpmnElement, existingParallelGateway.bounds);
-      } else {
-        const parallelGateway = criarGatewayParalelo(
-          moddle,
-          bpmnProcess,
-          bpmnPlane,
-          currentElement,
-          currentBounds,
-          participantBounds,
-          participants,
-          laneHeight,
-          name,
-          lane
-        );
-
-        const positions = calcularPosicoesDivergencia(
-          diverge,
-          currentBounds,
-          participantBounds,
-          participants,
-          laneHeight,
-          lane
-        );
-
-        addMultiplePositions(parallelGateway, positions);
-      }
-      break;
-
-    case 'Data Object':
-      const dataObjectDirection = name.split('_')[0];
-      name = name.split('_')[1];
-      criarDataObject(
-        moddle,
-        bpmnProcess,
-        bpmnPlane,
-        currentElement,
-        currentBounds,
         name,
-        dataObjectDirection
+        lane,
+        index,
+        elementsList
       );
-      updateCurrentState(currentElement, currentBounds);
       break;
+
+    // case 'Gateway Exclusivo':
+    //   const existingExclusiveGateway = buscarGatewayExistente(bpmnPlane, 'ExclusiveGateway', name);
+
+    //   if (existingExclusiveGateway) {
+    //     conectarGatewayExclusivoExistente(
+    //       moddle,
+    //       bpmnProcess,
+    //       bpmnPlane,
+    //       currentElement,
+    //       currentBounds,
+    //       existingExclusiveGateway,
+    //       elementTracker.get('nextPositions')
+    //     );
+
+    //     // Update state with the existing gateway for the next element
+    //   } else {
+    //     const exclusiveGateway = criarGatewayExclusivo(
+    //       moddle,
+    //       bpmnProcess,
+    //       bpmnPlane,
+    //       currentElement,
+    //       currentBounds,
+    //       participantBounds,
+    //       participants,
+    //       laneHeight,
+    //       name,
+    //       lane
+    //     );
+
+    //     const positions = calcularPosicoesDivergencia(
+    //       diverge,
+    //       currentBounds,
+    //       participantBounds,
+    //       participants,
+    //       laneHeight,
+    //       lane
+    //     );
+
+    //     addMultiplePositions(exclusiveGateway, positions);
+    //   }
+    //   break;
+
+    // case 'Gateway Paralelo':
+    //   const existingParallelGateway = buscarGatewayExistente(bpmnPlane, 'ParallelGateway', name);
+
+    //   if (existingParallelGateway) {
+    //     conectarGatewayParaleloExistente(
+    //       moddle,
+    //       bpmnProcess,
+    //       bpmnPlane,
+    //       currentElement,
+    //       currentBounds,
+    //       existingParallelGateway
+    //     );
+
+    //     // Update state with the existing gateway for the next element
+    //   } else {
+    //     const parallelGateway = criarGatewayParalelo(
+    //       moddle,
+    //       bpmnProcess,
+    //       bpmnPlane,
+    //       currentElement,
+    //       currentBounds,
+    //       participantBounds,
+    //       participants,
+    //       laneHeight,
+    //       name,
+    //       lane
+    //     );
+
+    //     const positions = calcularPosicoesDivergencia(
+    //       diverge,
+    //       currentBounds,
+    //       participantBounds,
+    //       participants,
+    //       laneHeight,
+    //       lane
+    //     );
+
+    //     addMultiplePositions(parallelGateway, positions);
+    //   }
+    //   break;
+
+    // case 'Data Object':
+    //   const dataObjectDirection = name.split('_')[0];
+    //   name = name.split('_')[1];
+    //   criarDataObject(
+    //     moddle,
+    //     bpmnProcess,
+    //     bpmnPlane,
+    //     currentElement,
+    //     currentBounds,
+    //     name,
+    //     dataObjectDirection
+    //   );
+    //   break;
+
+    // case 'Mensagem':
+    //   criarFluxoMensagem(
+    //     moddle,
+    //     collaboration,
+    //     bpmnPlane,
+    //     currentElement,
+    //     currentBounds,
+    //     externalParticipants,
+    //     participantBounds,
+    //     name,
+    //     lane
+    //   );
+    //   break;
 
     case 'Fim':
       eventType = name.split('_')[0];
@@ -219,14 +197,14 @@ export default function processarElemento(
         moddle,
         bpmnProcess,
         bpmnPlane,
-        currentElement,
-        currentBounds,
         participantBounds,
         participants,
         laneHeight,
         eventType,
         name,
-        lane
+        lane,
+        index,
+        elementsList
       );
       break;
 

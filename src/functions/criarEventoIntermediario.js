@@ -4,14 +4,14 @@ export default function criarEventoIntermediario(
   moddle,
   bpmnProcess,
   bpmnPlane,
-  sourceElement,
-  sourceBounds,
   participantBounds,
   participants,
   laneHeight,
-  eventName,
   eventType,
-  eventLane
+  eventName,
+  eventLane,
+  index,
+  elementsList
 ) {
   // Normaliza o ID removendo espaços e caracteres especiais
   const normalizedId = eventName.replace(/\s+/g, '_').replace(/[^\w]/g, '');
@@ -44,11 +44,14 @@ export default function criarEventoIntermediario(
   const laneIndex = participants.indexOf(eventLane);
   const laneY = participantBounds.y + laneIndex * laneHeight;
 
-  if(!sourceBounds.yOffset) sourceBounds.yOffset = 0;
+  const prevEntry = elementsList[index - 1];
+  const prevBounds = prevEntry.get("bounds");
+  const prevElement = prevEntry.get("element");
+
   // Define os limites do evento intermediário
   const eventBounds = {
-    x: sourceBounds.x + 150, // Deslocamento horizontal
-    y: laneY + laneHeight / 2 - 18 + sourceBounds.yOffset, // Centraliza verticalmente na lane
+    x: prevBounds.x + 150, // Deslocamento horizontal
+    y: laneY + laneHeight / 2 - 18, // Centraliza verticalmente na lane
     width: 36,
     height: 36,
   };
@@ -58,15 +61,14 @@ export default function criarEventoIntermediario(
     bpmnElement: intermediateEvent, // Referência ao elemento BPMN do evento
     bounds: moddle.create('dc:Bounds', eventBounds), // Define os limites do evento
   });
-  intermediateEventShape.bounds.yOffset = sourceBounds.yOffset;
 
   // Adiciona o shape do evento ao BPMNPlane
   bpmnPlane.planeElement.push(intermediateEventShape);
 
   // Cria o fluxo de sequência entre o elemento anterior e o evento intermediário
   const sequenceFlow = moddle.create('bpmn:SequenceFlow', {
-    id: `SequenceFlow_${sourceElement.id}_IntermediateThrowEvent_${normalizedId}`, // ID único para o fluxo
-    sourceRef: sourceElement, // Referência ao elemento anterior
+    id: `SequenceFlow_${prevElement.id}_IntermediateThrowEvent_${normalizedId}`, // ID único para o fluxo
+    sourceRef: prevElement, // Referência ao elemento anterior
     targetRef: intermediateEvent, // Referência ao evento intermediário
   });
 
@@ -75,21 +77,21 @@ export default function criarEventoIntermediario(
 
   // Calcula waypoints usando a nova função
   // Detecta se o elemento anterior é um gateway
-  const isFromGateway = sourceElement.id && (
-    sourceElement.id.includes('ExclusiveGateway') || 
-    sourceElement.id.includes('ParallelGateway')
+  const isFromGateway = prevElement.id && (
+    prevElement.id.includes('ExclusiveGateway') || 
+    prevElement.id.includes('ParallelGateway')
   );
   
   const sequenceFlowWaypoints = calcularWaypointsSequenceFlow(
     moddle,
-    sourceBounds,
+    prevBounds,
     eventBounds,
     isFromGateway // Usa lógica de gateway se vem de um gateway
   );
 
   // Cria o BPMNEdge para o fluxo de sequência
   const sequenceFlowEdge = moddle.create('bpmndi:BPMNEdge', {
-    id: `SequenceFlow_${sourceElement.id}_IntermediateThrowEvent_${normalizedId}_di`, // ID único para o edge
+    id: `SequenceFlow_${prevElement.id}_IntermediateThrowEvent_${normalizedId}_di`, // ID único para o edge
     bpmnElement: sequenceFlow, // Referência ao fluxo de sequência
     waypoint: sequenceFlowWaypoints, // Define os waypoints
   });
@@ -97,8 +99,11 @@ export default function criarEventoIntermediario(
   // Adiciona o edge ao BPMNPlane
   bpmnPlane.planeElement.push(sequenceFlowEdge);
 
-  return {
-    intermediateEvent, // Retorna o evento intermediário criado
-    intermediateEventShape, // Retorna o shape do evento intermediário
-  }; // Retorna o evento intermediário criado
+  const dictEntry = new Map();
+  dictEntry.set("element", intermediateEvent);
+  dictEntry.set("bounds", eventBounds);
+  dictEntry.set("shape", intermediateEventShape);
+  
+  elementsList.push(dictEntry);
+  return elementsList;
 }
