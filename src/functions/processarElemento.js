@@ -79,47 +79,47 @@ export default function processarElemento(
       );
       break;
 
-    // case 'Gateway Exclusivo':
-    //   const existingExclusiveGateway = buscarGatewayExistente(bpmnPlane, 'ExclusiveGateway', name);
+    case 'Gateway Exclusivo':
+      const existingExclusiveGateway = buscarGatewayExistente(bpmnPlane, 'ExclusiveGateway', name);
 
-    //   if (existingExclusiveGateway) {
-    //     conectarGatewayExclusivoExistente(
-    //       moddle,
-    //       bpmnProcess,
-    //       bpmnPlane,
-    //       currentElement,
-    //       currentBounds,
-    //       existingExclusiveGateway,
-    //       elementTracker.get('nextPositions')
-    //     );
+      if (existingExclusiveGateway) {
+        conectarGatewayExclusivoExistente(
+          moddle,
+          bpmnProcess,
+          bpmnPlane,
+          currentElement,
+          currentBounds,
+          existingExclusiveGateway,
+          elementTracker.get('nextPositions')
+        );
 
-    //     // Update state with the existing gateway for the next element
-    //   } else {
-    //     const exclusiveGateway = criarGatewayExclusivo(
-    //       moddle,
-    //       bpmnProcess,
-    //       bpmnPlane,
-    //       currentElement,
-    //       currentBounds,
-    //       participantBounds,
-    //       participants,
-    //       laneHeight,
-    //       name,
-    //       lane
-    //     );
+        // Update state with the existing gateway for the next element
+      } else {
+        const exclusiveGateway = criarGatewayExclusivo(
+          moddle,
+          bpmnProcess,
+          bpmnPlane,
+          currentElement,
+          currentBounds,
+          participantBounds,
+          participants,
+          laneHeight,
+          name,
+          lane
+        );
 
-    //     const positions = calcularPosicoesDivergencia(
-    //       diverge,
-    //       currentBounds,
-    //       participantBounds,
-    //       participants,
-    //       laneHeight,
-    //       lane
-    //     );
+        const positions = calcularPosicoesDivergencia(
+          diverge,
+          currentBounds,
+          participantBounds,
+          participants,
+          laneHeight,
+          lane
+        );
 
-    //     addMultiplePositions(exclusiveGateway, positions);
-    //   }
-    //   break;
+        addMultiplePositions(exclusiveGateway, positions);
+      }
+      break;
 
     // case 'Gateway Paralelo':
     //   const existingParallelGateway = buscarGatewayExistente(bpmnPlane, 'ParallelGateway', name);

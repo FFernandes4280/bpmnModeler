@@ -56,7 +56,7 @@ export function processElementsFromUI(elementsContainer) {
       diverge = row.querySelector('.element-name').value;
     }
 
-    return { type, name, lane, diverge };
+    return { index, type, name, lane, diverge };
   });
 }
 
