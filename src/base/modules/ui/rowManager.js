@@ -12,6 +12,7 @@ import {
   createExistingGatewaySelect
 } from './elementCreators.js';
 import { createGatewayCounter } from './gatewayCounter.js';
+import { setAddElementRowFunction } from './gatewayBranches.js';
 
 // Variável global para armazenar o callback de atualização do diagrama
 let globalUpdateDiagramCallback = null;
@@ -23,6 +24,9 @@ let globalUpdateDiagramCallback = null;
 export function setUpdateDiagramCallback(callback) {
   globalUpdateDiagramCallback = callback;
 }
+
+// Define a função addElementRow para uso no sistema de branches
+setAddElementRowFunction(addElementRow);
 
 /**
  * Adiciona uma nova linha de elementos
@@ -74,7 +78,7 @@ export function addElementRow(elementsContainer, participantsInput) {
   const activityTypeSelect = createActivityTypeSelect();
   const finalEventTypeSelect = createFinalEventTypeSelect();
   const dataObjectDirectionSelect = createDataObjectDirectionSelect();
-  const gatewayCounter = createGatewayCounter();
+  const gatewayCounter = createGatewayCounter(elementsContainer, participantsInput);
   const existingGatewayTypeSelect = createExistingGatewayTypeSelect();
   const existingGatewaySelect = createExistingGatewaySelect();
 

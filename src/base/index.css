@@ -209,6 +209,41 @@ background-color: #cc0000;
   margin-bottom: 0;
 }
 
+/* Estilos para divisões de gateway branches */
+.gateway-branches-container {
+  margin: 20px 0;
+}
+
+.gateway-branch {
+  margin-bottom: 15px;
+}
+
+.branch-separator {
+  text-align: center;
+  margin: 15px 0 10px 0;
+  color: #6c757d;
+  font-weight: normal;
+  font-size: 14px;
+}
+
+.branch-elements {
+  margin-bottom: 10px;
+}
+
+.add-branch-element {
+  width: 100%;
+  padding: 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+  margin-bottom: 5px;
+}
+
+.add-branch-element:hover {
+  background-color: #0056b3;
+}
+
 .gateway-select {
   width: 100px !important;
   height: 25px;
