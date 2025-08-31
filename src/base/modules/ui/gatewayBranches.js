@@ -2,6 +2,8 @@
  * Gerenciamento de branches de gateways
  */
 
+import { updateElementNumbers } from '../utils/domHelpers.js';
+
 // Armazena informações sobre as branches dos gateways
 const gatewayBranches = new Map();
 
@@ -110,10 +112,30 @@ function createBranchDivisions(gatewayId) {
 
   const mainContainer = gatewayData.originalContainer;
   
-  // Esconde o botão principal de adicionar linha
-  const mainAddButton = document.getElementById('addElementRow');
-  if (mainAddButton) {
-    mainAddButton.style.display = 'none';
+  // Determina o contexto de inserção baseado no container
+  let insertionParent, insertionReference;
+  
+  if (mainContainer.id === 'elementsContainer') {
+    // Estamos no container principal
+    const mainAddButton = document.getElementById('addElementRow');
+    if (mainAddButton) {
+      mainAddButton.style.display = 'none';
+    }
+    insertionParent = mainContainer.parentNode;
+    insertionReference = mainAddButton;
+  } else {
+    // Estamos dentro de uma branch - inserir dentro da própria branch
+    // Encontra e esconde o botão "Adicionar Linha" da branch pai
+    const parentBranch = mainContainer.closest('.gateway-branch');
+    if (parentBranch) {
+      const parentAddButton = parentBranch.querySelector('.add-branch-element');
+      if (parentAddButton) {
+        parentAddButton.style.display = 'none';
+      }
+    }
+    
+    insertionParent = mainContainer;
+    insertionReference = null; // Adicionar no final da branch
   }
 
   // Cria container para as divisões
@@ -126,8 +148,12 @@ function createBranchDivisions(gatewayId) {
     addBranchDivision(gatewayId, index, branchesContainer);
   });
 
-  // Adiciona as divisões após o container principal
-  mainContainer.parentNode.insertBefore(branchesContainer, mainAddButton);
+  // Adiciona as divisões no local apropriado
+  if (insertionReference) {
+    insertionParent.insertBefore(branchesContainer, insertionReference);
+  } else {
+    insertionParent.appendChild(branchesContainer);
+  }
 }
 
 /**
@@ -207,18 +233,55 @@ function addElementToBranch(gatewayId, branchIndex) {
  * @param {string} gatewayId - ID do gateway
  */
 export function removeGatewayBranches(gatewayId) {
+  const gatewayData = gatewayBranches.get(gatewayId);
   const branchesContainer = document.getElementById(`branches-${gatewayId}`);
+  
   if (branchesContainer) {
     branchesContainer.remove();
   }
 
   gatewayBranches.delete(gatewayId);
 
-  // Mostra o botão principal novamente se não há mais gateways com branches
+  // Verifica se devemos mostrar botões novamente
   if (gatewayBranches.size === 0) {
+    // Não há mais gateways com branches - mostra o botão principal
     const mainAddButton = document.getElementById('addElementRow');
     if (mainAddButton) {
       mainAddButton.style.display = '';
+    }
+  } else if (gatewayData) {
+    // Verifica o contexto do gateway removido
+    const wasMainContainer = gatewayData.originalContainer && gatewayData.originalContainer.id === 'elementsContainer';
+    
+    if (wasMainContainer) {
+      // Gateway estava no container principal
+      const hasMainGateways = Array.from(gatewayBranches.values()).some(data => 
+        data.originalContainer && data.originalContainer.id === 'elementsContainer'
+      );
+      
+      if (!hasMainGateways) {
+        const mainAddButton = document.getElementById('addElementRow');
+        if (mainAddButton) {
+          mainAddButton.style.display = '';
+        }
+      }
+    } else {
+      // Gateway estava dentro de uma branch - verifica se deve restaurar o botão da branch pai
+      const parentBranch = gatewayData.originalContainer.closest('.gateway-branch');
+      if (parentBranch) {
+        // Verifica se não há outros gateways aninhados nesta branch
+        const hasNestedGateways = Array.from(gatewayBranches.values()).some(data => {
+          return data.originalContainer && 
+                 data.originalContainer.closest('.gateway-branch') === parentBranch;
+        });
+        
+        if (!hasNestedGateways) {
+          const parentAddButton = parentBranch.querySelector('.add-branch-element');
+          if (parentAddButton) {
+            parentAddButton.style.display = '';
+          }
+        }
+      }
     }
   }
 }
@@ -312,4 +375,52 @@ export function getActiveGatewayIds() {
  */
 export function updateElementNumbersWithBranches(container = null) {
   updateGlobalElementNumbers();
+}
+
+/**
+ * Limpa branches de um gateway removido e migra elementos para o container pai
+ * @param {string} gatewayId - ID do gateway removido
+ */
+export function cleanupGatewayBranches(gatewayId) {
+  if (!gatewayBranches.has(gatewayId)) {
+    return; // Gateway não tinha branches
+  }
+
+  const gatewayData = gatewayBranches.get(gatewayId);
+  const branchesContainer = document.getElementById(`branches-${gatewayId}`);
+  
+  if (!branchesContainer) {
+    // Remove do registro se não encontrou o container
+    gatewayBranches.delete(gatewayId);
+    return;
+  }
+
+  // Encontra o container pai onde os elementos serão migrados
+  const parentContainer = gatewayData.originalContainer;
+  
+  // Para cada branch, migra os elementos para o container pai
+  gatewayData.branches.forEach((branch, branchIndex) => {
+    if (branch.container) {
+      const elementsInBranch = branch.container.querySelectorAll('.element-row');
+      
+      // Migra cada elemento da branch para o container pai
+      elementsInBranch.forEach(element => {
+        // Remove da branch e adiciona ao container pai
+        element.remove();
+        parentContainer.appendChild(element);
+      });
+    }
+  });
+  
+  // Remove as branches usando a função existente
+  removeGatewayBranches(gatewayId);
+  
+  // Renumera todos os elementos
+  if (hasActiveBranches()) {
+    updateElementNumbersWithBranches();
+  } else {
+    updateElementNumbers(parentContainer);
+  }
+  
+  console.log(`Gateway ${gatewayId} removido com cleanup de branches`);
 }

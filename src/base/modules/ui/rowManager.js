@@ -12,7 +12,7 @@ import {
   createExistingGatewaySelect
 } from './elementCreators.js';
 import { createGatewayCounter } from './gatewayCounter.js';
-import { setAddElementRowFunction, hasActiveBranches, updateElementNumbersWithBranches } from './gatewayBranches.js';
+import { setAddElementRowFunction, hasActiveBranches, updateElementNumbersWithBranches, cleanupGatewayBranches } from './gatewayBranches.js';
 
 // Variável global para armazenar o callback de atualização do diagrama
 let globalUpdateDiagramCallback = null;
@@ -296,6 +296,30 @@ function setupRowEventListeners(row, elementTypeSelect, elementLaneSelect, eleme
 
   // Event listener para remover a linha
   row.querySelector('.removeElementRow').addEventListener('click', () => {
+    const elementType = row.querySelector('.element-type').value;
+    
+    // Se for um gateway, fazer cleanup dos branches antes de remover
+    if (elementType === 'Gateway Exclusivo' || elementType === 'Gateway Paralelo') {
+      // Gera o ID do gateway da mesma forma que o gatewayCounter
+      const branchContainer = row.closest('.branch-elements');
+      let gatewayId;
+      
+      if (branchContainer) {
+        // Estamos dentro de uma branch - usar ID mais específico
+        const branchId = branchContainer.id; // branch-elements-gatewayX-branchY
+        const allRowsInBranch = Array.from(branchContainer.querySelectorAll('.element-row'));
+        const rowIndex = allRowsInBranch.indexOf(row);
+        gatewayId = `${branchId}_gateway_${elementType.replace(' ', '')}_${rowIndex}`;
+      } else {
+        // Estamos no container principal
+        const allRows = Array.from(document.querySelectorAll('#elementsContainer .element-row'));
+        const rowIndex = allRows.indexOf(row);
+        gatewayId = `gateway_${elementType.replace(' ', '')}_${rowIndex}`;
+      }
+      
+      cleanupGatewayBranches(gatewayId);
+    }
+    
     row.remove();
     
     // Usa numeração com branches se houver branches ativas, senão usa a padrão

@@ -18,15 +18,32 @@ export function createGatewayCounter(elementsContainer = null, participantsInput
   // Função para atualizar branches baseado no counter value
   function updateBranches() {
     const currentRow = gatewayCounter.closest('.element-row');
-    if (!currentRow || !elementsContainer || !participantsInput) return;
+    if (!currentRow) return;
 
     const elementType = currentRow.querySelector('.element-type').value;
     if (elementType !== 'Gateway Exclusivo' && elementType !== 'Gateway Paralelo') return;
 
-    // Gera um ID único para este gateway baseado na posição
-    const allRows = Array.from(document.querySelectorAll('.element-row'));
-    const rowIndex = allRows.indexOf(currentRow);
-    const gatewayId = `gateway_${elementType.replace(' ', '')}_${rowIndex}`;
+    // Detecta se estamos dentro de uma branch ou no container principal
+    const branchContainer = currentRow.closest('.branch-elements');
+    const actualContainer = branchContainer || elementsContainer;
+    const actualParticipantsInput = participantsInput;
+
+    if (!actualContainer || !actualParticipantsInput) return;
+
+    // Gera um ID único considerando se está em uma branch
+    let gatewayId;
+    if (branchContainer) {
+      // Estamos dentro de uma branch - usar ID mais específico
+      const branchId = branchContainer.id; // branch-elements-gatewayX-branchY
+      const allRowsInBranch = Array.from(branchContainer.querySelectorAll('.element-row'));
+      const rowIndex = allRowsInBranch.indexOf(currentRow);
+      gatewayId = `${branchId}_gateway_${elementType.replace(' ', '')}_${rowIndex}`;
+    } else {
+      // Estamos no container principal
+      const allRows = Array.from(document.querySelectorAll('#elementsContainer .element-row'));
+      const rowIndex = allRows.indexOf(currentRow);
+      gatewayId = `gateway_${elementType.replace(' ', '')}_${rowIndex}`;
+    }
 
     if (counterValue <= 0) {
       // Convergência ou valor inválido - remove branches
@@ -34,7 +51,7 @@ export function createGatewayCounter(elementsContainer = null, participantsInput
     } else {
       // Divergência - cria/atualiza branches
       const branchCount = counterValue + 1; // +1 porque counterValue=1 = 2 branches
-      initGatewayBranches(gatewayId, branchCount, elementsContainer, participantsInput);
+      initGatewayBranches(gatewayId, branchCount, actualContainer, actualParticipantsInput);
     }
   }
 
