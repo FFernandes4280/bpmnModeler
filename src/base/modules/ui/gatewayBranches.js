@@ -198,7 +198,7 @@ function addElementToBranch(gatewayId, branchIndex) {
     console.error('addElementRowFunction não foi definida');
   }
   
-  // Atualiza numeração global
+  // Atualiza numeração com sistema de branches
   updateGlobalElementNumbers();
 }
 
@@ -262,12 +262,31 @@ export function getBranchLastElement(gatewayId, branchIndex) {
  * Atualiza a numeração global dos elementos
  */
 function updateGlobalElementNumbers() {
-  const allRows = document.querySelectorAll('.element-row');
-  allRows.forEach((row, index) => {
-    const numberElement = row.querySelector('.element-number');
-    if (numberElement) {
-      numberElement.textContent = index + 1;
-    }
+  // Primeiro, numera os elementos do container principal (antes dos gateways)
+  const mainContainer = document.getElementById('elementsContainer');
+  if (mainContainer) {
+    const mainRows = mainContainer.querySelectorAll('.element-row');
+    mainRows.forEach((row, index) => {
+      const numberElement = row.querySelector('.element-number');
+      if (numberElement) {
+        numberElement.textContent = index + 1;
+      }
+    });
+  }
+
+  // Depois, numera cada branch independentemente
+  gatewayBranches.forEach((gatewayData, gatewayId) => {
+    gatewayData.branches.forEach((branch, branchIndex) => {
+      if (branch.container) {
+        const branchRows = branch.container.querySelectorAll('.element-row');
+        branchRows.forEach((row, index) => {
+          const numberElement = row.querySelector('.element-number');
+          if (numberElement) {
+            numberElement.textContent = index + 1; // Cada branch começa do 1
+          }
+        });
+      }
+    });
   });
 }
 
@@ -285,4 +304,12 @@ export function hasActiveBranches() {
  */
 export function getActiveGatewayIds() {
   return Array.from(gatewayBranches.keys());
+}
+
+/**
+ * Atualiza numeração considerando branches (função pública para usar no lugar da do domHelpers)
+ * @param {HTMLElement} container - Container que foi modificado (pode ser main ou branch)
+ */
+export function updateElementNumbersWithBranches(container = null) {
+  updateGlobalElementNumbers();
 }

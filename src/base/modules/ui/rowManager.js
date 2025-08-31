@@ -12,7 +12,7 @@ import {
   createExistingGatewaySelect
 } from './elementCreators.js';
 import { createGatewayCounter } from './gatewayCounter.js';
-import { setAddElementRowFunction } from './gatewayBranches.js';
+import { setAddElementRowFunction, hasActiveBranches, updateElementNumbersWithBranches } from './gatewayBranches.js';
 
 // Variável global para armazenar o callback de atualização do diagrama
 let globalUpdateDiagramCallback = null;
@@ -96,7 +96,13 @@ export function addElementRow(elementsContainer, participantsInput) {
                         eventTypeSelect, participantsOptions, externalParticipantsOptions, elementsContainer);
 
   elementsContainer.appendChild(row);
-  updateElementNumbers(elementsContainer);
+  
+  // Usa numeração com branches se houver branches ativas, senão usa a padrão
+  if (hasActiveBranches()) {
+    updateElementNumbersWithBranches(elementsContainer);
+  } else {
+    updateElementNumbers(elementsContainer);
+  }
 }
 
 /**
@@ -291,17 +297,32 @@ function setupRowEventListeners(row, elementTypeSelect, elementLaneSelect, eleme
   // Event listener para remover a linha
   row.querySelector('.removeElementRow').addEventListener('click', () => {
     row.remove();
-    updateElementNumbers(elementsContainer);
+    
+    // Usa numeração com branches se houver branches ativas, senão usa a padrão
+    if (hasActiveBranches()) {
+      updateElementNumbersWithBranches();
+    } else {
+      updateElementNumbers(elementsContainer);
+    }
+    
     updateAllExistingGatewaySelects(); // Atualiza selects após remover elemento
   });
 
   // Event listeners para botões de movimento
   row.querySelector('.move-up').addEventListener('click', () => {
     moveElementUp(row, elementsContainer);
+    // Atualiza numeração após movimento
+    if (hasActiveBranches()) {
+      updateElementNumbersWithBranches();
+    }
   });
 
   row.querySelector('.move-down').addEventListener('click', () => {
     moveElementDown(row, elementsContainer);
+    // Atualiza numeração após movimento
+    if (hasActiveBranches()) {
+      updateElementNumbersWithBranches();
+    }
   });
 }
 
