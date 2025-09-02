@@ -4,14 +4,23 @@ export default function criarGatewayExclusivo(
   moddle,
   bpmnProcess,
   bpmnPlane,
-  sourceElement,
-  sourceBounds,
   participantBounds,
   participants,
   laneHeight,
   gatewayName,
-  gatewayLane
+  gatewayLane,
+  index,
+  elementsList
 ) {
+
+  // Obtém o elemento anterior da lista usando o índice
+  const prevEntry = elementsList[index - 1];
+  const sourceElement = prevEntry ? prevEntry.get("element") : null;
+  const sourceBounds = prevEntry ? prevEntry.get("bounds") : null;
+
+  if (!sourceElement || !sourceBounds) {
+    throw new Error(`Elemento anterior não encontrado para o gateway "${gatewayName}"`);
+  }
 
   // Localiza o índice da lane correspondente ao participante
   const gatewayLaneIndex = participants.indexOf(gatewayLane);
@@ -80,5 +89,13 @@ export default function criarGatewayExclusivo(
 
   // Adiciona o edge ao BPMNPlane
   bpmnPlane.planeElement.push(sequenceFlowEdge);
+
+  // Adiciona o gateway à lista de elementos
+  elementsList.push(new Map([
+    ['element', gateway],
+    ['bounds', gatewayBounds],
+    ['index', index]
+  ]));
+
   return gateway; // Retorna o gateway criado
 }

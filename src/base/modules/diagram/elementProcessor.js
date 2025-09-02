@@ -10,7 +10,16 @@
 export function processElementsFromUI(elementsContainer) {
   let previousName = document.getElementById('initialEventName').value;
   
-  return Array.from(elementsContainer.querySelectorAll('.element-row')).map(row => {
+  // Coleta elementos do container principal
+  const mainElements = Array.from(elementsContainer.querySelectorAll('.element-row'));
+  
+  // Coleta elementos de todos os containers de branch (divergências)
+  const branchElements = Array.from(document.querySelectorAll('.branch-elements .element-row'));
+  
+  // Combina todos os elementos
+  const allElements = [...mainElements, ...branchElements];
+  
+  return allElements.map(row => {
     const type = row.querySelector('.element-type').value;
     const lane = row.querySelector('.element-lane').value;
     const index = parseInt(row.querySelector('.element-number').textContent, 10);
@@ -50,7 +59,13 @@ export function processElementsFromUI(elementsContainer) {
         const gatewaySelect = row.querySelector('.gateway-select');
         diverge = 'existing_' + (gatewaySelect.value || '1'); // Prefixo para identificar gateway existente
       } else {
-        diverge = counterText === 'Convergência' ? "1" : counterText;
+        // Para gateways com divergências, coletar índices dos primeiros elementos de cada branch
+        if (counterText !== 'Convergência') {
+          diverge = getBranchFirstElementIndexes(row, index);
+        } else {
+          // Para convergência, retorna array com o próximo elemento
+          diverge = [index + 1];
+        }
       }
     } else {
       diverge = row.querySelector('.element-name').value;
@@ -58,6 +73,55 @@ export function processElementsFromUI(elementsContainer) {
 
     return { index, type, name, lane, diverge };
   });
+}
+
+/**
+ * Coleta os índices dos primeiros elementos de cada branch de um gateway
+ * @param {HTMLElement} gatewayRow - Linha do gateway
+ * @param {number} gatewayIndex - Índice do gateway
+ * @returns {Array|string} Array com índices ou string para convergência
+ */
+function getBranchFirstElementIndexes(gatewayRow, gatewayIndex) {
+  // Gera o ID do gateway baseado na sua posição e tipo
+  const elementType = gatewayRow.querySelector('.element-type').value;
+  const branchContainer = gatewayRow.closest('.branch-elements');
+  
+  let gatewayId;
+  if (branchContainer) {
+    const branchId = branchContainer.id;
+    const allRowsInBranch = Array.from(branchContainer.querySelectorAll('.element-row'));
+    const rowIndex = allRowsInBranch.indexOf(gatewayRow);
+    gatewayId = `${branchId}_gateway_${elementType.replace(' ', '')}_${rowIndex}`;
+  } else {
+    const allRows = Array.from(document.querySelectorAll('#elementsContainer .element-row'));
+    const rowIndex = allRows.indexOf(gatewayRow);
+    gatewayId = `gateway_${elementType.replace(' ', '')}_${rowIndex}`;
+  }
+
+  // Procura pelo container de branches deste gateway
+  const branchesContainer = document.getElementById(`branches-${gatewayId}`);
+  if (!branchesContainer) {
+    // Se não encontrou branches, retorna array vazio (gateway divergente sem elementos)
+    return [];
+  }
+
+  // Coleta o índice do primeiro elemento de cada branch
+  const branchIndexes = [];
+  const branches = branchesContainer.querySelectorAll('.gateway-branch');
+  
+  branches.forEach(branch => {
+    const branchElements = branch.querySelector('.branch-elements');
+    if (branchElements) {
+      const firstElementRow = branchElements.querySelector('.element-row');
+      if (firstElementRow) {
+        const firstElementIndex = parseInt(firstElementRow.querySelector('.element-number').textContent, 10);
+        branchIndexes.push(firstElementIndex);
+      }
+    }
+  });
+
+  // Retorna array vazio se não há branches (gateway divergente sem elementos)
+  return branchIndexes.length > 0 ? branchIndexes : [];
 }
 
 /**

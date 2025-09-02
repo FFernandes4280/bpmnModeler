@@ -21,13 +21,13 @@ export default function processarElemento(
   participantBounds,
   participants,
   laneHeight,
-  externalParticipants
+  externalParticipants,
+  elements
 ) {
-
+  
   let { index, type, name, lane, diverge } = element;
   let eventType = '';
   let activityType = '';
-  console.log(elementsList)
   switch (type) {
     case 'Inicio':
       criarEventoInicial(
@@ -80,45 +80,35 @@ export default function processarElemento(
       break;
 
     case 'Gateway Exclusivo':
-      const existingExclusiveGateway = buscarGatewayExistente(bpmnPlane, 'ExclusiveGateway', name);
-
-      if (existingExclusiveGateway) {
-        conectarGatewayExclusivoExistente(
+      criarGatewayExclusivo(
+        moddle,
+        bpmnProcess,
+        bpmnPlane,
+        participantBounds,
+        participants,
+        laneHeight,
+        name,
+        lane,
+        index,
+        elementsList
+      );
+      
+      diverge.forEach((branchIndex) => {
+        processarElemento(
+          elements[branchIndex],
           moddle,
           bpmnProcess,
           bpmnPlane,
-          currentElement,
-          currentBounds,
-          existingExclusiveGateway,
-          elementTracker.get('nextPositions')
-        );
-
-        // Update state with the existing gateway for the next element
-      } else {
-        const exclusiveGateway = criarGatewayExclusivo(
-          moddle,
-          bpmnProcess,
-          bpmnPlane,
-          currentElement,
-          currentBounds,
+          collaboration,
+          elementsList,
           participantBounds,
           participants,
           laneHeight,
-          name,
-          lane
+          externalParticipants,
+          elements
         );
+      });
 
-        const positions = calcularPosicoesDivergencia(
-          diverge,
-          currentBounds,
-          participantBounds,
-          participants,
-          laneHeight,
-          lane
-        );
-
-        addMultiplePositions(exclusiveGateway, positions);
-      }
       break;
 
     // case 'Gateway Paralelo':

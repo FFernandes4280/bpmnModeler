@@ -325,27 +325,30 @@ export function getBranchLastElement(gatewayId, branchIndex) {
  * Atualiza a numeração global dos elementos
  */
 function updateGlobalElementNumbers() {
-  // Primeiro, numera os elementos do container principal (antes dos gateways)
+  // Numera todos os elementos sequencialmente, incluindo os das branches
+  let globalCounter = 1;
+  
+  // Primeiro, numera os elementos do container principal
   const mainContainer = document.getElementById('elementsContainer');
   if (mainContainer) {
     const mainRows = mainContainer.querySelectorAll('.element-row');
-    mainRows.forEach((row, index) => {
+    mainRows.forEach((row) => {
       const numberElement = row.querySelector('.element-number');
       if (numberElement) {
-        numberElement.textContent = index + 1;
+        numberElement.textContent = globalCounter++;
       }
     });
   }
 
-  // Depois, numera cada branch independentemente
+  // Depois, numera cada branch continuando a sequência global
   gatewayBranches.forEach((gatewayData, gatewayId) => {
     gatewayData.branches.forEach((branch, branchIndex) => {
       if (branch.container) {
         const branchRows = branch.container.querySelectorAll('.element-row');
-        branchRows.forEach((row, index) => {
+        branchRows.forEach((row) => {
           const numberElement = row.querySelector('.element-number');
           if (numberElement) {
-            numberElement.textContent = index + 1; // Cada branch começa do 1
+            numberElement.textContent = globalCounter++;
           }
         });
       }

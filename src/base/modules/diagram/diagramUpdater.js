@@ -59,9 +59,7 @@ async function performDiagramUpdate(viewer, generateDiagramFromInput, setupCanva
   const uiElements = processElementsFromUI(elementsContainer);
   const elements = [initialElement, ...uiElements];
   
-  // Processamento de duplicatas para inserção de gateways
   const processedElements = processDuplicateElements(elements);
-  console.log('Processed Elements:', processedElements);
   try {
     const diagramXML = await generateDiagramFromInput(
       processName,
