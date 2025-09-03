@@ -1,7 +1,6 @@
 import BpmnModdle from 'bpmn-moddle';
 import processarElemento from '../functions/processarElemento.js';
 import criarParticipantesExternos from '../functions/criarParticipantesExternos.js';
-import criarEventoInicial from '../functions/criarEventoInicial.js';
 
 const moddle = new BpmnModdle();
 
@@ -107,23 +106,29 @@ export async function generateDiagramFromInput(processName, participantsInput, h
   }
 
   const elementsList = [];
-  
+
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  
-  elements.forEach(element => {
-    processarElemento(
+
+  elements.forEach((element, index) => {
+    const resultado = processarElemento(
       element,
       moddle,
       bpmnProcess,
       bpmnPlane,
       collaboration,
-      elementsList,
+      elementsList.length ? elementsList[index - 1] : null,
       participantBounds,
       participants,
       laneHeight,
       externalParticipants,
       elements
     );
+
+    if (Array.isArray(resultado)) {
+      elementsList.push(...resultado);
+    } else {
+      elementsList.push(resultado);
+    }
   });
 
   // Finalize the diagram

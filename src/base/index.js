@@ -1,5 +1,5 @@
 import BpmnViewer from 'bpmn-js';
-import { generateDiagramFromInput } from './chatbot.js';
+import { generateDiagramFromInput } from './diagramCreator.js';
 import { addElementRow, updateAllExistingGatewaySelects, setUpdateDiagramCallback } from './modules/ui/rowManager.js';
 import { createGatewayCounter, ensureGatewayCounterSeparation } from './modules/ui/gatewayCounter.js';
 import { updateDiagram } from './modules/diagram/diagramUpdater.js';

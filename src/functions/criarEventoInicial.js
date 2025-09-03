@@ -6,8 +6,7 @@ export default function criarEventoInicial(
   participants,
   laneHeight,
   initialEventName,
-  initialEventLane,
-  elementsList
+  initialEventLane
 ) {
   // Create the initial start event
   const laneIndex = participants.indexOf(initialEventLane);
@@ -58,6 +57,5 @@ export default function criarEventoInicial(
   dictEntry.set('bounds', initialEventBounds);
   dictEntry.set('shape', initialEventShape);
   
-  elementsList.push(dictEntry);
-  return elementsList;
+  return dictEntry;
 }

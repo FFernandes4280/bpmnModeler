@@ -6,10 +6,10 @@ import criarEventoInicial from './criarEventoInicial.js';
 import criarEventoFinal from './criarEventoFinal.js';
 import criarDataObject from './criarDataObject.js';
 import criarFluxoMensagem from './criarFluxoMensagem.js';
-import calcularPosicoesDivergencia from './calcularPosicoesDivergencia.js';
 import conectarGatewayExclusivoExistente from './conectarGatewayExclusivoExistente.js';
 import conectarGatewayParaleloExistente from './conectarGatewayParaleloExistente.js';
 import buscarGatewayExistente from './buscarGatewayExistente.js';
+import { gerenciadorDivergencias } from './gerenciarDivergencias.js';
 
 export default function processarElemento(
   element,
@@ -17,7 +17,7 @@ export default function processarElemento(
   bpmnProcess,
   bpmnPlane,
   collaboration,
-  elementsList,
+  dictEntry,
   participantBounds,
   participants,
   laneHeight,
@@ -28,9 +28,13 @@ export default function processarElemento(
   let { index, type, name, lane, diverge } = element;
   let eventType = '';
   let activityType = '';
+  
+  const positionConfig = gerenciadorDivergencias.obterConfiguracaoCompleta(index);
+  const gatewayPai = gerenciadorDivergencias.ehPrimeiroElementoBranch(index);
+
   switch (type) {
     case 'Inicio':
-      criarEventoInicial(
+      dictEntry = criarEventoInicial(
         moddle,
         bpmnProcess,
         bpmnPlane,
@@ -38,15 +42,14 @@ export default function processarElemento(
         participants,
         laneHeight,
         name,
-        lane,
-        elementsList
+        lane
       );
       break;
 
     case 'Atividade':
       activityType = name.split('_')[0];
       name = name.split('_')[1];
-      criarAtividade(
+      dictEntry = criarAtividade(
         moddle,
         bpmnProcess,
         bpmnPlane,
@@ -57,14 +60,16 @@ export default function processarElemento(
         name,
         lane,
         index,
-        elementsList
+        dictEntry,
+        positionConfig,
+        gatewayPai
       );
       break;
 
     case 'Evento Intermediario':
       eventType = name.split('_')[0];
       name = name.split('_')[1];
-      criarEventoIntermediario(
+      dictEntry = criarEventoIntermediario(
         moddle,
         bpmnProcess,
         bpmnPlane,
@@ -75,12 +80,15 @@ export default function processarElemento(
         name,
         lane,
         index,
-        elementsList
+        dictEntry,
+        positionConfig,
+        gatewayPai
       );
       break;
 
     case 'Gateway Exclusivo':
-      criarGatewayExclusivo(
+      // Primeiro cria o gateway e obtém seus bounds
+      const gatewayBounds = criarGatewayExclusivo(
         moddle,
         bpmnProcess,
         bpmnPlane,
@@ -90,9 +98,26 @@ export default function processarElemento(
         name,
         lane,
         index,
-        elementsList
+        elementsList,
+        positionConfig
       );
 
+      // Se tem divergências, registra usando as regras originais
+      if (diverge && diverge.length > 0) {
+        const gatewayId = `gateway_${index}`;
+        
+        gerenciadorDivergencias.registrarDivergencia(
+          gatewayId, 
+          diverge, 
+          gatewayBounds,  // currentBounds
+          participantBounds, 
+          participants, 
+          laneHeight, 
+          lane
+        );
+      }
+
+      // Processa elementos dos branches
       diverge.forEach((branchIndex) => {
         processarElemento(
           elements[branchIndex],
@@ -112,6 +137,52 @@ export default function processarElemento(
       break;
 
     case 'Gateway Paralelo':
+      // Primeiro cria o gateway e obtém seus bounds
+      const gatewayParaleloBounds = criarGatewayParalelo(
+        moddle,
+        bpmnProcess,
+        bpmnPlane,
+        participantBounds,
+        participants,
+        laneHeight,
+        name,
+        lane,
+        index,
+        elementsList,
+        positionConfig
+      );
+
+      // Se tem divergências, registra usando as regras originais
+      if (diverge && diverge.length > 0) {
+        const gatewayId = `gateway_paralelo_${index}`;
+        
+        gerenciadorDivergencias.registrarDivergencia(
+          gatewayId, 
+          diverge, 
+          gatewayParaleloBounds,
+          participantBounds, 
+          participants, 
+          laneHeight, 
+          lane
+        );
+      }
+
+      // Processa elementos dos branches
+      diverge.forEach((branchIndex) => {
+        processarElemento(
+          elements[branchIndex],
+          moddle,
+          bpmnProcess,
+          bpmnPlane,
+          collaboration,
+          elementsList,
+          participantBounds,
+          participants,
+          laneHeight,
+          externalParticipants,
+          elements
+        );
+      });
       break;
 
     case 'Data Object':
@@ -121,7 +192,7 @@ export default function processarElemento(
         moddle,
         bpmnProcess,
         bpmnPlane,
-        elementsList,
+        dictEntry,
         name,
         dataObjectDirection
       );
@@ -133,7 +204,7 @@ export default function processarElemento(
         moddle,
         collaboration,
         bpmnPlane,
-        elementsList,
+        dictEntry,
         externalParticipants,
         participantBounds,
         messageType,
@@ -155,11 +226,15 @@ export default function processarElemento(
         name,
         lane,
         index,
-        elementsList
+        dictEntry,
+        positionConfig,
+        gatewayPai
       );
       break;
 
     default:
       console.error('Unknown element type:', type);
   }
+
+  return dictEntry;
 }

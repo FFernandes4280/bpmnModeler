@@ -2,7 +2,7 @@ export default function criarFluxoMensagem(
   moddle,
   collaboration,
   bpmnPlane,
-  elementsList,
+  dictEntry,
   externalParticipants,
   participantBounds,
   name,
@@ -12,9 +12,8 @@ export default function criarFluxoMensagem(
     (participant) => participant.name === lane
   );
 
-  const prevEntry = elementsList[elementsList.length - 1]; 
-  const prevBounds = prevEntry.get("bounds");
-  const prevElement = prevEntry.get("element");
+  const prevBounds = dictEntry.get("bounds");
+  const prevElement = dictEntry.get("element");
 
   const messageFlow = moddle.create('bpmn:MessageFlow', {
     id: `MessageFlow_${prevElement.id}_to_${externalParticipant.id}`,

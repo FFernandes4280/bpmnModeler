@@ -2,7 +2,7 @@ export default function criarDataObject(
     moddle,
     bpmnProcess,
     bpmnPlane,
-    elementsList,
+    dictEntry,
     name,
     direction
 ) {
@@ -11,9 +11,8 @@ export default function criarDataObject(
         name: name,
     });
 
-    const prevEntry = elementsList[elementsList.length - 1];
-    const prevBounds = prevEntry.get("bounds");
-    const prevElement = prevEntry.get("element");
+    const prevBounds = dictEntry.get("bounds");
+    const prevElement = dictEntry.get("element");
 
     const dataObjectRef = moddle.create('bpmn:DataObjectReference', {
         id: `DataObjectReference_${name.replace(/\s+/g, '_')}`,

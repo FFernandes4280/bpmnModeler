@@ -5,14 +5,23 @@ export default function criarGatewayParalelo(
     moddle,
     bpmnProcess,
     bpmnPlane,
-    sourceElement,
-    sourceBounds,
     participantBounds,
     participants,
     laneHeight,
     gatewayName,
-    gatewayLane
+    gatewayLane,
+    index,
+    elementsList,
   ) {
+    // Obtém o elemento anterior da lista usando o índice
+    const prevEntry = elementsList[index - 1];
+    const sourceElement = prevEntry ? prevEntry.get("element") : null;
+    const sourceBounds = prevEntry ? prevEntry.get("bounds") : null;
+
+    if (!sourceElement || !sourceBounds) {
+      throw new Error(`Elemento anterior não encontrado para o gateway "${gatewayName}"`);
+    }
+
     // Localiza o índice da lane correspondente ao participante
     const gatewayLaneIndex = participants.indexOf(gatewayLane);
     if (gatewayLaneIndex === -1) {
@@ -21,9 +30,27 @@ export default function criarGatewayParalelo(
   
     // Calcula os limites da lane correspondente
     const gatewayLaneY = participantBounds.y + gatewayLaneIndex * laneHeight;
+    
+    // Calcula posição base
+    let baseX = sourceBounds.x + 150; // Desloca o gateway horizontalmente
+    let baseY = gatewayLaneY + (laneHeight - 36) / 2; // Centraliza verticalmente na lane
+
+    // Aplica as regras de posicionamento se houver configuração
+    if (positionConfig) {
+      baseX = baseX + (positionConfig.adjustX || 0);
+      baseY = baseY + (positionConfig.adjustY || 0) + positionConfig.yOffset;
+      
+      console.log(`Gateway Paralelo ${gatewayName} posicionado:`, {
+        tipo: positionConfig.type,
+        x: baseX, 
+        y: baseY,
+        yOffset: positionConfig.yOffset
+      });
+    }
+
     const gatewayBounds = {
-      x: sourceBounds.x + 150, // Desloca o gateway horizontalmente
-      y: gatewayLaneY + (laneHeight - 36) / 2, // Centraliza verticalmente na lane
+      x: baseX,
+      y: baseY,
       width: 36, // Largura padrão do gateway
       height: 36, // Altura padrão do gateway
     };
@@ -74,6 +101,13 @@ export default function criarGatewayParalelo(
   
     // Adiciona o edge ao BPMNPlane
     bpmnPlane.planeElement.push(sequenceFlowEdge);
+
+    // Adiciona o gateway à lista de elementos
+    elementsList.push(new Map([
+      ['element', gateway],
+      ['bounds', gatewayBounds],
+      ['index', index]
+    ]));
   
-    return gateway; // Retorna o gateway criado
+    return gatewayBounds; // Retorna os bounds do gateway para o gerenciador de divergências
   }

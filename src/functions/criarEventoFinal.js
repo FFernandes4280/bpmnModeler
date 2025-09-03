@@ -11,12 +11,11 @@ export default function criarEventoFinal(
   eventName,
   laneName,
   index,
-  elementsList
+  dictEntry
 ) {
   // Recupera o elemento anterior da elementsList
-  const prevEntry = elementsList[index - 1];
-  const prevBounds = prevEntry.get("bounds");
-  const prevElement = prevEntry.get("element");
+  const prevBounds = dictEntry.get("bounds");
+  const prevElement = dictEntry.get("element");
 
   // Normaliza o ID removendo espaços e caracteres especiais
   const normalizedId = eventName.replace(/\s+/g, '_').replace(/[^\w]/g, '');
