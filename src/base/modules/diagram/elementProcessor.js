@@ -19,13 +19,25 @@ export function processElementsFromUI(elementsContainer) {
   // Combina todos os elementos
   const allElements = [...mainElements, ...branchElements];
   
-  return allElements.map(row => {
+  // Primeiro, processa todos os elementos e identifica quais devem ter índice
+  const processedElements = allElements.map(row => {
     const type = row.querySelector('.element-type').value;
     const lane = row.querySelector('.element-lane').value;
-    const index = parseInt(row.querySelector('.element-number').textContent, 10);
+    const originalIndex = parseInt(row.querySelector('.element-number').textContent, 10);
+    
+    // Elementos que não devem ter índice na sequência principal
+    const shouldHaveIndex = !['Mensagem', 'Data Object'].includes(type);
 
     if (type !== 'Gateway Exclusivo' && type !== 'Gateway Paralelo') {
-      let name = row.querySelector('.element-name').value;
+      // Para elementos de mensagem, usar o tipo de mensagem se disponível
+      let name;
+      if (type === 'Mensagem') {
+        const messageTypeElement = row.querySelector('.element-messageType');
+        const messageType = messageTypeElement ? messageTypeElement.value : 'Envio';
+        name = messageType + '_Mensagem_' + originalIndex;
+      } else {
+        name = row.querySelector('.element-name').value;
+      }
       
       // Processamento específico por tipo
       if (type === 'Evento Intermediario') {
@@ -41,11 +53,15 @@ export function processElementsFromUI(elementsContainer) {
         const dataObjectDirection = row.querySelector('.element-dataObjectDirection').value;
         name = dataObjectDirection + '_' + name;
       }
-      previousName = name;
-      return { index, type, name, lane };
+      
+      if (shouldHaveIndex) {
+        previousName = name;
+      }
+      
+      return { originalIndex, type, name, lane, shouldHaveIndex };
     }
 
-    // Processamento para gateways
+    // Processamento para gateways (sempre têm índice)
     let normalizedName = previousName.replace(/\s+/g, '_').replace(/[^\w]/g, '');
     const name = "following" + normalizedName;
     previousName = name;
@@ -61,17 +77,46 @@ export function processElementsFromUI(elementsContainer) {
       } else {
         // Para gateways com divergências, coletar índices dos primeiros elementos de cada branch
         if (counterText !== 'Convergência') {
-          diverge = getBranchFirstElementIndexes(row, index);
+          diverge = getBranchFirstElementIndexes(row, originalIndex);
         } else {
-          // Para convergência, retorna array com o próximo elemento
-          diverge = [index + 1];
+          // Para convergência, retorna array com o próximo elemento se houver um próximo elemento
+          diverge = (originalIndex + 1 < allElements.length) ? [originalIndex + 1] : [];
         }
       }
     } else {
-      diverge = row.querySelector('.element-name').value;
+      // Fallback: se não há counter-value, tentar pegar do campo nome se existir
+      const nameElement = row.querySelector('.element-name');
+      diverge = nameElement ? nameElement.value : '';
     }
 
-    return { index, type, name, lane, diverge };
+    return { originalIndex, type, name, lane, diverge, shouldHaveIndex: true }; // Gateways sempre têm índice
+  });
+
+  // Agora renumera apenas os elementos que devem ter índice
+  let currentIndex = 1;
+  const finalElements = processedElements.map(element => {
+    if (element.shouldHaveIndex) {
+      const index = currentIndex;
+      currentIndex++;
+      return { ...element, index };
+    } else {
+      // Elementos sem índice (Mensagem e Data Object) usam null ou um valor especial
+      return { ...element, index: null };
+    }
+  });
+
+  // Ajusta as referências de divergência nos gateways para usar os novos índices
+  return finalElements.map(element => {
+    if (element.diverge && Array.isArray(element.diverge)) {
+      // Mapeia os índices originais para os novos índices
+      const newDiverge = element.diverge.map(originalIdx => {
+        const targetElement = finalElements.find(el => el.originalIndex === originalIdx);
+        return targetElement ? targetElement.index : originalIdx;
+      }).filter(idx => idx !== null); // Remove referências para elementos sem índice
+      
+      return { ...element, diverge: newDiverge };
+    }
+    return element;
   });
 }
 
@@ -135,7 +180,8 @@ export function processDuplicateElements(elements) {
   elements.forEach((element, index) => {
     if (indexesList.includes(index)) return;
     indexesList.push(index);
-    if (element.type === 'Gateway Exclusivo' || element.type === 'Gateway Paralelo' || element.type === 'Mensagem') return;
+    // Não processa elementos sem índice ou gateways ou mensagens
+    if (element.index === null || element.type === 'Gateway Exclusivo' || element.type === 'Gateway Paralelo' || element.type === 'Mensagem') return;
     
     const duplicates = elements
       .map((el, idx) => (el.name === element.name ? idx : -1))

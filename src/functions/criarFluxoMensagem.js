@@ -2,8 +2,7 @@ export default function criarFluxoMensagem(
   moddle,
   collaboration,
   bpmnPlane,
-  currentElement,
-  currentBounds,
+  elementsList,
   externalParticipants,
   participantBounds,
   name,
@@ -12,16 +11,15 @@ export default function criarFluxoMensagem(
   const externalParticipant = collaboration.get('participants').find(
     (participant) => participant.name === lane
   );
-  
-  if (!externalParticipant) {
-    console.error(`Participante externo "${lane}" não encontrado.`);
-    return null;
-  }
+
+  const prevEntry = elementsList[elementsList.length - 1]; 
+  const prevBounds = prevEntry.get("bounds");
+  const prevElement = prevEntry.get("element");
 
   const messageFlow = moddle.create('bpmn:MessageFlow', {
-    id: `MessageFlow_${currentElement.id}_to_${externalParticipant.id}`,
-    sourceRef: name === 'Envio' ? currentElement : externalParticipant,
-    targetRef: name === 'Envio' ? externalParticipant : currentElement,
+    id: `MessageFlow_${prevElement.id}_to_${externalParticipant.id}`,
+    sourceRef: name === 'Envio' ? prevElement : externalParticipant,
+    targetRef: name === 'Envio' ? externalParticipant : prevElement,
   });
 
   if (!collaboration.get('messageFlows')) {
@@ -30,8 +28,8 @@ export default function criarFluxoMensagem(
   collaboration.get('messageFlows').push(messageFlow);
 
   // Define os waypoints para o Message Flow
-  const elementX = currentBounds.x + currentBounds.width / 2;
-  const elementY = currentBounds.y; // Sempre usar o topo do elemento
+  const elementX = prevBounds.x + prevBounds.width / 2;
+  const elementY = prevBounds.y; 
 
   const targetParticipantIndex = externalParticipants.indexOf(lane);
  
@@ -51,16 +49,11 @@ export default function criarFluxoMensagem(
 
   // Cria o BPMNEdge para o Message Flow
   const messageFlowEdge = moddle.create('bpmndi:BPMNEdge', {
-    id: `MessageFlow_${currentElement.id}_to_${externalParticipant.id}_di`,
+    id: `MessageFlow_${prevElement.id}_to_${externalParticipant.id}_di`,
     bpmnElement: messageFlow,
     waypoint: messageFlowWaypoints,
   });
 
   // Adiciona o edge ao BPMNPlane
   bpmnPlane.planeElement.push(messageFlowEdge);
-
-  return {
-    messageFlow,
-    messageFlowEdge
-  };
 }

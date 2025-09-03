@@ -70,6 +70,20 @@ export function createDataObjectDirectionSelect() {
 }
 
 /**
+ * Cria select para tipo de mensagem
+ * @returns {HTMLSelectElement}
+ */
+export function createMessageTypeSelect() {
+  const messageTypeSelect = document.createElement('select');
+  messageTypeSelect.className = 'element-messageType';
+  messageTypeSelect.innerHTML = `
+    <option value="Envio">Envio</option>
+    <option value="Recebimento">Recebimento</option>
+  `;
+  return messageTypeSelect;
+}
+
+/**
  * Cria select para tipo de gateway existente
  * @returns {HTMLSelectElement}
  */

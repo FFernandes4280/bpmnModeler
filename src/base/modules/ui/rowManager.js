@@ -8,6 +8,7 @@ import {
   createActivityTypeSelect, 
   createFinalEventTypeSelect, 
   createDataObjectDirectionSelect,
+  createMessageTypeSelect,
   createExistingGatewayTypeSelect,
   createExistingGatewaySelect
 } from './elementCreators.js';
@@ -61,6 +62,7 @@ function createAuxiliaryElements(elementsContainer, participantsInput) {
     activityTypeSelect: createActivityTypeSelect(),
     finalEventTypeSelect: createFinalEventTypeSelect(),
     dataObjectDirectionSelect: createDataObjectDirectionSelect(),
+    messageTypeSelect: createMessageTypeSelect(),
     gatewayCounter: createGatewayCounter(elementsContainer, participantsInput),
     existingGatewayTypeSelect: createExistingGatewayTypeSelect(),
     existingGatewaySelect: createExistingGatewaySelect()
@@ -169,7 +171,7 @@ function manageNormalGatewayElements(row, elementLaneSelect, auxiliaryElements) 
  * Gerencia elementos específicos para tipos especiais
  */
 function manageSpecialTypeElements(row, elementTypeSelect, elementNameInput, auxiliaryElements) {
-  const { dataObjectDirectionSelect, finalEventTypeSelect, activityTypeSelect } = auxiliaryElements;
+  const { dataObjectDirectionSelect, finalEventTypeSelect, activityTypeSelect, messageTypeSelect } = auxiliaryElements;
   
   switch (elementTypeSelect.value) {
     case 'Data Object':
@@ -194,6 +196,13 @@ function manageSpecialTypeElements(row, elementTypeSelect, elementNameInput, aux
       activityTypeSelect.style.display = '';
       break;
       
+    case 'Mensagem':
+      if (!row.querySelector('.element-messageType')) {
+        row.insertBefore(messageTypeSelect, row.querySelector('.element-lane'));
+      }
+      messageTypeSelect.style.display = '';
+      break;
+      
     case 'Evento Intermediario':
       // Mantém eventType visível se existir
       const eventType = row.querySelector('.element-eventType');
@@ -207,16 +216,17 @@ function manageSpecialTypeElements(row, elementTypeSelect, elementNameInput, aux
  */
 function hideUnusedElements(row, elementTypeSelect) {
   const hideMap = {
-    'Gateway Existente': ['eventType', 'activityType', 'finalEventType', 'dataObjectDirection'],
-    'Gateway Exclusivo': ['eventType', 'activityType', 'finalEventType', 'dataObjectDirection', 'existingGatewayType', 'existingGatewaySelect'],
-    'Gateway Paralelo': ['eventType', 'activityType', 'finalEventType', 'dataObjectDirection', 'existingGatewayType', 'existingGatewaySelect'],
-    'Data Object': ['eventType', 'activityType', 'finalEventType', 'existingGatewayType', 'existingGatewaySelect'],
-    'Fim': ['eventType', 'activityType', 'dataObjectDirection', 'existingGatewayType', 'existingGatewaySelect'],
-    'Atividade': ['eventType', 'finalEventType', 'dataObjectDirection', 'existingGatewayType', 'existingGatewaySelect'],
-    'Evento Intermediario': ['activityType', 'finalEventType', 'dataObjectDirection', 'existingGatewayType', 'existingGatewaySelect']
+    'Gateway Existente': ['eventType', 'activityType', 'finalEventType', 'dataObjectDirection', 'messageType'],
+    'Gateway Exclusivo': ['eventType', 'activityType', 'finalEventType', 'dataObjectDirection', 'messageType', 'existingGatewayType', 'existingGatewaySelect'],
+    'Gateway Paralelo': ['eventType', 'activityType', 'finalEventType', 'dataObjectDirection', 'messageType', 'existingGatewayType', 'existingGatewaySelect'],
+    'Data Object': ['eventType', 'activityType', 'finalEventType', 'messageType', 'existingGatewayType', 'existingGatewaySelect'],
+    'Fim': ['eventType', 'activityType', 'dataObjectDirection', 'messageType', 'existingGatewayType', 'existingGatewaySelect'],
+    'Atividade': ['eventType', 'finalEventType', 'dataObjectDirection', 'messageType', 'existingGatewayType', 'existingGatewaySelect'],
+    'Mensagem': ['eventType', 'activityType', 'finalEventType', 'dataObjectDirection', 'existingGatewayType', 'existingGatewaySelect'],
+    'Evento Intermediario': ['activityType', 'finalEventType', 'dataObjectDirection', 'messageType', 'existingGatewayType', 'existingGatewaySelect']
   };
 
-  const elementsToHide = hideMap[elementTypeSelect.value] || ['eventType', 'activityType', 'finalEventType', 'dataObjectDirection', 'existingGatewayType', 'existingGatewaySelect'];
+  const elementsToHide = hideMap[elementTypeSelect.value] || ['eventType', 'activityType', 'finalEventType', 'dataObjectDirection', 'messageType', 'existingGatewayType', 'existingGatewaySelect'];
   
   elementsToHide.forEach(type => {
     const element = row.querySelector(`.element-${type}`);

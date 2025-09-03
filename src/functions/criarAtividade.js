@@ -36,7 +36,6 @@ export default function criarAtividade(
   // Calcula a posição vertical com base na lane associada
   const laneIndex = participants.indexOf(activityLane);
   const laneY = participantBounds.y + laneIndex * laneHeight;
-  // let offsetY = elementsList[index-1].bounds.yOffset ? elementsList[index-1].bounds.yOffset : 0;
 
   const prevEntry = elementsList[index - 1];
   const prevBounds = prevEntry.get("bounds");

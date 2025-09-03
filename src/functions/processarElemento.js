@@ -24,7 +24,7 @@ export default function processarElemento(
   externalParticipants,
   elements
 ) {
-  
+
   let { index, type, name, lane, diverge } = element;
   let eventType = '';
   let activityType = '';
@@ -92,7 +92,7 @@ export default function processarElemento(
         index,
         elementsList
       );
-      
+
       diverge.forEach((branchIndex) => {
         processarElemento(
           elements[branchIndex],
@@ -111,74 +111,35 @@ export default function processarElemento(
 
       break;
 
-    // case 'Gateway Paralelo':
-    //   const existingParallelGateway = buscarGatewayExistente(bpmnPlane, 'ParallelGateway', name);
+    case 'Gateway Paralelo':
+      break;
 
-    //   if (existingParallelGateway) {
-    //     conectarGatewayParaleloExistente(
-    //       moddle,
-    //       bpmnProcess,
-    //       bpmnPlane,
-    //       currentElement,
-    //       currentBounds,
-    //       existingParallelGateway
-    //     );
+    case 'Data Object':
+      const dataObjectDirection = name.split('_')[0];
+      name = name.split('_')[1];
+      criarDataObject(
+        moddle,
+        bpmnProcess,
+        bpmnPlane,
+        elementsList,
+        name,
+        dataObjectDirection
+      );
+      break;
 
-    //     // Update state with the existing gateway for the next element
-    //   } else {
-    //     const parallelGateway = criarGatewayParalelo(
-    //       moddle,
-    //       bpmnProcess,
-    //       bpmnPlane,
-    //       currentElement,
-    //       currentBounds,
-    //       participantBounds,
-    //       participants,
-    //       laneHeight,
-    //       name,
-    //       lane
-    //     );
-
-    //     const positions = calcularPosicoesDivergencia(
-    //       diverge,
-    //       currentBounds,
-    //       participantBounds,
-    //       participants,
-    //       laneHeight,
-    //       lane
-    //     );
-
-    //     addMultiplePositions(parallelGateway, positions);
-    //   }
-    //   break;
-
-    // case 'Data Object':
-    //   const dataObjectDirection = name.split('_')[0];
-    //   name = name.split('_')[1];
-    //   criarDataObject(
-    //     moddle,
-    //     bpmnProcess,
-    //     bpmnPlane,
-    //     currentElement,
-    //     currentBounds,
-    //     name,
-    //     dataObjectDirection
-    //   );
-    //   break;
-
-    // case 'Mensagem':
-    //   criarFluxoMensagem(
-    //     moddle,
-    //     collaboration,
-    //     bpmnPlane,
-    //     currentElement,
-    //     currentBounds,
-    //     externalParticipants,
-    //     participantBounds,
-    //     name,
-    //     lane
-    //   );
-    //   break;
+    case 'Mensagem':
+      const messageType = name.split('_')[0]; 
+      criarFluxoMensagem(
+        moddle,
+        collaboration,
+        bpmnPlane,
+        elementsList,
+        externalParticipants,
+        participantBounds,
+        messageType,
+        lane
+      );
+      break;
 
     case 'Fim':
       eventType = name.split('_')[0];
