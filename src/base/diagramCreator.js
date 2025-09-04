@@ -54,7 +54,7 @@ export async function generateDiagramFromInput(processName, participantsInput, h
     x: 160,
     y: 80 + externalParticipantsCount * 200 + (externalParticipantsCount > 0 ? 50 : 0),
     width: elements.length * 200 + 200,
-    height: participantNumber * 200 + 200,
+    height: participantNumber * 200 + 250,
   };
 
   // Create a participant shape for the process
@@ -109,7 +109,7 @@ export async function generateDiagramFromInput(processName, participantsInput, h
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  elements.forEach((element, index) => {
+  elements.some((element, index) => {
     const resultado = processarElemento(
       element,
       moddle,
@@ -129,6 +129,7 @@ export async function generateDiagramFromInput(processName, participantsInput, h
     } else {
       elementsList.push(resultado);
     }
+    return element.type.includes('Gateway') ? true : false; 
   });
 
   // Finalize the diagram

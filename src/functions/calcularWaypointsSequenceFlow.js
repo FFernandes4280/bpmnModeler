@@ -4,19 +4,26 @@ export default function calcularWaypointsSequenceFlow(
   targetBounds,
   isGatewayFlow = false
 ) {
-  // Para fluxos de gateway, usa lógica específica
+
   if (isGatewayFlow) {
-    // Para gateways, sempre sai do centro direito do gateway
-    const sourceX = sourceBounds.x + sourceBounds.width;
-    const sourceY = sourceBounds.y + sourceBounds.height / 2;
-    
-    // E entra pela lateral esquerda do elemento alvo
+    let sourceX = sourceBounds.x + sourceBounds.width;
+    let sourceY = sourceBounds.y + sourceBounds.height / 2;
+
     const targetX = targetBounds.x;
     const targetY = targetBounds.y + targetBounds.height / 2;
-    
+
+    if (targetY > sourceY) {
+      sourceX = sourceBounds.x + sourceBounds.width / 2;
+      sourceY = sourceBounds.y + sourceBounds.height;
+    }
+    if (targetY < sourceY) {
+      sourceX = sourceBounds.x + sourceBounds.width / 2;
+      sourceY = sourceBounds.y;
+    }
+
     const middleX = sourceX;
     const middleY = targetY;
-    
+
     return [
       moddle.create('dc:Point', { x: sourceX, y: sourceY }),
       moddle.create('dc:Point', { x: middleX, y: middleY }),
@@ -24,25 +31,24 @@ export default function calcularWaypointsSequenceFlow(
     ];
   }
 
-  // Lógica original para elementos normais (com detecção de mudança de Y)
   let sourceX = sourceBounds.x + sourceBounds.width;
   let sourceY = sourceBounds.y + sourceBounds.height / 2;
 
   let targetX = targetBounds.x;
   let targetY = targetBounds.y + targetBounds.height / 2;
 
-  if(targetY > sourceY) { 
+  if (targetY > sourceY) {
     sourceX = sourceBounds.x + sourceBounds.width / 2;
     sourceY = sourceBounds.y + sourceBounds.height;
   }
-  if(targetY < sourceY) { 
+  if (targetY < sourceY) {
     sourceX = sourceBounds.x + sourceBounds.width / 2;
     sourceY = sourceBounds.y;
   }
 
   let middleX = sourceX;
   let middleY = targetY;
-  
+
   return [
     moddle.create('dc:Point', { x: sourceX, y: sourceY }),
     moddle.create('dc:Point', { x: middleX, y: middleY }),

@@ -10,7 +10,6 @@ export default function criarAtividade(
   activityType,
   activityName,
   activityLane,
-  index,
   dictEntry,
   positionConfig = null,  // Nova configuração de posição
   gatewayPai = null       // Novo parâmetro para conexão com gateway
@@ -84,15 +83,9 @@ export default function criarAtividade(
   // Se é primeiro elemento de um branch, conecta diretamente ao gateway pai
   if (gatewayPai) {
     // Procura o gateway pai na lista de elementos
-    const gatewayEntry = elementsList.find(entry => 
-      entry.get("element").id === gatewayPai || 
-      entry.get("element").id.includes(gatewayPai)
-    );
+    const gatewayEntry = dictEntry;
     
-    if (gatewayEntry) {
-      sourceElement = gatewayEntry.get("element");
-      console.log(`Conectando atividade ${activityName} ao gateway pai ${gatewayPai}`);
-    }
+    if (gatewayEntry) sourceElement = gatewayEntry.get("element");
   }
 
   // Cria o fluxo de sequência entre o elemento anterior e a atividade
@@ -113,15 +106,13 @@ export default function criarAtividade(
   );
 
   // Obtém os bounds do elemento fonte
-  const sourceBounds = gatewayPai ? 
-    elementsList.find(entry => entry.get("element") === sourceElement)?.get("bounds") || prevBounds :
-    prevBounds;
+  const sourceBounds = prevBounds;
   
   const sequenceFlowWaypoints = calcularWaypointsSequenceFlow(
     moddle,
     sourceBounds,
     activityBounds,
-    isFromGateway // Usa lógica de gateway se vem de um gateway
+    isFromGateway 
   );
 
   // Cria o BPMNEdge para o fluxo de sequência

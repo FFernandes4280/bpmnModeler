@@ -9,25 +9,16 @@ export default function criarGatewayExclusivo(
   laneHeight,
   gatewayName,
   gatewayLane,
-  index,
-  elementsList,
+  dictEntry,
   positionConfig = null  // Nova configuração de posição
 ) {
 
   // Obtém o elemento anterior da lista usando o índice
-  const prevEntry = elementsList[index - 1];
-  const sourceElement = prevEntry ? prevEntry.get("element") : null;
-  const sourceBounds = prevEntry ? prevEntry.get("bounds") : null;
-
-  if (!sourceElement || !sourceBounds) {
-    throw new Error(`Elemento anterior não encontrado para o gateway "${gatewayName}"`);
-  }
+  const sourceElement = dictEntry.get("element");
+  const sourceBounds = dictEntry.get("bounds");
 
   // Localiza o índice da lane correspondente ao participante
   const gatewayLaneIndex = participants.indexOf(gatewayLane);
-  if (gatewayLaneIndex === -1) {
-    throw new Error(`Participante "${gatewayLane}" não foi declarado`);
-  }
 
   // Calcula os limites da lane correspondente
   const gatewayLaneY = participantBounds.y + gatewayLaneIndex * laneHeight;
@@ -109,12 +100,11 @@ export default function criarGatewayExclusivo(
   // Adiciona o edge ao BPMNPlane
   bpmnPlane.planeElement.push(sequenceFlowEdge);
 
-  // Adiciona o gateway à lista de elementos
-  elementsList.push(new Map([
-    ['element', gateway],
-    ['bounds', gatewayBounds],
-    ['index', index]
-  ]));
+  const newDictEntry = new Map();
 
-  return gatewayBounds; // Retorna os bounds do gateway para o gerenciador de divergências
+  newDictEntry.set("element", gateway);
+  newDictEntry.set("bounds", gatewayBounds);
+  newDictEntry.set("shape", gatewayShape);
+
+  return newDictEntry; 
 }

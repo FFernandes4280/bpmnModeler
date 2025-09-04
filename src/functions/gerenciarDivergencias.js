@@ -74,13 +74,13 @@ export class GerenciadorDivergencias {
       participantBounds.y + participants.indexOf(lane) * laneHeight + laneHeight / 2 - 18;
       
     for (let i = 0; i < diverge; i++) {
-      const yOffset = (i - (diverge - 1) / 2) * (laneHeight / diverge);
+      const yOffset = (i - (diverge - 1) / 2) * (laneHeight / (diverge + 1));
       let position;
 
       if (diverge === 1) {
         // Regra original: Apenas meio
         position = {
-          x: baseX,
+          x: baseX ,
           y: baseY,
           width: 35,
           height: 35,
@@ -119,12 +119,13 @@ export class GerenciadorDivergencias {
         } else if (i === 1) {
           // Meio
           position = {
-            x: baseX,
+            x: baseX - 17.5,
             y: baseY,
             width: 35,
             height: 35,
             yOffset: yOffset,
-            type: 'meio'
+            type: 'meio',
+            adjustX: -17.5
           };
         } else if (i === 2) {
           // Baixo

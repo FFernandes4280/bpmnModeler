@@ -59,7 +59,6 @@ export default function processarElemento(
         activityType,
         name,
         lane,
-        index,
         dictEntry,
         positionConfig,
         gatewayPai
@@ -79,7 +78,6 @@ export default function processarElemento(
         eventType,
         name,
         lane,
-        index,
         dictEntry,
         positionConfig,
         gatewayPai
@@ -87,8 +85,9 @@ export default function processarElemento(
       break;
 
     case 'Gateway Exclusivo':
-      // Primeiro cria o gateway e obtém seus bounds
-      const gatewayBounds = criarGatewayExclusivo(
+      const divergeEntry = [];
+
+      divergeEntry.push(criarGatewayExclusivo(
         moddle,
         bpmnProcess,
         bpmnPlane,
@@ -97,10 +96,9 @@ export default function processarElemento(
         laneHeight,
         name,
         lane,
-        index,
-        elementsList,
+        dictEntry,
         positionConfig
-      );
+      ));
 
       // Se tem divergências, registra usando as regras originais
       if (diverge && diverge.length > 0) {
@@ -109,7 +107,7 @@ export default function processarElemento(
         gerenciadorDivergencias.registrarDivergencia(
           gatewayId, 
           diverge, 
-          gatewayBounds,  // currentBounds
+          divergeEntry[0].get("bounds"),  
           participantBounds, 
           participants, 
           laneHeight, 
@@ -125,7 +123,7 @@ export default function processarElemento(
           bpmnProcess,
           bpmnPlane,
           collaboration,
-          elementsList,
+          divergeEntry[0],
           participantBounds,
           participants,
           laneHeight,
@@ -134,6 +132,7 @@ export default function processarElemento(
         );
       });
 
+      dictEntry = divergeEntry;
       break;
 
     case 'Gateway Paralelo':
@@ -215,7 +214,7 @@ export default function processarElemento(
     case 'Fim':
       eventType = name.split('_')[0];
       name = name.split('_')[1];
-      criarEventoFinal(
+      dictEntry = criarEventoFinal(
         moddle,
         bpmnProcess,
         bpmnPlane,
@@ -225,7 +224,6 @@ export default function processarElemento(
         eventType,
         name,
         lane,
-        index,
         dictEntry,
         positionConfig,
         gatewayPai

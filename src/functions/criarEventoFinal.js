@@ -10,7 +10,6 @@ export default function criarEventoFinal(
   finalEventType,
   eventName,
   laneName,
-  index,
   dictEntry
 ) {
   // Recupera o elemento anterior da elementsList

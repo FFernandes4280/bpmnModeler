@@ -10,7 +10,6 @@ export default function criarEventoIntermediario(
   eventType,
   eventName,
   eventLane,
-  index,
   dictEntry
 ) {
   // Normaliza o ID removendo espaços e caracteres especiais
