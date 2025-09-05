@@ -1,7 +1,3 @@
-/**
- * Gerencia as posições e offsets das divergências de gateways
- * Incorpora as regras de negócio do calcularPosicoesDivergencia.js
- */
 export class GerenciadorDivergencias {
   constructor() {
     this.branchOffsets = new Map(); // Map<branchId, {offsetY, positionConfig}>
@@ -11,16 +7,6 @@ export class GerenciadorDivergencias {
     this.branchConfigs = new Map(); // Map<elementId, positionConfig>
   }
 
-  /**
-   * Registra uma nova divergência usando as regras extraídas do calcularPosicoesDivergencia
-   * @param {string} gatewayId - ID do gateway
-   * @param {Array} branchIndexes - Índices dos primeiros elementos de cada branch
-   * @param {Object} currentBounds - Bounds do gateway atual
-   * @param {Object} participantBounds - Bounds do participante
-   * @param {Array} participants - Lista de participantes
-   * @param {number} laneHeight - Altura da lane
-   * @param {string} lane - Lane atual
-   */
   registrarDivergencia(gatewayId, branchIndexes, currentBounds, participantBounds, participants, laneHeight, lane) {
     const numBranches = branchIndexes.length;
     
@@ -53,16 +39,6 @@ export class GerenciadorDivergencias {
     });
   }
 
-  /**
-   * Extrai e adapta as regras do calcularPosicoesDivergencia.js
-   * @param {number} diverge - Número de divergências
-   * @param {Object} currentBounds - Bounds do gateway
-   * @param {Object} participantBounds - Bounds do participante
-   * @param {Array} participants - Lista de participantes
-   * @param {number} laneHeight - Altura da lane
-   * @param {string} lane - Lane atual
-   * @returns {Array} Array de configurações de posição
-   */
   calcularPosicoesComRegrasOriginais(diverge, currentBounds, participantBounds, participants, laneHeight, lane) {
     const positions = [];
     const baseX = currentBounds.x + 150;
@@ -185,72 +161,35 @@ export class GerenciadorDivergencias {
     return positions;
   }
 
-  /**
-   * Obtém a configuração completa de posição para um elemento
-   * @param {number} elementIndex - Índice do elemento
-   * @returns {Object|null} Configuração de posição ou null
-   */
+
   obterConfiguracaoCompleta(elementIndex) {
     return this.branchConfigs.get(elementIndex) || null;
   }
 
-  /**
-   * Obtém apenas o offset Y de um elemento (compatibilidade com versão anterior)
-   * @param {number} elementIndex - Índice do elemento
-   * @param {string} gatewayId - ID do gateway pai (opcional)
-   * @returns {number} Offset Y para o elemento
-   */
-  obterOffset(elementIndex, gatewayId = null) {
+  obterOffset(elementIndex) {
     const config = this.branchConfigs.get(elementIndex);
     return config ? config.yOffset : 0;
   }
 
-  /**
-   * Obtém o ajuste X específico para um elemento baseado nas regras originais
-   * @param {number} elementIndex - Índice do elemento
-   * @returns {number} Ajuste X para o elemento
-   */
   obterAjusteX(elementIndex) {
     const config = this.branchConfigs.get(elementIndex);
     return config && config.adjustX ? config.adjustX : 0;
   }
 
-  /**
-   * Obtém o ajuste Y específico para um elemento baseado nas regras originais
-   * @param {number} elementIndex - Índice do elemento
-   * @returns {number} Ajuste Y para o elemento
-   */
   obterAjusteY(elementIndex) {
     const config = this.branchConfigs.get(elementIndex);
     return config && config.adjustY ? config.adjustY : 0;
   }
 
-  /**
-   * Obtém o tipo de posição do elemento (cima, meio, baixo)
-   * @param {number} elementIndex - Índice do elemento
-   * @returns {string} Tipo de posição
-   */
   obterTipoPosicao(elementIndex) {
     const config = this.branchConfigs.get(elementIndex);
     return config ? config.type : 'meio';
   }
 
-  /**
-   * Verifica se um elemento é o primeiro de um branch
-   * @param {number} elementIndex - Índice do elemento
-   * @returns {string|null} ID do gateway pai se for primeiro elemento
-   */
   ehPrimeiroElementoBranch(elementIndex) {
     return this.gatewayConnections.get(elementIndex) || null;
   }
 
-  /**
-   * Aplica as regras de posicionamento a um elemento baseado em sua configuração
-   * @param {number} elementIndex - Índice do elemento
-   * @param {number} baseX - Posição X base do elemento
-   * @param {number} baseY - Posição Y base do elemento
-   * @returns {Object} Posição final {x, y}
-   */
   aplicarRegrasPositionamento(elementIndex, baseX, baseY) {
     const config = this.obterConfiguracaoCompleta(elementIndex);
     
@@ -265,6 +204,20 @@ export class GerenciadorDivergencias {
       height: config.height,
       type: config.type
     };
+  }
+  
+  registrarConfiguracaoHerdada(elementIndex, configAnterior) {
+    // Cria uma nova configuração baseada na anterior, mantendo yOffset e adjustX/Y
+    const configHerdada = {
+      ...configAnterior,
+      // Mantém as posições de offset do elemento anterior
+      yOffset: configAnterior.yOffset,
+      adjustX: configAnterior.adjustX,
+      adjustY: configAnterior.adjustY,
+      type: configAnterior.type
+    };
+    
+    this.branchConfigs.set(elementIndex, configHerdada);
   }
 
   /**

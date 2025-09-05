@@ -31,13 +31,6 @@ export default function criarGatewayExclusivo(
   if (positionConfig) {
     baseX = baseX + (positionConfig.adjustX || 0);
     baseY = baseY + (positionConfig.adjustY || 0) + positionConfig.yOffset;
-    
-    console.log(`Gateway Exclusivo ${gatewayName} posicionado:`, {
-      tipo: positionConfig.type,
-      x: baseX, 
-      y: baseY,
-      yOffset: positionConfig.yOffset
-    });
   }
 
   const gatewayBounds = {

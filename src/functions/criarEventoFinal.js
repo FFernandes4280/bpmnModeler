@@ -10,7 +10,9 @@ export default function criarEventoFinal(
   finalEventType,
   eventName,
   laneName,
-  dictEntry
+  dictEntry,
+  positionConfig = null,  // Nova configuração de posição
+  gatewayPai = null       // Novo parâmetro para conexão com gateway
 ) {
   // Recupera o elemento anterior da elementsList
   const prevBounds = dictEntry.get("bounds");
@@ -22,9 +24,28 @@ export default function criarEventoFinal(
   // Calcula os bounds do evento final com base na lane correspondente
   const laneIndex = participants.indexOf(laneName); // Obtém o índice da lane
   const laneY = participantBounds.y + laneIndex * laneHeight;
+  
+  // Calcula posição base
+  let baseX = prevBounds.x + 150; // Posiciona o evento final à direita do elemento anterior
+  let baseY = laneY + (laneHeight - 35) / 2; // Centraliza na lane
+
+  // Aplica as regras de posicionamento se houver configuração
+  if (positionConfig) {
+    baseX = baseX + (positionConfig.adjustX || 0);
+    baseY = baseY + (positionConfig.adjustY || 0) + positionConfig.yOffset;
+    
+    console.log(`Evento Final ${eventName} (${finalEventType}) posicionado:`, {
+      tipo: positionConfig.type,
+      x: baseX, 
+      y: baseY,
+      yOffset: positionConfig.yOffset,
+      gatewayPai: gatewayPai
+    });
+  }
+
   const finalEventBounds = {
-    x: prevBounds.x + 150, // Posiciona o evento final à direita do elemento anterior
-    y: laneY + (laneHeight - 35) / 2, // Centraliza na lane
+    x: baseX,
+    y: baseY,
     width: 35,
     height: 35,
   };
@@ -116,13 +137,10 @@ export default function criarEventoFinal(
   bpmnPlane.planeElement.push(sequenceFlowEdge);
 
   // Cria um Map para o elemento final
-  // const endEventEntry = new Map();
-  // endEventEntry.set("element", finalEvent);
-  // endEventEntry.set("bounds", finalEventBounds);
-  // endEventEntry.set("shape", finalEventShape);
+  const endEventEntry = new Map();
+  endEventEntry.set("element", finalEvent);
+  endEventEntry.set("bounds", finalEventBounds);
+  endEventEntry.set("shape", finalEventShape);
 
-  // Adiciona o elemento à elementsList
-  // elementsList.push(endEventEntry);
-
-  // return elementsList;
+  return endEventEntry;
 }

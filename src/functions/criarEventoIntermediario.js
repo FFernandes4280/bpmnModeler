@@ -10,7 +10,9 @@ export default function criarEventoIntermediario(
   eventType,
   eventName,
   eventLane,
-  dictEntry
+  dictEntry,
+  positionConfig = null,  // Nova configuração de posição
+  gatewayPai = null       // Novo parâmetro para conexão com gateway
 ) {
   // Normaliza o ID removendo espaços e caracteres especiais
   const normalizedId = eventName.replace(/\s+/g, '_').replace(/[^\w]/g, '');
@@ -46,10 +48,28 @@ export default function criarEventoIntermediario(
   const prevBounds = dictEntry.get("bounds");
   const prevElement = dictEntry.get("element");
 
+  // Calcula posição base
+  let baseX = prevBounds.x + 150; // Deslocamento horizontal
+  let baseY = laneY + laneHeight / 2 - 18; // Centraliza verticalmente na lane
+
+  // Aplica as regras de posicionamento se houver configuração
+  if (positionConfig) {
+    baseX = baseX + (positionConfig.adjustX || 0);
+    baseY = baseY + (positionConfig.adjustY || 0) + positionConfig.yOffset;
+    
+    console.log(`Evento Intermediário ${eventName} (${eventType}) posicionado:`, {
+      tipo: positionConfig.type,
+      x: baseX, 
+      y: baseY,
+      yOffset: positionConfig.yOffset,
+      gatewayPai: gatewayPai
+    });
+  }
+
   // Define os limites do evento intermediário
   const eventBounds = {
-    x: prevBounds.x + 150, // Deslocamento horizontal
-    y: laneY + laneHeight / 2 - 18, // Centraliza verticalmente na lane
+    x: baseX,
+    y: baseY,
     width: 36,
     height: 36,
   };

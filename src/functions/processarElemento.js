@@ -103,85 +103,65 @@ export default function processarElemento(
       // Se tem divergências, registra usando as regras originais
       if (diverge && diverge.length > 0) {
         const gatewayId = `gateway_${index}`;
-        
+
         gerenciadorDivergencias.registrarDivergencia(
-          gatewayId, 
-          diverge, 
-          divergeEntry[0].get("bounds"),  
-          participantBounds, 
-          participants, 
-          laneHeight, 
+          gatewayId,
+          diverge,
+          divergeEntry[0].get("bounds"),
+          participantBounds,
+          participants,
+          laneHeight,
           lane
         );
       }
 
-      // Processa elementos dos branches
-      diverge.forEach((branchIndex) => {
-        processarElemento(
-          elements[branchIndex],
-          moddle,
-          bpmnProcess,
-          bpmnPlane,
-          collaboration,
-          divergeEntry[0],
-          participantBounds,
-          participants,
-          laneHeight,
-          externalParticipants,
-          elements
-        );
+      // Processa cada branch completo
+      diverge.forEach((branchIndex, branchNum) => {
+        let currentElement = divergeEntry[0]; // Gateway como elemento anterior inicial
+
+        // Determina onde termina este branch (próximo branch ou fim do array)
+        const nextBranchIndex = branchNum < diverge.length - 1 ? diverge[branchNum + 1] : elements.length;
+
+        // Processa todos os elementos deste branch
+        for (let i = branchIndex; i < nextBranchIndex; i++) {
+          // Para elementos após o primeiro do branch, herda configuração do anterior
+          if (i > branchIndex && currentElement) {
+            // Herda a configuração de posição do elemento anterior
+            const configAnterior = gerenciadorDivergencias.obterConfiguracaoCompleta(currentElement.index || branchIndex);
+            if (configAnterior) {
+              gerenciadorDivergencias.registrarConfiguracaoHerdada(i, configAnterior);
+            }
+          }
+
+          const processedElement = processarElemento(
+            elements[i],
+            moddle,
+            bpmnProcess,
+            bpmnPlane,
+            collaboration,
+            currentElement, 
+            participantBounds,
+            participants,
+            laneHeight,
+            externalParticipants,
+            elements
+          );
+
+          // Se é o primeiro elemento do branch, adiciona ao divergeEntry
+          if (i === branchIndex) {
+            divergeEntry.push(processedElement);
+          }
+
+          // Atualiza o elemento anterior para o próximo elemento
+          currentElement = processedElement;
+        }
       });
 
       dictEntry = divergeEntry;
       break;
 
     case 'Gateway Paralelo':
-      // Primeiro cria o gateway e obtém seus bounds
-      const gatewayParaleloBounds = criarGatewayParalelo(
-        moddle,
-        bpmnProcess,
-        bpmnPlane,
-        participantBounds,
-        participants,
-        laneHeight,
-        name,
-        lane,
-        index,
-        elementsList,
-        positionConfig
-      );
-
-      // Se tem divergências, registra usando as regras originais
-      if (diverge && diverge.length > 0) {
-        const gatewayId = `gateway_paralelo_${index}`;
-        
-        gerenciadorDivergencias.registrarDivergencia(
-          gatewayId, 
-          diverge, 
-          gatewayParaleloBounds,
-          participantBounds, 
-          participants, 
-          laneHeight, 
-          lane
-        );
-      }
-
-      // Processa elementos dos branches
-      diverge.forEach((branchIndex) => {
-        processarElemento(
-          elements[branchIndex],
-          moddle,
-          bpmnProcess,
-          bpmnPlane,
-          collaboration,
-          elementsList,
-          participantBounds,
-          participants,
-          laneHeight,
-          externalParticipants,
-          elements
-        );
-      });
+      
       break;
 
     case 'Data Object':

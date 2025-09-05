@@ -35,13 +35,13 @@ function createRowHTML(participantsOptions) {
     <div class="element-number">1</div>
     <select class="element-type">
       <option value="Atividade">Atividade</option>
-      <option value="Mensagem">Mensagem</option>
-      <option value="Data Object">Data Object</option>
+      <option value="Evento Intermediario">Evento Intermediario</option>
+      <option value="Fim">Fim</option>
       <option value="Gateway Exclusivo">Gateway Exclusivo</option>
       <option value="Gateway Paralelo">Gateway Paralelo</option>
       <option value="Gateway Existente">Gateway Existente</option>
-      <option value="Evento Intermediario">Evento Intermediario</option>
-      <option value="Fim">Fim</option>
+      <option value="Mensagem">Mensagem</option>
+      <option value="Data Object">Data Object</option>
     </select>
     <input type="text" class="element-name" placeholder="Nome" />
     <select class="element-lane">${participantsOptions}</select>

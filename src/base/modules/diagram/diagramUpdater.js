@@ -65,6 +65,7 @@ async function performDiagramUpdate(viewer, generateDiagramFromInput, setupCanva
   
   const processedElements = processDuplicateElements(elements);
   try {
+    console.log('Processed Elements:', processedElements);
     const diagramXML = await generateDiagramFromInput(
       processName,
       participants,

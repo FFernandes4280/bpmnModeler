@@ -14,6 +14,7 @@ export default function criarAtividade(
   positionConfig = null,  // Nova configuração de posição
   gatewayPai = null       // Novo parâmetro para conexão com gateway
 ) {
+  console.log(dictEntry);
   // Normaliza o ID removendo espaços e caracteres especiais
   const normalizedId = activityName.replace(/\s+/g, '_').replace(/[^\w]/g, '');
   
@@ -49,14 +50,6 @@ export default function criarAtividade(
   if (positionConfig) {
     baseX = baseX + (positionConfig.adjustX || 0);
     baseY = baseY + (positionConfig.adjustY || 0) + positionConfig.yOffset;
-    
-    console.log(`Atividade ${activityName} (${activityType}) posicionada:`, {
-      tipo: positionConfig.type,
-      x: baseX, 
-      y: baseY,
-      yOffset: positionConfig.yOffset,
-      gatewayPai: gatewayPai
-    });
   }
 
   // Define os limites da atividade com as posições ajustadas

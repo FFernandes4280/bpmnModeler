@@ -129,7 +129,7 @@ export async function generateDiagramFromInput(processName, participantsInput, h
     } else {
       elementsList.push(resultado);
     }
-    return element.type.includes('Gateway') ? true : false; 
+    return element.type.includes('Gateway') ? true : false;
   });
 
   // Finalize the diagram
