@@ -34,8 +34,6 @@ export class GerenciadorDivergencias {
       
       this.branchConfigs.set(branchFirstIndex, positionConfig);
       this.gatewayConnections.set(branchFirstIndex, gatewayId);
-      
-      console.log(`Branch ${branchId} registrado:`, positionConfig);
     });
   }
 

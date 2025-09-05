@@ -122,11 +122,8 @@ export default function processarElemento(
         // Determina onde termina este branch (próximo branch ou fim do array)
         const nextBranchIndex = branchNum < diverge.length - 1 ? diverge[branchNum + 1] : elements.length;
 
-        // Processa todos os elementos deste branch
         for (let i = branchIndex; i < nextBranchIndex; i++) {
-          // Para elementos após o primeiro do branch, herda configuração do anterior
           if (i > branchIndex && currentElement) {
-            // Herda a configuração de posição do elemento anterior
             const configAnterior = gerenciadorDivergencias.obterConfiguracaoCompleta(currentElement.index || branchIndex);
             if (configAnterior) {
               gerenciadorDivergencias.registrarConfiguracaoHerdada(i, configAnterior);
@@ -161,7 +158,6 @@ export default function processarElemento(
       break;
 
     case 'Gateway Paralelo':
-      
       break;
 
     case 'Data Object':

@@ -9,22 +9,22 @@
  */
 export function processElementsFromUI(elementsContainer) {
   let previousName = document.getElementById('initialEventName').value;
-  
+
   // Coleta elementos do container principal
   const mainElements = Array.from(elementsContainer.querySelectorAll('.element-row'));
-  
+
   // Coleta elementos de todos os containers de branch (divergências)
   const branchElements = Array.from(document.querySelectorAll('.branch-elements .element-row'));
-  
+
   // Combina todos os elementos
   const allElements = [...mainElements, ...branchElements];
-  
+
   // Primeiro, processa todos os elementos e identifica quais devem ter índice
   const processedElements = allElements.map(row => {
     const type = row.querySelector('.element-type').value;
     const lane = row.querySelector('.element-lane').value;
     const originalIndex = parseInt(row.querySelector('.element-number').textContent, 10);
-    
+
     // Elementos que não devem ter índice na sequência principal
     const shouldHaveIndex = !['Mensagem', 'Data Object'].includes(type);
 
@@ -38,7 +38,7 @@ export function processElementsFromUI(elementsContainer) {
       } else {
         name = row.querySelector('.element-name').value;
       }
-      
+
       // Processamento específico por tipo
       if (type === 'Evento Intermediario') {
         const eventType = row.querySelector('.element-eventType').value;
@@ -53,11 +53,11 @@ export function processElementsFromUI(elementsContainer) {
         const dataObjectDirection = row.querySelector('.element-dataObjectDirection').value;
         name = dataObjectDirection + '_' + name;
       }
-      
+
       if (shouldHaveIndex) {
         previousName = name;
       }
-      
+
       return { originalIndex, type, name, lane, shouldHaveIndex };
     }
 
@@ -71,16 +71,31 @@ export function processElementsFromUI(elementsContainer) {
     let diverge;
     if (counterElement) {
       const counterText = counterElement.textContent;
-      if (counterText === 'Gateway Existente') {
-        const gatewaySelect = row.querySelector('.gateway-select');
-        diverge = 'existing_' + (gatewaySelect.value || '1'); // Prefixo para identificar gateway existente
+      // Para gateways com divergências, coletar índices dos primeiros elementos de cada branch
+      if (counterText !== 'Convergência') {
+        diverge = getBranchFirstElementIndexes(row, originalIndex);
       } else {
-        // Para gateways com divergências, coletar índices dos primeiros elementos de cada branch
-        if (counterText !== 'Convergência') {
-          diverge = getBranchFirstElementIndexes(row, originalIndex);
+        // Gateway de Convergência
+        const currentPosition = allElements.indexOf(row);
+        const hasNextElement = (currentPosition + 1) < allElements.length;
+
+        if (hasNextElement) {
+          const nextElement = allElements[currentPosition + 1];
+
+          // Verifica se o próximo elemento está no mesmo nível (mesmo container)
+          const currentContainer = row.closest('.branch-elements, #elementsContainer');
+          const nextContainer = nextElement.closest('.branch-elements, #elementsContainer');
+
+          // Se estão no mesmo container (mesmo nível), conecta
+          if (currentContainer === nextContainer) {
+            const nextOriginalIndex = parseInt(nextElement.querySelector('.element-number').textContent, 10);
+            diverge = [nextOriginalIndex];
+          } else {
+            // Se estão em containers diferentes (níveis diferentes), não conecta
+            diverge = [];
+          }
         } else {
-          // Para convergência, retorna array com o próximo elemento se houver um próximo elemento
-          diverge = (originalIndex + 1 < allElements.length) ? [originalIndex + 1] : [];
+          diverge = [];
         }
       }
     } else {
@@ -113,7 +128,7 @@ export function processElementsFromUI(elementsContainer) {
         const targetElement = finalElements.find(el => el.originalIndex === originalIdx);
         return targetElement ? targetElement.index : originalIdx;
       }).filter(idx => idx !== null); // Remove referências para elementos sem índice
-      
+
       return { ...element, diverge: newDiverge };
     }
     return element;
@@ -130,7 +145,7 @@ function getBranchFirstElementIndexes(gatewayRow, gatewayIndex) {
   // Gera o ID do gateway baseado na sua posição e tipo
   const elementType = gatewayRow.querySelector('.element-type').value;
   const branchContainer = gatewayRow.closest('.branch-elements');
-  
+
   let gatewayId;
   if (branchContainer) {
     const branchId = branchContainer.id;
@@ -153,7 +168,7 @@ function getBranchFirstElementIndexes(gatewayRow, gatewayIndex) {
   // Coleta o índice do primeiro elemento de cada branch
   const branchIndexes = [];
   const branches = branchesContainer.querySelectorAll('.gateway-branch');
-  
+
   branches.forEach(branch => {
     const branchElements = branch.querySelector('.branch-elements');
     if (branchElements) {
@@ -176,13 +191,13 @@ function getBranchFirstElementIndexes(gatewayRow, gatewayIndex) {
  */
 export function processDuplicateElements(elements) {
   let indexesList = [];
-  
+
   elements.forEach((element, index) => {
     if (indexesList.includes(index)) return;
     indexesList.push(index);
     // Não processa elementos sem índice ou gateways ou mensagens
     if (element.index === null || element.type === 'Gateway Exclusivo' || element.type === 'Gateway Paralelo' || element.type === 'Mensagem') return;
-    
+
     const duplicates = elements
       .map((el, idx) => (el.name === element.name ? idx : -1))
       .filter(idx => idx !== -1);
@@ -190,13 +205,13 @@ export function processDuplicateElements(elements) {
     indexesList.push(...duplicates);
 
     if (duplicates.length <= 1) return;
-    
+
     let normalizedName = element.name.replace(/\s+/g, '_').replace(/[^\w]/g, '');
     const gateway = {
       type: "Gateway Exclusivo",
       name: "followedBy" + normalizedName,
       lane: element.lane,
-      diverge: "1" // Sempre convergência para gateways inseridos automaticamente
+      diverge: []
     };
 
     elements.splice(duplicates[0], 0, gateway);
@@ -210,6 +225,6 @@ export function processDuplicateElements(elements) {
       }
     });
   });
-  
+
   return elements;
 }
