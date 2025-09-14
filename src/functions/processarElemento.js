@@ -39,7 +39,8 @@ export default function processarElemento(
         participants,
         laneHeight,
         name,
-        lane
+        lane,
+        yOffset
       );
       break;
 
@@ -74,7 +75,8 @@ export default function processarElemento(
         eventType,
         name,
         lane,
-        dictEntry
+        dictEntry,
+        yOffset
       );
       break;
 
@@ -90,13 +92,13 @@ export default function processarElemento(
         laneHeight,
         name,
         lane,
-        dictEntry
+        dictEntry,
+        yOffset
       ));
 
-      const pontos = distribuirPontosDivergencia(diverge.length);
+      const pontos = distribuirPontosDivergencia(diverge.length, yOffset);
       diverge.forEach((branchIndex, divergeIndex) => {
-        const yOffset = pontos[divergeIndex];
-        console.log('Y Offset for branch', divergeIndex, ':', yOffset);
+        const branchYOffset = pontos[divergeIndex];
         divergeEntry.push(processarElemento(
           elements[branchIndex],
           moddle,
@@ -109,8 +111,27 @@ export default function processarElemento(
           laneHeight,
           externalParticipants,
           elements,
-          yOffset
+          branchYOffset
         ));
+        const startIndex = branchIndex + 1;
+        const endIndex = divergeIndex < diverge.length - 1 ? diverge[divergeIndex + 1] : elements.length;
+
+        for (let i = startIndex; i < endIndex; i++) {
+          divergeEntry.push(processarElemento(
+            elements[i],
+            moddle,
+            bpmnProcess,
+            bpmnPlane,
+            collaboration,
+            divergeEntry[divergeEntry.length - 1],
+            participantBounds,
+            participants,
+            laneHeight,
+            externalParticipants,
+            elements,
+            branchYOffset
+          ));
+        }
       });
 
       dictEntry = divergeEntry;
@@ -133,7 +154,7 @@ export default function processarElemento(
       break;
 
     case 'Mensagem':
-      const messageType = name.split('_')[0]; 
+      const messageType = name.split('_')[0];
       criarFluxoMensagem(
         moddle,
         collaboration,
@@ -159,7 +180,8 @@ export default function processarElemento(
         eventType,
         name,
         lane,
-        dictEntry
+        dictEntry,
+        yOffset
       );
       break;
 
@@ -170,16 +192,16 @@ export default function processarElemento(
   return dictEntry;
 }
 
-function distribuirPontosDivergencia(x) {
+function distribuirPontosDivergencia(x, offsetBase = 0) {
   if (x === 1) {
-    return [0];
+    return [offsetBase];
   }
 
   const valores = [];
   const inicio = -((x - 1) * 90) / 2;
 
   for (let i = 0; i < x; i++) {
-    valores.push(inicio + i * 90);
+    valores.push(offsetBase + inicio + i * 90);
   }
 
   return valores;

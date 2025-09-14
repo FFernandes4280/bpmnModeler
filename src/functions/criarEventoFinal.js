@@ -10,7 +10,8 @@ export default function criarEventoFinal(
   finalEventType,
   eventName,
   laneName,
-  dictEntry
+  dictEntry,
+  yOffset = 0
 ) {
   // Recupera o elemento anterior da elementsList
   const prevShape = dictEntry;
@@ -31,7 +32,7 @@ export default function criarEventoFinal(
 
   const finalEventBounds = {
     x: baseX,
-    y: baseY,
+    y: baseY + yOffset,
     width: 35,
     height: 35,
   };

@@ -9,7 +9,8 @@ export default function criarGatewayExclusivo(
   laneHeight,
   gatewayName,
   gatewayLane,
-  dictEntry
+  dictEntry,
+  yOffset
 ) {
 
   // Obtém o elemento anterior da lista usando o índice
@@ -30,7 +31,7 @@ export default function criarGatewayExclusivo(
 
   const gatewayBounds = {
     x: baseX,
-    y: baseY,
+    y: baseY + yOffset,
     width: 36, // Largura padrão do gateway
     height: 36, // Altura padrão do gateway
   };

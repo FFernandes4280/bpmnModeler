@@ -10,7 +10,8 @@ export default function criarEventoIntermediario(
   eventType,
   eventName,
   eventLane,
-  dictEntry
+  dictEntry,
+  yOffset = 0
 ) {
   // Normaliza o ID removendo espaços e caracteres especiais
   const normalizedId = eventName.replace(/\s+/g, '_').replace(/[^\w]/g, '');
@@ -55,7 +56,7 @@ export default function criarEventoIntermediario(
   // Define os limites do evento intermediário
   const eventBounds = {
     x: baseX,
-    y: baseY,
+    y: baseY + yOffset,
     width: 36,
     height: 36,
   };

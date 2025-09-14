@@ -67,8 +67,6 @@ export default function criarAtividade(
   // Determina qual elemento anterior usar para a conexão
   let sourceElement = prevElement;
   
-
-  console.log('Source Element for Activity:', sourceElement);
   // Cria o fluxo de sequência entre o elemento anterior e a atividade
   const sequenceFlow = moddle.create('bpmn:SequenceFlow', {
     id: `SequenceFlow_${sourceElement.id}_Task_${normalizedId}`, // ID único para o fluxo
