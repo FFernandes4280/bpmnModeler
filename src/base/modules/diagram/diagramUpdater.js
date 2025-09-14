@@ -5,7 +5,6 @@
 import { validateRequiredFields } from '../utils/validation.js';
 import { getParticipantsOptions } from '../utils/domHelpers.js';
 import { processElementsFromUI, processDuplicateElements } from './elementProcessor.js';
-import { gerenciadorDivergencias } from '../../../functions/gerenciarDivergencias.js';
 
 // Variável para controle de debounce
 let updateTimeout;
@@ -33,9 +32,6 @@ export async function updateDiagram(viewer, generateDiagramFromInput, setupCanva
  * Executa a atualização do diagrama
  */
 async function performDiagramUpdate(viewer, generateDiagramFromInput, setupCanvasDragBehavior, elementsContainer) {
-  // Limpa dados de divergências da geração anterior
-  gerenciadorDivergencias.limpar();
-  
   // Verificação silenciosa - só atualiza se todos os campos estão preenchidos
   if (!validateRequiredFields(false)) {
     return; // Retorna silenciosamente sem exibir erro no console

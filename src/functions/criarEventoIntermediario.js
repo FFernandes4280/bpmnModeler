@@ -10,9 +10,7 @@ export default function criarEventoIntermediario(
   eventType,
   eventName,
   eventLane,
-  dictEntry,
-  positionConfig = null,  // Nova configuração de posição
-  gatewayPai = null       // Novo parâmetro para conexão com gateway
+  dictEntry
 ) {
   // Normaliza o ID removendo espaços e caracteres especiais
   const normalizedId = eventName.replace(/\s+/g, '_').replace(/[^\w]/g, '');
@@ -45,26 +43,14 @@ export default function criarEventoIntermediario(
   const laneIndex = participants.indexOf(eventLane);
   const laneY = participantBounds.y + laneIndex * laneHeight;
 
-  const prevBounds = dictEntry.get("bounds");
-  const prevElement = dictEntry.get("element");
+  const prevShape = dictEntry;
+  const prevElement = dictEntry.bpmnElement;
 
   // Calcula posição base
-  let baseX = prevBounds.x + 150; // Deslocamento horizontal
+  let baseX = prevShape.bounds.x + 150; // Deslocamento horizontal
   let baseY = laneY + laneHeight / 2 - 18; // Centraliza verticalmente na lane
 
-  // Aplica as regras de posicionamento se houver configuração
-  if (positionConfig) {
-    baseX = baseX + (positionConfig.adjustX || 0);
-    baseY = baseY + (positionConfig.adjustY || 0) + positionConfig.yOffset;
-    
-    console.log(`Evento Intermediário ${eventName} (${eventType}) posicionado:`, {
-      tipo: positionConfig.type,
-      x: baseX, 
-      y: baseY,
-      yOffset: positionConfig.yOffset,
-      gatewayPai: gatewayPai
-    });
-  }
+
 
   // Define os limites do evento intermediário
   const eventBounds = {
@@ -102,7 +88,7 @@ export default function criarEventoIntermediario(
   
   const sequenceFlowWaypoints = calcularWaypointsSequenceFlow(
     moddle,
-    prevBounds,
+    prevShape.bounds,
     eventBounds,
     isFromGateway // Usa lógica de gateway se vem de um gateway
   );
@@ -117,10 +103,5 @@ export default function criarEventoIntermediario(
   // Adiciona o edge ao BPMNPlane
   bpmnPlane.planeElement.push(sequenceFlowEdge);
 
-  const newDictEntry = new Map();
-  newDictEntry.set("element", intermediateEvent);
-  newDictEntry.set("bounds", eventBounds);
-  newDictEntry.set("shape", intermediateEventShape);
-
-  return newDictEntry;
+  return intermediateEventShape;
 }

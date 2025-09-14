@@ -10,13 +10,11 @@ export default function criarEventoFinal(
   finalEventType,
   eventName,
   laneName,
-  dictEntry,
-  positionConfig = null,  // Nova configuração de posição
-  gatewayPai = null       // Novo parâmetro para conexão com gateway
+  dictEntry
 ) {
   // Recupera o elemento anterior da elementsList
-  const prevBounds = dictEntry.get("bounds");
-  const prevElement = dictEntry.get("element");
+  const prevShape = dictEntry;
+  const prevElement = dictEntry.bpmnElement;
 
   // Normaliza o ID removendo espaços e caracteres especiais
   const normalizedId = eventName.replace(/\s+/g, '_').replace(/[^\w]/g, '');
@@ -26,22 +24,10 @@ export default function criarEventoFinal(
   const laneY = participantBounds.y + laneIndex * laneHeight;
   
   // Calcula posição base
-  let baseX = prevBounds.x + 150; // Posiciona o evento final à direita do elemento anterior
+  let baseX = prevShape.bounds.x + 150; // Posiciona o evento final à direita do elemento anterior
   let baseY = laneY + (laneHeight - 35) / 2; // Centraliza na lane
 
-  // Aplica as regras de posicionamento se houver configuração
-  if (positionConfig) {
-    baseX = baseX + (positionConfig.adjustX || 0);
-    baseY = baseY + (positionConfig.adjustY || 0) + positionConfig.yOffset;
-    
-    console.log(`Evento Final ${eventName} (${finalEventType}) posicionado:`, {
-      tipo: positionConfig.type,
-      x: baseX, 
-      y: baseY,
-      yOffset: positionConfig.yOffset,
-      gatewayPai: gatewayPai
-    });
-  }
+
 
   const finalEventBounds = {
     x: baseX,
@@ -121,7 +107,7 @@ export default function criarEventoFinal(
   
   const sequenceFlowWaypoints = calcularWaypointsSequenceFlow(
     moddle,
-    prevBounds,
+    prevShape.bounds,
     finalEventBounds,
     isFromGateway // Usa lógica de gateway se vem de um gateway
   );
@@ -136,11 +122,5 @@ export default function criarEventoFinal(
   // Adiciona o edge ao BPMNPlane
   bpmnPlane.planeElement.push(sequenceFlowEdge);
 
-  // Cria um Map para o elemento final
-  const endEventEntry = new Map();
-  endEventEntry.set("element", finalEvent);
-  endEventEntry.set("bounds", finalEventBounds);
-  endEventEntry.set("shape", finalEventShape);
-
-  return endEventEntry;
+  return finalEventShape;
 }

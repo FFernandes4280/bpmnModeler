@@ -52,10 +52,5 @@ export default function criarEventoInicial(
 
   bpmnPlane.planeElement.push(initialEventShape);
 
-  const dictEntry = new Map();
-  dictEntry.set('element', initialEvent);
-  dictEntry.set('bounds', initialEventBounds);
-  dictEntry.set('shape', initialEventShape);
-  
-  return dictEntry;
+  return initialEventShape;
 }

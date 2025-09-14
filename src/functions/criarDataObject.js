@@ -11,8 +11,8 @@ export default function criarDataObject(
         name: name,
     });
 
-    const prevBounds = dictEntry.get("bounds");
-    const prevElement = dictEntry.get("element");
+    const prevShape = dictEntry;
+    const prevElement = dictEntry.bpmnElement;
 
     const dataObjectRef = moddle.create('bpmn:DataObjectReference', {
         id: `DataObjectReference_${name.replace(/\s+/g, '_')}`,
@@ -24,8 +24,8 @@ export default function criarDataObject(
     bpmnProcess.get('flowElements').push(dataObjectRef);
 
     const dataObjectBounds = {
-        x: prevBounds.x + (prevBounds.width - 36) / 2,
-        y: prevBounds.y - 70,
+        x: prevShape.bounds.x + (prevShape.bounds.width - 36) / 2,
+        y: prevShape.bounds.y - 70,
         width: 36,
         height: 48,
     };
@@ -82,13 +82,13 @@ export default function criarDataObject(
     let associationWaypoints;
     if (direction === 'Envio') {
         associationWaypoints = [
-            moddle.create('dc:Point', { x: prevBounds.x + prevBounds.width / 2, y: prevBounds.y }),
+            moddle.create('dc:Point', { x: prevShape.bounds.x + prevShape.bounds.width / 2, y: prevShape.bounds.y }),
             moddle.create('dc:Point', { x: dataObjectBounds.x + dataObjectBounds.width / 2, y: dataObjectBounds.y + dataObjectBounds.height }),
         ];
     } else {
         associationWaypoints = [
             moddle.create('dc:Point', { x: dataObjectBounds.x + dataObjectBounds.width / 2, y: dataObjectBounds.y + dataObjectBounds.height }),
-            moddle.create('dc:Point', { x: prevBounds.x + prevBounds.width / 2, y: prevBounds.y }),
+            moddle.create('dc:Point', { x: prevShape.bounds.x + prevShape.bounds.width / 2, y: prevShape.bounds.y }),
         ];
     }
 

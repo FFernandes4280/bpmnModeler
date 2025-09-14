@@ -10,11 +10,9 @@ export default function criarAtividade(
   activityType,
   activityName,
   activityLane,
-  dictEntry,
-  positionConfig = null,  // Nova configuração de posição
-  gatewayPai = null       // Novo parâmetro para conexão com gateway
+  dictEntry, 
+  yOffset
 ) {
-  console.log(dictEntry);
   // Normaliza o ID removendo espaços e caracteres especiais
   const normalizedId = activityName.replace(/\s+/g, '_').replace(/[^\w]/g, '');
   
@@ -39,23 +37,19 @@ export default function criarAtividade(
   const laneIndex = participants.indexOf(activityLane);
   const laneY = participantBounds.y + laneIndex * laneHeight;
 
-  const prevBounds = dictEntry.get("bounds");
-  const prevElement = dictEntry.get("element");
+  const prevShape = dictEntry;
+  const prevElement = dictEntry.bpmnElement;
 
   // Calcula posição base
-  let baseX = prevBounds.x + 150; // Deslocamento horizontal
+  let baseX = prevShape.bounds.x + 150; // Deslocamento horizontal
   let baseY = laneY + (laneHeight - 80) / 2; // Centraliza verticalmente na lane
 
-  // Aplica as regras de posicionamento se houver configuração
-  if (positionConfig) {
-    baseX = baseX + (positionConfig.adjustX || 0);
-    baseY = baseY + (positionConfig.adjustY || 0) + positionConfig.yOffset;
-  }
+
 
   // Define os limites da atividade com as posições ajustadas
   const activityBounds = {
     x: baseX,
-    y: baseY,
+    y: baseY + yOffset,
     width: 100,
     height: 80,
   };
@@ -73,14 +67,8 @@ export default function criarAtividade(
   // Determina qual elemento anterior usar para a conexão
   let sourceElement = prevElement;
   
-  // Se é primeiro elemento de um branch, conecta diretamente ao gateway pai
-  if (gatewayPai) {
-    // Procura o gateway pai na lista de elementos
-    const gatewayEntry = dictEntry;
-    
-    if (gatewayEntry) sourceElement = gatewayEntry.get("element");
-  }
 
+  console.log('Source Element for Activity:', sourceElement);
   // Cria o fluxo de sequência entre o elemento anterior e a atividade
   const sequenceFlow = moddle.create('bpmn:SequenceFlow', {
     id: `SequenceFlow_${sourceElement.id}_Task_${normalizedId}`, // ID único para o fluxo
@@ -99,7 +87,7 @@ export default function criarAtividade(
   );
 
   // Obtém os bounds do elemento fonte
-  const sourceBounds = prevBounds;
+  const sourceBounds = prevShape.bounds;
   
   const sequenceFlowWaypoints = calcularWaypointsSequenceFlow(
     moddle,
@@ -118,10 +106,5 @@ export default function criarAtividade(
   // Adiciona o edge ao BPMNPlane
   bpmnPlane.planeElement.push(sequenceFlowEdge);
 
-  const newDictEntry = new Map();
-  newDictEntry.set("element", activity);
-  newDictEntry.set("bounds", activityBounds);
-  newDictEntry.set("shape", activityShape);
-
-  return newDictEntry;
+  return activityShape;
 }

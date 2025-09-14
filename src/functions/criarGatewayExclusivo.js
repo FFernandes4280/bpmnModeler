@@ -9,13 +9,12 @@ export default function criarGatewayExclusivo(
   laneHeight,
   gatewayName,
   gatewayLane,
-  dictEntry,
-  positionConfig = null  // Nova configuração de posição
+  dictEntry
 ) {
 
   // Obtém o elemento anterior da lista usando o índice
-  const sourceElement = dictEntry.get("element");
-  const sourceBounds = dictEntry.get("bounds");
+  const sourceElement = dictEntry.bpmnElement;
+  const prevShape = dictEntry;
 
   // Localiza o índice da lane correspondente ao participante
   const gatewayLaneIndex = participants.indexOf(gatewayLane);
@@ -24,14 +23,10 @@ export default function criarGatewayExclusivo(
   const gatewayLaneY = participantBounds.y + gatewayLaneIndex * laneHeight;
   
   // Calcula posição base
-  let baseX = sourceBounds.x + 150; // Desloca o gateway horizontalmente
+  let baseX = prevShape.bounds.x + 150; // Desloca o gateway horizontalmente
   let baseY = gatewayLaneY + (laneHeight - 36) / 2; // Centraliza verticalmente na lane
 
-  // Aplica as regras de posicionamento se houver configuração
-  if (positionConfig) {
-    baseX = baseX + (positionConfig.adjustX || 0);
-    baseY = baseY + (positionConfig.adjustY || 0) + positionConfig.yOffset;
-  }
+
 
   const gatewayBounds = {
     x: baseX,
@@ -78,7 +73,7 @@ export default function criarGatewayExclusivo(
   
   const sequenceFlowWaypoints = calcularWaypointsSequenceFlow(
     moddle,
-    sourceBounds,
+    prevShape.bounds,
     gatewayBounds,
     isFromGateway // Usa lógica de gateway se vem de um gateway
   );
@@ -93,11 +88,5 @@ export default function criarGatewayExclusivo(
   // Adiciona o edge ao BPMNPlane
   bpmnPlane.planeElement.push(sequenceFlowEdge);
 
-  const newDictEntry = new Map();
-
-  newDictEntry.set("element", gateway);
-  newDictEntry.set("bounds", gatewayBounds);
-  newDictEntry.set("shape", gatewayShape);
-
-  return newDictEntry; 
+  return gatewayShape; 
 }

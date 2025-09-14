@@ -12,8 +12,8 @@ export default function criarFluxoMensagem(
     (participant) => participant.name === lane
   );
 
-  const prevBounds = dictEntry.get("bounds");
-  const prevElement = dictEntry.get("element");
+  const prevShape = dictEntry;
+  const prevElement = dictEntry.bpmnElement;
 
   const messageFlow = moddle.create('bpmn:MessageFlow', {
     id: `MessageFlow_${prevElement.id}_to_${externalParticipant.id}`,
@@ -27,8 +27,8 @@ export default function criarFluxoMensagem(
   collaboration.get('messageFlows').push(messageFlow);
 
   // Define os waypoints para o Message Flow
-  const elementX = prevBounds.x + prevBounds.width / 2;
-  const elementY = prevBounds.y; 
+  const elementX = prevShape.bounds.x + prevShape.bounds.width / 2;
+  const elementY = prevShape.bounds.y; 
 
   const targetParticipantIndex = externalParticipants.indexOf(lane);
  

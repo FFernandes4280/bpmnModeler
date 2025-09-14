@@ -14,11 +14,10 @@ export default function criarGatewayParalelo(
     elementsList,
   ) {
     // Obtém o elemento anterior da lista usando o índice
-    const prevEntry = elementsList[index - 1];
-    const sourceElement = prevEntry ? prevEntry.get("element") : null;
-    const sourceBounds = prevEntry ? prevEntry.get("bounds") : null;
+    const prevShape = elementsList[index - 1];
+    const sourceElement = prevShape ? prevShape.bpmnElement : null;
 
-    if (!sourceElement || !sourceBounds) {
+    if (!sourceElement || !prevShape) {
       throw new Error(`Elemento anterior não encontrado para o gateway "${gatewayName}"`);
     }
 
@@ -32,21 +31,10 @@ export default function criarGatewayParalelo(
     const gatewayLaneY = participantBounds.y + gatewayLaneIndex * laneHeight;
     
     // Calcula posição base
-    let baseX = sourceBounds.x + 150; // Desloca o gateway horizontalmente
+    let baseX = prevShape.bounds.x + 150; // Desloca o gateway horizontalmente
     let baseY = gatewayLaneY + (laneHeight - 36) / 2; // Centraliza verticalmente na lane
 
-    // Aplica as regras de posicionamento se houver configuração
-    if (positionConfig) {
-      baseX = baseX + (positionConfig.adjustX || 0);
-      baseY = baseY + (positionConfig.adjustY || 0) + positionConfig.yOffset;
-      
-      console.log(`Gateway Paralelo ${gatewayName} posicionado:`, {
-        tipo: positionConfig.type,
-        x: baseX, 
-        y: baseY,
-        yOffset: positionConfig.yOffset
-      });
-    }
+
 
     const gatewayBounds = {
       x: baseX,
@@ -87,7 +75,7 @@ export default function criarGatewayParalelo(
     // Calcula waypoints usando a nova função
     const sequenceFlowWaypoints = calcularWaypointsSequenceFlow(
       moddle,
-      sourceBounds,
+      prevShape.bounds,
       gatewayBounds,
       false // Fluxo PARA o gateway usa lógica normal
     );
@@ -103,11 +91,7 @@ export default function criarGatewayParalelo(
     bpmnPlane.planeElement.push(sequenceFlowEdge);
 
     // Adiciona o gateway à lista de elementos
-    elementsList.push(new Map([
-      ['element', gateway],
-      ['bounds', gatewayBounds],
-      ['index', index]
-    ]));
+    elementsList.push(gatewayShape);
   
-    return gatewayBounds; // Retorna os bounds do gateway para o gerenciador de divergências
+    return gatewayShape; // Retorna o shape do gateway
   }
