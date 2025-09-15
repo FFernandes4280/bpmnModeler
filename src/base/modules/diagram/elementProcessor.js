@@ -165,23 +165,33 @@ function getBranchFirstElementIndexes(gatewayRow, gatewayIndex) {
     return [];
   }
 
-  // Coleta o índice do primeiro elemento de cada branch
+  // Coleta o índice do primeiro elemento de cada branch (apenas filhos diretos)
   const branchIndexes = [];
-  const branches = branchesContainer.querySelectorAll('.gateway-branch');
+  const branches = Array.from(branchesContainer.children)
+    .filter(el => el.classList && el.classList.contains('gateway-branch'));
 
   branches.forEach(branch => {
-    const branchElements = branch.querySelector('.branch-elements');
-    if (branchElements) {
-      const firstElementRow = branchElements.querySelector('.element-row');
-      if (firstElementRow) {
-        const firstElementIndex = parseInt(firstElementRow.querySelector('.element-number').textContent, 10);
+    // Busca apenas a .branch-elements filha direta do branch
+    const branchElements = Array.from(branch.children)
+      .find(el => el.classList && el.classList.contains('branch-elements'));
+
+    if (!branchElements) return;
+
+    // Primeiro .element-row filho direto (não recursivo)
+    const firstElementRow = Array.from(branchElements.children)
+      .find(el => el.classList && el.classList.contains('element-row'));
+
+    if (firstElementRow) {
+      const numberEl = firstElementRow.querySelector('.element-number');
+      const firstElementIndex = numberEl ? parseInt(numberEl.textContent, 10) : NaN;
+      if (!Number.isNaN(firstElementIndex)) {
         branchIndexes.push(firstElementIndex);
       }
     }
   });
 
-  // Retorna array vazio se não há branches (gateway divergente sem elementos)
-  return branchIndexes.length > 0 ? branchIndexes : [];
+  // Deduplica e retorna vazio se não há branches
+  return branchIndexes.length > 0 ? [...new Set(branchIndexes)] : [];
 }
 
 /**

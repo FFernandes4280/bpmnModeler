@@ -97,6 +97,7 @@ export default function processarElemento(
       ));
 
       const pontos = distribuirPontosDivergencia(diverge.length, yOffset);
+      
       diverge.forEach((branchIndex, divergeIndex) => {
         const branchYOffset = pontos[divergeIndex];
         divergeEntry.push(processarElemento(
