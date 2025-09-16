@@ -3,8 +3,8 @@
  */
 
 /**
- * Calcula a altura do participante baseada no espaçamento esperado dos gateways
- * após todos os elementos serem processados, considerando a nova lógica de distribuição
+ * Calcula a altura do participante baseada no somatório dos espaçamentos de todos os gateways
+ * considerando a lógica de espaçamento progressivo (gateways pais têm mais espaçamento)
  * @param {Array} elements - Array de elementos do diagrama
  * @param {number} participantNumber - Número de participantes
  * @returns {number} Altura calculada do participante
@@ -16,41 +16,54 @@ export function calcularAlturaParticipante(elements, participantNumber) {
     return defaultHeight;
   }
 
-  // Encontra todos os gateways e calcula o espaçamento máximo esperado
-  let maxEspacamentoEsperado = 0;
+  // Conta quantos gateways existem e calcula o somatório dos espaçamentos
+  let somatorioEspacamentos = 0;
+  let totalGateways = 0;
   
   elements.forEach((element, index) => {
     if (element.type === 'Gateway Exclusivo' || element.type === 'Gateway Paralelo') {
+      totalGateways++;
+      
       if (element.diverge && element.diverge.length > 0) {
         // Calcula quantos gateways filhos este gateway terá
         const gatewaysFilhos = calculateGatewaysAfter(elements, index);
         
-        // Calcula o espaçamento que este gateway usará
-        const baseSpacing = 90;
-        const spacing = baseSpacing + (gatewaysFilhos * 45);
+        // Calcula o espaçamento que este gateway usará (lógica progressiva)
+        // Usa valores pares para garantir cálculos sempre inteiros
+        const baseSpacing = 120; // Base: 120px (par)
+        const spacingIncrement = 60; // Incremento: 60px por gateway filho (par)
+        const spacing = baseSpacing + (gatewaysFilhos * spacingIncrement);
         
         // Calcula a extensão total dos branches deste gateway
         const branchCount = element.diverge.length;
-        const extensaoTotal = calculateBranchExtension(branchCount, spacing);
+        const extensaoGateway = calculateBranchExtension(branchCount, spacing);
         
-        // Mantém o maior espaçamento encontrado
-        if (extensaoTotal > maxEspacamentoEsperado) {
-          maxEspacamentoEsperado = extensaoTotal;
-        }
+        // Adiciona ao somatório
+        somatorioEspacamentos += extensaoGateway;
       }
     }
   });
 
   // Se não há gateways, usa altura padrão
-  if (maxEspacamentoEsperado === 0) {
+  if (totalGateways === 0) {
     return defaultHeight;
   }
 
-  // Calcula altura baseada no espaçamento máximo esperado
-  // Adiciona margem de segurança (20% extra)
-  const alturaBaseadaEmEspacamento = defaultHeight + (maxEspacamentoEsperado * 1.2);
+  // Calcula altura baseada no somatório dos espaçamentos
+  // Usa valores pares para garantir que divisões por 2 sejam sempre inteiras
+  const margemPorGateway = 80; // Valor par para evitar frações
+  const margemBase = 100; // Valor par
   
-  return Math.max(defaultHeight, alturaBaseadaEmEspacamento);
+  const alturaCalculada = defaultHeight + 
+    (somatorioEspacamentos * 2) + // Multiplica por 2 (para cima e para baixo)
+    (totalGateways * margemPorGateway) + 
+    margemBase;
+  
+  const altura = Math.max(defaultHeight, alturaCalculada);
+  
+  // Garante que o resultado seja sempre par (divisível por 2)
+  // Isso evita frações quando a altura é dividida por 2 para calcular o centro
+  return Math.ceil(altura / 2) * 2;
 }
 
 /**
@@ -77,22 +90,22 @@ function calculateGatewaysAfter(elements, currentGatewayIndex) {
 }
 
 /**
- * Calcula a extensão total dos branches de um gateway
+ * Calcula o deslocamento máximo dos branches de um gateway a partir do centro
  * @param {number} branchCount - Número de branches
  * @param {number} spacing - Espaçamento entre branches
- * @returns {number} Extensão total dos branches
+ * @returns {number} Deslocamento máximo a partir do centro
  */
 function calculateBranchExtension(branchCount, spacing) {
   if (branchCount <= 1) {
     return 0;
   }
 
-  // Para branches simétricas, a extensão vai do primeiro ao último branch
-  // Exemplo: 3 branches com spacing 180 = [-180, 0, 180] = extensão de 360
-  const inicio = -((branchCount - 1) * spacing) / 2;
-  const fim = ((branchCount - 1) * spacing) / 2;
+  // Para branches simétricas, o deslocamento máximo é do centro até a ponta
+  // Exemplo: 2 branches com spacing 180 = [-90, 90] = deslocamento máximo 90
+  // Exemplo: 3 branches com spacing 180 = [-180, 0, 180] = deslocamento máximo 180
+  const deslocamentoMaximo = ((branchCount - 1) * spacing) / 2;
   
-  return Math.abs(fim - inicio);
+  return deslocamentoMaximo;
 }
 
 /**

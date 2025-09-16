@@ -21,9 +21,9 @@ export function distribuirPontosDivergencia(branchCount, offsetBase = 0, element
   const gatewaysAfter = calculateGatewaysAfter(elements, currentGatewayIndex);
   
   // Espaçamento aumenta conforme há mais gateways filhos para abrir espaço
-  // Gateway final: espaçamento padrão (90px), Gateway com filhos: mais espaçamento
-  const baseSpacing = 90;
-  const spacing = baseSpacing + (gatewaysAfter * 45);
+  // Usa valores pares para garantir cálculos sempre inteiros (sincronizado com calcularAlturaParticipante)
+  const baseSpacing = 120; // Base: 120px (par)
+  const spacing = baseSpacing + (gatewaysAfter * 60); // Incremento: 60px (par)
   
   const valores = [];
   const inicio = -((branchCount - 1) * spacing) / 2;
