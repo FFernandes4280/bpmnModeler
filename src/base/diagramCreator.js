@@ -1,6 +1,7 @@
 import BpmnModdle from 'bpmn-moddle';
 import processarElemento from '../functions/processarElemento.js';
 import criarParticipantesExternos from '../functions/criarParticipantesExternos.js';
+import { calcularAlturaParticipante } from '../functions/calcularAlturaParticipante.js';
 
 const moddle = new BpmnModdle();
 
@@ -48,31 +49,7 @@ export async function generateDiagramFromInput(processName, participantsInput, h
   const bpmnPlane = moddle.create('bpmndi:BPMNPlane', { id: 'BPMNPlane', bpmnElement: collaboration });
   bpmnPlane.planeElement = [];
 
-  // Função para calcular altura baseada na maior divergência
-  function calcularAlturaParticipante() {
-    let maiorDivergencia = 0;
-    let defaultHeight = participantNumber * 200;
-    // Procura por gateways e encontra a maior divergência
-    if(!elements || elements.length === 0) {
-      return defaultHeight;
-    }
-    
-    elements.forEach(element => {
-      if (element.type === 'Gateway Exclusivo' || element.type === 'Gateway Paralelo') {
-        if (element.diverge && element.diverge.length > maiorDivergencia) {
-          maiorDivergencia = element.diverge.length;
-        }
-      }
-    });
 
-    // Se não há divergências, usa altura baseada no número de participantes
-    if (maiorDivergencia === 0) {
-      return defaultHeight;
-    }
-
-    // Calcula altura baseada na maior divergência
-    return defaultHeight + maiorDivergencia * 80;
-  }
 
   // Define participant bounds
   const externalParticipantsCount = hasExternalParticipants === 'Sim' ? externalParticipants.length : 0;
@@ -80,7 +57,7 @@ export async function generateDiagramFromInput(processName, participantsInput, h
     x: 160,
     y: 80 + externalParticipantsCount * 200 + (externalParticipantsCount > 0 ? 50 : 0),
     width: elements.length * 200 + 200,
-    height: calcularAlturaParticipante(), // Executa a função e armazena o resultado
+    height: calcularAlturaParticipante(elements, participantNumber), // Usa a nova função importada
   };
 
   // Create a participant shape for the process

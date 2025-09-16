@@ -9,6 +9,7 @@ import criarFluxoMensagem from './criarFluxoMensagem.js';
 import conectarGatewayExclusivoExistente from './conectarGatewayExclusivoExistente.js';
 import conectarGatewayParaleloExistente from './conectarGatewayParaleloExistente.js';
 import buscarGatewayExistente from './buscarGatewayExistente.js';
+import { distribuirPontosDivergencia } from './distribuirPontosDivergencia.js';
 
 export default function processarElemento(
   element,
@@ -96,7 +97,14 @@ export default function processarElemento(
         yOffset
       ));
 
-      const pontos = distribuirPontosDivergencia(diverge.length, yOffset);
+      // Encontra o índice do gateway atual no array de elementos
+      const currentGatewayIndex = elements.findIndex(el => 
+        el.type === element.type && 
+        el.name === element.name && 
+        el.lane === element.lane
+      );
+      
+      const pontos = distribuirPontosDivergencia(diverge.length, yOffset, elements, currentGatewayIndex);
       
       diverge.forEach((branchIndex, divergeIndex) => {
         const branchYOffset = pontos[divergeIndex];
@@ -115,10 +123,10 @@ export default function processarElemento(
           branchYOffset
         ));
         const startIndex = branchIndex + 1;
-        const endIndex = divergeIndex < diverge.length - 1 ? diverge[divergeIndex + 1] : elements.length;
+        const endIndex = findElementToStop(elements, diverge[0] - 1, divergeIndex, diverge.length);
 
         for (let i = startIndex; i < endIndex; i++) {
-          divergeEntry.push(processarElemento(
+          const currentEntry = processarElemento(
             elements[i],
             moddle,
             bpmnProcess,
@@ -131,7 +139,14 @@ export default function processarElemento(
             externalParticipants,
             elements,
             branchYOffset
-          ));
+          );
+          if (Array.isArray(currentEntry)) {
+            divergeEntry.push(...currentEntry);
+          } else {
+            divergeEntry.push(currentEntry);
+          }
+          if (elements[i].type === 'Gateway Exclusivo' ||
+              elements[i].type === 'Gateway Paralelo') break;
         }
       });
 
@@ -193,20 +208,39 @@ export default function processarElemento(
   return dictEntry;
 }
 
-function distribuirPontosDivergencia(x, offsetBase = 0) {
-  if (x === 1) {
-    return [offsetBase];
+function findElementToStop(elements, gatewayIndex, divergeIndex, divergeLength) {
+  if (divergeIndex < divergeLength - 1) {
+    return elements[gatewayIndex].diverge[divergeIndex + 1];
+  }
+  
+  for (let i = gatewayIndex - 1; i > 0; i--) {
+    if (elements[i] && (elements[i].type === 'Gateway Exclusivo' || elements[i].type === 'Gateway Paralelo')) {
+      // Encontra em qual branch do gateway anterior o gateway atual está
+      let indexInDiverge = -1;
+      for (let branchIdx = 0; branchIdx < elements[i].diverge.length; branchIdx++) {
+        const branchStart = elements[i].diverge[branchIdx] - 1; // Converte para índice baseado em 0
+        const branchEnd = branchIdx < elements[i].diverge.length - 1 ? 
+          elements[i].diverge[branchIdx + 1] - 1 : elements.length;
+        
+        if (gatewayIndex + 1 >= branchStart && gatewayIndex + 1 < branchEnd) {
+          indexInDiverge = branchIdx;
+          break;
+        }
+      }
+      
+      let prevDiverLength = elements[i].diverge.length;
+      if (indexInDiverge !== -1 && indexInDiverge < prevDiverLength - 1) {
+        return elements[i].diverge[indexInDiverge + 1];
+      }
+      
+      gatewayIndex = i;
+      divergeIndex = indexInDiverge;
+      divergeLength = prevDiverLength;
+      i = gatewayIndex; 
+    }
   }
 
-  const valores = [];
-  const inicio = -((x - 1) * 90) / 2;
-
-  for (let i = 0; i < x; i++) {
-    valores.push(offsetBase + inicio + i * 90);
-  }
-
-  return valores;
+  return elements.length;
 }
-
 
 

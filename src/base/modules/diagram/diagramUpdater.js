@@ -49,7 +49,6 @@ async function performDiagramUpdate(viewer, generateDiagramFromInput, setupCanva
 
   // Criar elemento inicial
   const initialElement = {
-    index: 0,
     type: 'Inicio',
     name: initialEventType+ "_" + initialEventName,
     lane: initialEventLane

@@ -19,14 +19,10 @@ export function processElementsFromUI(elementsContainer) {
   // Combina todos os elementos
   const allElements = [...mainElements, ...branchElements];
 
-  // Primeiro, processa todos os elementos e identifica quais devem ter índice
-  const processedElements = allElements.map(row => {
+  // Processa todos os elementos
+  const processedElements = allElements.map((row, index) => {
     const type = row.querySelector('.element-type').value;
     const lane = row.querySelector('.element-lane').value;
-    const originalIndex = parseInt(row.querySelector('.element-number').textContent, 10);
-
-    // Elementos que não devem ter índice na sequência principal
-    const shouldHaveIndex = !['Mensagem', 'Data Object'].includes(type);
 
     if (type !== 'Gateway Exclusivo' && type !== 'Gateway Paralelo') {
       // Para elementos de mensagem, usar o tipo de mensagem se disponível
@@ -34,7 +30,7 @@ export function processElementsFromUI(elementsContainer) {
       if (type === 'Mensagem') {
         const messageTypeElement = row.querySelector('.element-messageType');
         const messageType = messageTypeElement ? messageTypeElement.value : 'Envio';
-        name = messageType + '_Mensagem_' + originalIndex;
+        name = messageType + '_Mensagem_' + (index + 1);
       } else {
         name = row.querySelector('.element-name').value;
       }
@@ -54,11 +50,11 @@ export function processElementsFromUI(elementsContainer) {
         name = dataObjectDirection + '_' + name;
       }
 
-      if (shouldHaveIndex) {
+      if (!['Mensagem', 'Data Object'].includes(type)) {
         previousName = name;
       }
 
-      return { originalIndex, type, name, lane, shouldHaveIndex };
+      return { type, name, lane };
     }
 
     // Processamento para gateways (sempre têm índice)
@@ -73,7 +69,7 @@ export function processElementsFromUI(elementsContainer) {
       const counterText = counterElement.textContent;
       // Para gateways com divergências, coletar índices dos primeiros elementos de cada branch
       if (counterText !== 'Convergência') {
-        diverge = getBranchFirstElementIndexes(row, originalIndex);
+        diverge = getBranchFirstElementIndexes(row, index);
       } else {
         // Gateway de Convergência
         const currentPosition = allElements.indexOf(row);
@@ -88,8 +84,8 @@ export function processElementsFromUI(elementsContainer) {
 
           // Se estão no mesmo container (mesmo nível), conecta
           if (currentContainer === nextContainer) {
-            const nextOriginalIndex = parseInt(nextElement.querySelector('.element-number').textContent, 10);
-            diverge = [nextOriginalIndex];
+            const nextPosition = allElements.indexOf(nextElement);
+            diverge = [nextPosition + 1];
           } else {
             // Se estão em containers diferentes (níveis diferentes), não conecta
             diverge = [];
@@ -104,41 +100,29 @@ export function processElementsFromUI(elementsContainer) {
       diverge = nameElement ? nameElement.value : '';
     }
 
-    return { originalIndex, type, name, lane, diverge, shouldHaveIndex: true }; // Gateways sempre têm índice
+    return { type, name, lane, diverge };
   });
 
-  // Agora renumera apenas os elementos que devem ter índice
+  // Adiciona índices sequenciais para elementos que precisam
   let currentIndex = 1;
   const finalElements = processedElements.map(element => {
-    if (element.shouldHaveIndex) {
+    if (!['Mensagem', 'Data Object'].includes(element.type)) {
       const index = currentIndex;
       currentIndex++;
       return { ...element, index };
     } else {
-      // Elementos sem índice (Mensagem e Data Object) usam null ou um valor especial
+      // Elementos sem índice (Mensagem e Data Object) usam null
       return { ...element, index: null };
     }
   });
 
-  // Ajusta as referências de divergência nos gateways para usar os novos índices
-  return finalElements.map(element => {
-    if (element.diverge && Array.isArray(element.diverge)) {
-      // Mapeia os índices originais para os novos índices
-      const newDiverge = element.diverge.map(originalIdx => {
-        const targetElement = finalElements.find(el => el.originalIndex === originalIdx);
-        return targetElement ? targetElement.index : originalIdx;
-      }).filter(idx => idx !== null); // Remove referências para elementos sem índice
-
-      return { ...element, diverge: newDiverge };
-    }
-    return element;
-  });
+  return finalElements;
 }
 
 /**
  * Coleta os índices dos primeiros elementos de cada branch de um gateway
  * @param {HTMLElement} gatewayRow - Linha do gateway
- * @param {number} gatewayIndex - Índice do gateway
+ * @param {number} gatewayIndex - Índice do gateway na lista de elementos
  * @returns {Array|string} Array com índices ou string para convergência
  */
 function getBranchFirstElementIndexes(gatewayRow, gatewayIndex) {
@@ -182,10 +166,20 @@ function getBranchFirstElementIndexes(gatewayRow, gatewayIndex) {
       .find(el => el.classList && el.classList.contains('element-row'));
 
     if (firstElementRow) {
-      const numberEl = firstElementRow.querySelector('.element-number');
-      const firstElementIndex = numberEl ? parseInt(numberEl.textContent, 10) : NaN;
-      if (!Number.isNaN(firstElementIndex)) {
-        branchIndexes.push(firstElementIndex);
+      // Encontra a posição do primeiro elemento no array completo de elementos
+      const allElements = Array.from(document.querySelectorAll('.element-row'));
+      const elementPosition = allElements.indexOf(firstElementRow);
+      if (elementPosition !== -1) {
+        // Conta apenas elementos que terão índice (não Mensagem nem Data Object)
+        const elementsBeforeWithIndex = allElements.slice(0, elementPosition).filter(row => {
+          const type = row.querySelector('.element-type').value;
+          return !['Mensagem', 'Data Object'].includes(type);
+        }).length;
+        
+        const currentType = firstElementRow.querySelector('.element-type').value;
+        if (!['Mensagem', 'Data Object'].includes(currentType)) {
+          branchIndexes.push(elementsBeforeWithIndex + 1);
+        }
       }
     }
   });
