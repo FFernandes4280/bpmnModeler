@@ -31,22 +31,68 @@ export function processElementsFromUI(elementsContainer) {
         const messageTypeElement = row.querySelector('.element-messageType');
         const messageType = messageTypeElement ? messageTypeElement.value : 'Envio';
         name = messageType + '_Mensagem_' + (index + 1);
+      } else if (type === 'Gateway Existente') {
+        // Nova abordagem: Gateway Existente com referência por índice
+        const existingGatewaySelect = row.querySelector('.element-existingGatewaySelect');
+        const selectedGatewayValue = existingGatewaySelect ? existingGatewaySelect.value : '';
+        
+        // Extrai o índice do gateway selecionado (ex: "gateway_1" -> 1)
+        let refGatewayIndex = null;
+        if (selectedGatewayValue) {
+          const indexMatch = selectedGatewayValue.match(/(\d+)$/);
+          if (indexMatch) {
+            refGatewayIndex = parseInt(indexMatch[1]);
+          }
+        }
+        
+        // Se não conseguiu extrair índice, busca primeiro gateway da mesma lane
+        if (refGatewayIndex === null) {
+          // Conta quantos gateways existem antes na mesma lane
+          let gatewayCount = 0;
+          for (let i = 0; i < index; i++) {
+            const prevRow = allElements[i];
+            const prevType = prevRow.querySelector('.element-type')?.value;
+            const prevLane = prevRow.querySelector('.element-lane')?.value;
+            
+            if ((prevType === 'Gateway Exclusivo' || prevType === 'Gateway Paralelo') && prevLane === lane) {
+              gatewayCount++;
+            }
+          }
+          
+          // Se encontrou pelo menos um gateway, usa o primeiro (índice 1)
+          if (gatewayCount > 0) {
+            refGatewayIndex = 1;
+          }
+        }
+        
+        // Retorna Gateway Existente com referência por índice
+        return {
+          type: 'Gateway Existente',
+          refGateway: refGatewayIndex,
+          lane: lane
+        };
       } else {
-        name = row.querySelector('.element-name').value;
+        // Elementos que têm campo name
+        const nameElement = row.querySelector('.element-name');
+        name = nameElement ? nameElement.value : 'Elemento_' + (index + 1);
       }
 
       // Processamento específico por tipo
       if (type === 'Evento Intermediario') {
-        const eventType = row.querySelector('.element-eventType').value;
+        const eventTypeElement = row.querySelector('.element-eventType');
+        const eventType = eventTypeElement ? eventTypeElement.value : 'Default';
         name = eventType + '_' + name;
       } else if (type === 'Fim') {
-        const finalEventType = row.querySelector('.element-finalEventType').value;
+        const finalEventTypeElement = row.querySelector('.element-finalEventType');
+        const finalEventType = finalEventTypeElement ? finalEventTypeElement.value : 'End';
         name = finalEventType + '_' + name;
       } else if (type === 'Atividade') {
-        const activityType = row.querySelector('.element-activityType').value;
+        const activityTypeElement = row.querySelector('.element-activityType');
+        const activityType = activityTypeElement ? activityTypeElement.value : 'Task';
         name = activityType + '_' + name;
       } else if (type === 'Data Object') {
-        const dataObjectDirection = row.querySelector('.element-dataObjectDirection').value;
+        const dataObjectDirectionElement = row.querySelector('.element-dataObjectDirection');
+        const dataObjectDirection = dataObjectDirectionElement ? dataObjectDirectionElement.value : 'Input';
         name = dataObjectDirection + '_' + name;
       }
 
@@ -105,7 +151,7 @@ export function processElementsFromUI(elementsContainer) {
 
   // Adiciona índices sequenciais para elementos que precisam
   let currentIndex = 1;
-  const finalElements = processedElements.map(element => {
+  const elementsWithIndex = processedElements.map(element => {
     if (!['Mensagem', 'Data Object'].includes(element.type)) {
       const index = currentIndex;
       currentIndex++;
@@ -114,6 +160,38 @@ export function processElementsFromUI(elementsContainer) {
       // Elementos sem índice (Mensagem e Data Object) usam null
       return { ...element, index: null };
     }
+  });
+
+  // Resolve referências dos Gateway Existente
+  const finalElements = elementsWithIndex.map(element => {
+    if (element.type === 'Gateway Existente' && element.refGateway !== null) {
+      // Busca o gateway referenciado pelo índice
+      const referencedGateway = elementsWithIndex.find(el => 
+        (el.type === 'Gateway Exclusivo' || el.type === 'Gateway Paralelo') && 
+        el.index === element.refGateway
+      );
+      
+      if (referencedGateway) {
+        // CORREÇÃO: Mantém tipo como Gateway Existente e usa nome exato do gateway referenciado
+        return {
+          type: 'Gateway Existente',  // Mantém como Gateway Existente
+          name: referencedGateway.name,  // Nome exato do gateway referenciado (sem prefixos)
+          lane: element.lane,  // Mantém lane original do Gateway Existente
+          originalType: referencedGateway.type,
+          index: element.index
+        };
+      } else {
+        console.warn(`Gateway Existente: Gateway com índice ${element.refGateway} não encontrado`);
+        return {
+          type: 'Gateway Existente',
+          name: 'GatewayExistente_RefInvalida_' + element.index,
+          lane: element.lane,
+          index: element.index
+        };
+      }
+    }
+    
+    return element;
   });
 
   return finalElements;
@@ -199,11 +277,24 @@ export function processDuplicateElements(elements) {
   elements.forEach((element, index) => {
     if (indexesList.includes(index)) return;
     indexesList.push(index);
-    // Não processa elementos sem índice ou gateways ou mensagens
-    if (element.index === null || element.type === 'Gateway Exclusivo' || element.type === 'Gateway Paralelo' || element.type === 'Mensagem') return;
+    // Não processa elementos sem índice ou gateways ou mensagens ou Gateway Existente
+    if (element.index === null || 
+        element.type === 'Gateway Exclusivo' || 
+        element.type === 'Gateway Paralelo' || 
+        element.type === 'Gateway Existente' ||  // CORREÇÃO: Gateway Existente não é duplicata
+        element.type === 'Mensagem') return;
 
+    // Busca duplicatas apenas entre elementos do mesmo tipo (excluindo Gateway Existente)
     const duplicates = elements
-      .map((el, idx) => (el.name === element.name ? idx : -1))
+      .map((el, idx) => {
+        // Só considera duplicata se for o mesmo nome E mesmo tipo E não for Gateway Existente
+        if (el.name === element.name && 
+            el.type === element.type && 
+            el.type !== 'Gateway Existente') {
+          return idx;
+        }
+        return -1;
+      })
       .filter(idx => idx !== -1);
 
     indexesList.push(...duplicates);
