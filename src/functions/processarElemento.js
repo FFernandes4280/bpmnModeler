@@ -161,7 +161,7 @@ export default function processarElemento(
     case 'Data Object':
       const dataObjectDirection = name.split('_')[0];
       name = name.split('_')[1];
-      criarDataObject(
+      dictEntry = criarDataObject(
         moddle,
         bpmnProcess,
         bpmnPlane,

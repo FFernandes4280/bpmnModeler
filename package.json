@@ -4,7 +4,13 @@
   "type": "module",
   "main": "index.html",
   "scripts": {
-    "start": "vite --host" 
+    "start": "vite --host",
+    "test": "node tests/testRunner.js",
+    "test:watch": "nodemon tests/testRunner.js",
+    "test:specific": "node tests/testRunner.js",
+    "test:create": "node tests/createTest.js",
+    "test:status": "node tests/testUtils.js status",
+    "test:validate": "node tests/testUtils.js validate"
   },
   "keywords": [],
   "author": "",

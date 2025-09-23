@@ -110,21 +110,26 @@ export async function generateDiagramFromInput(processName, participantsInput, h
 
   const elementsList = [];
 
+  // Separa elementos do fluxo principal dos auxiliares (Data Object, Mensagem)
+  const mainFlowElements = elements.filter(el => !['Data Object', 'Mensagem'].includes(el.type));
+  const auxiliaryElements = elements.filter(el => ['Data Object', 'Mensagem'].includes(el.type));
+
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  elements.some((element, index) => {
+  // Processa primeiro o fluxo principal (sem elementos auxiliares)
+  mainFlowElements.some((element, index) => {
     const resultado = processarElemento(
       element,
       moddle,
       bpmnProcess,
       bpmnPlane,
       collaboration,
-      elementsList.length ? elementsList[index - 1] : null,
+      elementsList.length ? elementsList[elementsList.length - 1] : null,
       participantBounds,
       participants,
       laneHeight,
       externalParticipants,
-      elements,
+      mainFlowElements, // Passa apenas elementos do fluxo principal
       0
     );
 
@@ -134,6 +139,49 @@ export async function generateDiagramFromInput(processName, participantsInput, h
       elementsList.push(resultado);
     }
     return element.type.includes('Gateway') ? true : false;
+  });
+
+  // Processa elementos auxiliares depois, associando-os aos elementos já criados
+  auxiliaryElements.forEach((auxElement) => {
+    if (auxElement.type === 'Data Object') {
+      // Encontra o elemento de referência através de uma busca mais direta
+      let targetElement = null;
+      
+      if (auxElement.index !== null && auxElement.index !== undefined) {
+        // Percorre o mainFlowElements para encontrar qual elemento tem o mesmo índice
+        for (let i = 0; i < mainFlowElements.length; i++) {
+          if (mainFlowElements[i].index === auxElement.index) {
+            // Usa o elemento processado na mesma posição
+            if (i < elementsList.length) {
+              targetElement = elementsList[i];
+            }
+            break;
+          }
+        }
+      }
+      
+      // Se não encontrou por índice, usa o último elemento
+      if (!targetElement && elementsList.length > 0) {
+        targetElement = elementsList[elementsList.length - 1];
+      }
+      
+      if (targetElement) {
+        processarElemento(
+          auxElement,
+          moddle,
+          bpmnProcess,
+          bpmnPlane,
+          collaboration,
+          targetElement,
+          participantBounds,
+          participants,
+          laneHeight,
+          externalParticipants,
+          elements, // Passa o array completo para referência
+          0
+        );
+      }
+    }
   });
 
   // Finalize the diagram

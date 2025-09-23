@@ -1,0 +1,75 @@
+[
+  {
+    "type": "Inicio",
+    "name": "Padrão_Kit recebido",
+    "lane": "Produção"
+  },
+  {
+    "type": "Atividade",
+    "name": "Default_Separar as peças",
+    "lane": "Produção",
+    "index": 1
+  },
+  {
+    "type": "Gateway Exclusivo",
+    "name": "followingDefault_Separar_as_peas",
+    "lane": "Produção",
+    "diverge": [
+      3
+    ],
+    "index": 2
+  },
+  {
+    "type": "Atividade",
+    "name": "Default_Montar",
+    "lane": "Produção",
+    "index": 3
+  },
+  {
+    "type": "Atividade",
+    "name": "Default_Inspecionar",
+    "lane": "Qualidade",
+    "index": 4
+  },
+  {
+    "type": "Gateway Exclusivo",
+    "name": "followingDefault_Inspecionar",
+    "lane": "Qualidade",
+    "diverge": [
+      6,
+      9
+    ],
+    "index": 5
+  },
+  {
+    "type": "Evento Intermediario",
+    "name": "Padrão_Kit aprovado",
+    "lane": "Qualidade",
+    "index": 6
+  },
+  {
+    "type": "Atividade",
+    "name": "Default_Embalar",
+    "lane": "Produção",
+    "index": 7
+  },
+  {
+    "type": "Fim",
+    "name": "Padrão_Produto embalado",
+    "lane": "Produção",
+    "index": 8
+  },
+  {
+    "type": "Evento Intermediario",
+    "name": "Padrão_Kit rejeitado",
+    "lane": "Qualidade",
+    "index": 9
+  },
+  {
+    "type": "Gateway Existente",
+    "name": "followingDefault_Separar_as_peas",
+    "lane": "Produção",
+    "originalType": "Gateway Exclusivo",
+    "index": 10
+  }
+]

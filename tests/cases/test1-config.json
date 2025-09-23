@@ -1,0 +1,10 @@
+{
+  "name": "Test 1 - Montagem de kit",
+  "description": "Teste básico com Gateway Existente criando um fluxo de retorno",
+  "processName": "Montagem de kit",
+  "participants": ["Produção", "Qualidade"],
+  "hasExternalParticipants": false,
+  "externalParticipants": [],
+  "inputFile": "test1-input.json",
+  "expectedFile": "test1-expected.bpmn"
+}

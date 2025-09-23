@@ -6,8 +6,9 @@ export default function criarDataObject(
     name,
     direction
 ) {
+    const normalizedName = name.replace(/\s+/g, '_').replace(/[^\w]/g, '');
     const dataObject = moddle.create('bpmn:DataObject', {
-        id: `DataObject_${name.replace(/\s+/g, '_')}`,
+        id: `DataObject_${normalizedName}`,
         name: name,
     });
 
@@ -15,7 +16,7 @@ export default function criarDataObject(
     const prevElement = dictEntry.bpmnElement;
 
     const dataObjectRef = moddle.create('bpmn:DataObjectReference', {
-        id: `DataObjectReference_${name.replace(/\s+/g, '_')}`,
+        id: `DataObjectReference_${normalizedName}`,
         dataObjectRef: dataObject,
         name: name,
     });
@@ -31,7 +32,7 @@ export default function criarDataObject(
     };
 
     const dataObjectShape = moddle.create('bpmndi:BPMNShape', {
-        id: `DataObjectReference_${name.replace(/\s+/g, '_')}_di`,
+        id: `DataObjectReference_${normalizedName}_di`,
         bpmnElement: dataObjectRef,
         bounds: moddle.create('dc:Bounds', dataObjectBounds),
         isExpanded: true,
@@ -112,4 +113,7 @@ export default function criarDataObject(
     });
 
     dataObjectShape.label = dataObjectLabel;
+    
+    // Retorna o dictEntry original, pois o Data Object não altera a sequência principal
+    return dictEntry;
 }

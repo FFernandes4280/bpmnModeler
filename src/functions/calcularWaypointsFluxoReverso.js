@@ -1,9 +1,3 @@
-/**
- * Calcula waypoints para fluxo reverso (Gateway Existente)
- * Cria conexões com ângulos de 90 graus e waypoints intermediários
- * - Source embaixo do Target: sai de baixo → vai horizontal → desce → conecta embaixo do target
- * - Source acima do Target: sai de cima → vai horizontal → sobe → conecta em cima do target
- */
 export default function calcularWaypointsFluxoReverso(
   moddle,
   sourceBounds,
@@ -20,8 +14,6 @@ export default function calcularWaypointsFluxoReverso(
   let waypoints = [];
   
   if (sourceCenterY > targetCenterY) {
-    // Source está EMBAIXO do Target
-    // Fluxo sai de baixo do source → conecta embaixo do target
     sourceX = sourceBounds.x + sourceBounds.width / 2;  // Centro horizontal do source
     sourceY = sourceBounds.y + sourceBounds.height;     // Parte inferior do source
     
@@ -52,8 +44,6 @@ export default function calcularWaypointsFluxoReverso(
     ];
     
   } else {
-    // Source está ACIMA do Target  
-    // Fluxo sai de cima do source → conecta em cima do target
     sourceX = sourceBounds.x + sourceBounds.width / 2;  // Centro horizontal do source
     sourceY = sourceBounds.y;                           // Parte superior do source
     
