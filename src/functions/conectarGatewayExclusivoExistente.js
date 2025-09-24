@@ -33,6 +33,7 @@ export default function conectarGatewayExclusivoExistente(
     bpmnPlane,
     currentElement,
     existingGateway.bpmnElement,
-    sequenceFlowWaypoints
+    sequenceFlowWaypoints,
+    true // isReturnFlow = true para gateways existentes
   );
 }

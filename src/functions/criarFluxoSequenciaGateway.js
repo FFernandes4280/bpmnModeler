@@ -24,6 +24,7 @@ export default function criarFluxoSequenciaGateway(
     bpmnPlane,
     sourceElement,
     targetElement,
-    waypoints
+    waypoints,
+    false // isReturnFlow = false para fluxos normais
   );
 }

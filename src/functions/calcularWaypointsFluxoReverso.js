@@ -3,76 +3,106 @@ export default function calcularWaypointsFluxoReverso(
   sourceBounds,
   targetBounds
 ) {
-  // Posições centrais para determinar direção
+  // Posições centrais
+  const sourceCenterX = sourceBounds.x + sourceBounds.width / 2;
   const sourceCenterY = sourceBounds.y + sourceBounds.height / 2;
+  const targetCenterX = targetBounds.x + targetBounds.width / 2;
   const targetCenterY = targetBounds.y + targetBounds.height / 2;
   
-  // Distância horizontal para waypoints intermediários
-  const horizontalOffset = 40;
+  // Calcular diferenças nos eixos
+  const horizontalDistance = Math.abs(targetCenterX - sourceCenterX);
+  const isTargetAbove = targetCenterY < sourceCenterY;
+  const isTargetBelow = targetCenterY > sourceCenterY;
+  
+  // Limiar para considerar X como "muito diferente"
+  const X_THRESHOLD = 100;
   
   let sourceX, sourceY, targetX, targetY;
-  let waypoints = [];
+  const waypoints = [];
   
-  if (sourceCenterY > targetCenterY) {
-    sourceX = sourceBounds.x + sourceBounds.width / 2;  // Centro horizontal do source
-    sourceY = sourceBounds.y + sourceBounds.height;     // Parte inferior do source
-    
-    targetX = targetBounds.x + targetBounds.width / 2;  // Centro horizontal do target
-    targetY = targetBounds.y + targetBounds.height;     // Parte inferior do target
-    
-    // Ponto de saída vertical do source (para baixo)
-    const sourceExitY = sourceY + horizontalOffset;
-    
-    // Ponto de chegada vertical no target (vindo de baixo)
-    const targetEntryY = targetY + horizontalOffset;
-    
-    waypoints = [
-      // Ponto inicial (centro inferior do source)
-      moddle.create('dc:Point', { x: sourceX, y: sourceY }),
+  if (horizontalDistance > X_THRESHOLD) {
+    // X muito diferente: verificar posição Y relativa
+    if (isTargetAbove) {
+      // Target em cima (gateway acima do elemento): sair de baixo e entrar em baixo
+      sourceX = sourceCenterX;
+      sourceY = sourceBounds.y + sourceBounds.height; // Fundo do source
+      targetX = targetCenterX;
+      targetY = targetBounds.y + targetBounds.height; // Fundo do target
       
-      // Sai verticalmente para baixo do source
-      moddle.create('dc:Point', { x: sourceX, y: sourceExitY }),
+      waypoints.push(moddle.create('dc:Point', { x: sourceX, y: sourceY }));
       
-      // Curva horizontal em direção ao target
-      moddle.create('dc:Point', { x: targetX, y: sourceExitY }),
+      // Criar caminho com ângulos de 90 graus
+      const intermediateY = Math.max(sourceY, targetY) + 30;
+      waypoints.push(moddle.create('dc:Point', { x: sourceX, y: intermediateY }));
+      waypoints.push(moddle.create('dc:Point', { x: targetX, y: intermediateY }));
       
-      // Desce em direção ao target
-      moddle.create('dc:Point', { x: targetX, y: targetEntryY }),
+    } else if (isTargetBelow) {
+      // Target em baixo (gateway abaixo do elemento): sair de cima e entrar em cima
+      sourceX = sourceCenterX;
+      sourceY = sourceBounds.y; // Topo do source
+      targetX = targetCenterX;
+      targetY = targetBounds.y; // Topo do target
       
-      // Ponto final (centro inferior do target)
-      moddle.create('dc:Point', { x: targetX, y: targetY })
-    ];
+      waypoints.push(moddle.create('dc:Point', { x: sourceX, y: sourceY }));
+      
+      // Criar caminho com ângulos de 90 graus
+      const intermediateY = Math.min(sourceY, targetY) - 30;
+      waypoints.push(moddle.create('dc:Point', { x: sourceX, y: intermediateY }));
+      waypoints.push(moddle.create('dc:Point', { x: targetX, y: intermediateY }));
+      
+    } else {
+      // Mesma altura Y: usar caminho lateral
+      sourceX = targetCenterX < sourceCenterX ? sourceBounds.x : sourceBounds.x + sourceBounds.width;
+      sourceY = sourceCenterY;
+      targetX = sourceCenterX < targetCenterX ? targetBounds.x : targetBounds.x + targetBounds.width;
+      targetY = targetCenterY;
+      
+      waypoints.push(moddle.create('dc:Point', { x: sourceX, y: sourceY }));
+    }
     
   } else {
-    sourceX = sourceBounds.x + sourceBounds.width / 2;  // Centro horizontal do source
-    sourceY = sourceBounds.y;                           // Parte superior do source
-    
-    targetX = targetBounds.x + targetBounds.width / 2;  // Centro horizontal do target
-    targetY = targetBounds.y;                           // Parte superior do target
-    
-    // Ponto de saída vertical do source (para cima)
-    const sourceExitY = sourceY - horizontalOffset;
-    
-    // Ponto de chegada vertical no target (vindo de cima)
-    const targetEntryY = targetY - horizontalOffset;
-    
-    waypoints = [
-      // Ponto inicial (centro superior do source)
-      moddle.create('dc:Point', { x: sourceX, y: sourceY }),
+    // X próximo: usar caminho com ângulos de 90 graus saindo de cima/baixo
+    if (isTargetAbove) {
+      // Target acima: sair do topo do source e entrar por baixo do target
+      sourceX = sourceCenterX;
+      sourceY = sourceBounds.y; // Topo do source
+      targetX = targetCenterX;
+      targetY = targetBounds.y + targetBounds.height; // Fundo do target
       
-      // Sai verticalmente para cima do source
-      moddle.create('dc:Point', { x: sourceX, y: sourceExitY }),
+      waypoints.push(moddle.create('dc:Point', { x: sourceX, y: sourceY }));
       
-      // Curva horizontal em direção ao target
-      moddle.create('dc:Point', { x: targetX, y: sourceExitY }),
+      // Criar caminho em L: cima -> cima mais -> esquerda -> baixo
+      const intermediateY = sourceY - 60; // Ir para cima
+      waypoints.push(moddle.create('dc:Point', { x: sourceX, y: intermediateY }));
+      waypoints.push(moddle.create('dc:Point', { x: targetX, y: intermediateY }));
       
-      // Sobe em direção ao target
-      moddle.create('dc:Point', { x: targetX, y: targetEntryY }),
+    } else if (isTargetBelow) {
+      // Target abaixo: sair do fundo do source e entrar por cima do target
+      sourceX = sourceCenterX;
+      sourceY = sourceBounds.y + sourceBounds.height; // Fundo do source
+      targetX = targetCenterX;
+      targetY = targetBounds.y; // Topo do target
       
-      // Ponto final (centro superior do target)
-      moddle.create('dc:Point', { x: targetX, y: targetY })
-    ];
+      waypoints.push(moddle.create('dc:Point', { x: sourceX, y: sourceY }));
+      
+      // Criar caminho em L: baixo -> baixo mais -> esquerda -> cima
+      const intermediateY = sourceY + 60; // Ir para baixo
+      waypoints.push(moddle.create('dc:Point', { x: sourceX, y: intermediateY }));
+      waypoints.push(moddle.create('dc:Point', { x: targetX, y: intermediateY }));
+      
+    } else {
+      // Mesma altura Y: conexão direta lateral
+      sourceX = targetCenterX < sourceCenterX ? sourceBounds.x : sourceBounds.x + sourceBounds.width;
+      sourceY = sourceCenterY;
+      targetX = sourceCenterX < targetCenterX ? targetBounds.x : targetBounds.x + targetBounds.width;
+      targetY = targetCenterY;
+      
+      waypoints.push(moddle.create('dc:Point', { x: sourceX, y: sourceY }));
+    }
   }
+  
+  // Adicionar ponto final
+  waypoints.push(moddle.create('dc:Point', { x: targetX, y: targetY }));
   
   return waypoints;
 }

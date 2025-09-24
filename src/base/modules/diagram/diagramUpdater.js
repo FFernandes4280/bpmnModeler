@@ -55,16 +55,14 @@ async function performDiagramUpdate(viewer, generateDiagramFromInput, setupCanva
   };
 
   // Processamento dos elementos (incluindo o inicial como primeiro)
-  const uiElements = processElementsFromUI(elementsContainer);
-  const elements = [initialElement, ...uiElements];
+  let processedElements;
   
-  // const processedElements = processDuplicateElements(elements);
-  const processedElements = [
-  {
-    "type": "Inicio",
-    "name": "Padrão_Artigo recebido",
-    "lane": "Comissão julgadora"
-  },
+  // FLAG PARA USAR DADOS DE TESTE - Altere para true/false conforme necessário
+  const USE_TEST_JSON = true;
+  
+  if (USE_TEST_JSON) {
+    // Dados do test2-input.json incorporados diretamente
+    const testElements = [
   {
     "type": "Gateway Exclusivo",
     "name": "followingArtigo_recebido",
@@ -162,6 +160,15 @@ async function performDiagramUpdate(viewer, generateDiagramFromInput, setupCanva
     "index": 14
   }
 ];
+    
+    processedElements = [initialElement, ...testElements];
+    console.log('🔧 USANDO DADOS DO test2-input.json (incorporados):', processedElements);
+  } else {
+    // Usa dados da UI (comportamento normal)
+    const uiElements = processElementsFromUI(elementsContainer);
+    const elements = [initialElement, ...uiElements];
+    processedElements = processDuplicateElements(elements);
+  }
   try {
     console.log('Processed Elements:', processedElements);
     const diagramXML = await generateDiagramFromInput(

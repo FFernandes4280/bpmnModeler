@@ -244,7 +244,8 @@ export default function processarElemento(
               bpmnPlane,
               sourceDict.bpmnElement,
               targetDict,
-              reverseWaypoints
+              reverseWaypoints,
+              true // isReturnFlow = true para gateways existentes
             );
           } else {
             console.warn('sourceDict ou bounds não encontrados para Gateway Existente');
