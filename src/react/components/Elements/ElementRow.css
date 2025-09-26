@@ -1,0 +1,128 @@
+/* Estilos para elementos - mantém compatibilidade com CSS original */
+
+.element-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+  align-items: flex-start;
+  position: relative;
+}
+
+.element-number {
+  background-color: #007bff;
+  color: white;
+  border-radius: 50%;
+  width: 25px;
+  height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 12px;
+  min-width: 25px;
+  margin-right: 5px;
+  margin-top: 8px;
+}
+
+.gateway-indicator {
+  background-color: #28a745;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  margin-right: 5px;
+  margin-top: 10px;
+  cursor: help;
+}
+
+.element-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-left: 5px;
+  height: 40px;
+  justify-content: space-between;
+  margin-top: 0;
+}
+
+.move-button {
+  width: 20px;
+  height: 18px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 10px;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0 !important;
+}
+
+.move-button:hover:not(:disabled) {
+  background-color: #5a6268;
+}
+
+.move-button:disabled {
+  background-color: #dee2e6;
+  color: #6c757d;
+  cursor: not-allowed;
+}
+
+.removeElementRow {
+  width: 25px;
+  height: 25px;
+  margin-bottom: 0;
+  background-color: #ff4d4d; 
+  color: white; 
+  border: none; 
+  padding: 0;
+  font-size: 12px; 
+  cursor: pointer;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 5px;
+  margin-top: 8px;
+}
+
+.removeElementRow:hover {
+  background-color: #cc0000; 
+}
+
+.element-row select,
+.element-row input {
+  flex: 1;
+  padding: 8px;
+  box-sizing: border-box;
+  height: 40px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.element-type {
+  min-width: 120px;
+}
+
+.element-subtype {
+  min-width: 100px;
+}
+
+.element-label {
+  min-width: 150px;
+}
+
+.element-participant {
+  min-width: 120px;
+}
+
+.element-gateway-ref {
+  min-width: 140px;
+}

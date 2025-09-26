@@ -58,7 +58,7 @@ async function performDiagramUpdate(viewer, generateDiagramFromInput, setupCanva
   let processedElements;
   
   // FLAG PARA USAR DADOS DE TESTE - Altere para true/false conforme necessário
-  const USE_TEST_JSON = true;
+  const USE_TEST_JSON = false;
   
   if (USE_TEST_JSON) {
     // Dados do test2-input.json incorporados diretamente

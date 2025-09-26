@@ -6,9 +6,6 @@ import criarEventoInicial from './criarEventoInicial.js';
 import criarEventoFinal from './criarEventoFinal.js';
 import criarDataObject from './criarDataObject.js';
 import criarFluxoMensagem from './criarFluxoMensagem.js';
-import conectarGatewayExclusivoExistente from './conectarGatewayExclusivoExistente.js';
-import conectarGatewayParaleloExistente from './conectarGatewayParaleloExistente.js';
-import buscarGatewayExistente from './buscarGatewayExistente.js';
 import { distribuirPontosDivergencia } from './distribuirPontosDivergencia.js';
 import criarFluxoSequencia from './criarFluxoSequencia.js';
 import calcularWaypointsFluxoReverso from './calcularWaypointsFluxoReverso.js';
@@ -109,6 +106,13 @@ export default function processarElemento(
       const pontos = distribuirPontosDivergencia(diverge.length, yOffset, elements, currentGatewayIndex);
 
       diverge.forEach((branchIndex, divergeIndex) => {
+        if (!elements[branchIndex]) {
+          console.error('❌ Elemento undefined no índice:', branchIndex, 'de', elements.length);
+          return; // Skip este branch
+        }
+        
+        console.log('🔀 Processando branch índice:', branchIndex, 'elemento:', elements[branchIndex].type);
+        
         const branchYOffset = pontos[divergeIndex];
         divergeEntry.push(processarElemento(
           elements[branchIndex],
@@ -173,7 +177,7 @@ export default function processarElemento(
 
     case 'Mensagem':
       const messageType = name.split('_')[0];
-      criarFluxoMensagem(
+      dictEntry = criarFluxoMensagem(
         moddle,
         collaboration,
         bpmnPlane,

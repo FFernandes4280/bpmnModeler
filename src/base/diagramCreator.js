@@ -16,6 +16,8 @@ const xmlStart =
   '</bpmn2:definitions>';
 
 export async function generateDiagramFromInput(processName, participantsInput, hasExternalParticipants, externalParticipantsInput, elements) {
+
+
   const { rootElement: definitions } = await moddle.fromXML(xmlStart);
 
   // Create the process
@@ -113,7 +115,6 @@ export async function generateDiagramFromInput(processName, participantsInput, h
   // Separa elementos do fluxo principal dos auxiliares (Data Object, Mensagem)
   const mainFlowElements = elements.filter(el => !['Data Object', 'Mensagem'].includes(el.type));
   const auxiliaryElements = elements.filter(el => ['Data Object', 'Mensagem'].includes(el.type));
-
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   // Processa primeiro o fluxo principal (sem elementos auxiliares)
@@ -146,7 +147,7 @@ export async function generateDiagramFromInput(processName, participantsInput, h
     if (auxElement.type === 'Data Object') {
       // Encontra o elemento de referência através de uma busca mais direta
       let targetElement = null;
-      
+
       if (auxElement.index !== null && auxElement.index !== undefined) {
         // Percorre o mainFlowElements para encontrar qual elemento tem o mesmo índice
         for (let i = 0; i < mainFlowElements.length; i++) {
@@ -159,12 +160,12 @@ export async function generateDiagramFromInput(processName, participantsInput, h
           }
         }
       }
-      
+
       // Se não encontrou por índice, usa o último elemento
       if (!targetElement && elementsList.length > 0) {
         targetElement = elementsList[elementsList.length - 1];
       }
-      
+
       if (targetElement) {
         processarElemento(
           auxElement,
@@ -181,6 +182,51 @@ export async function generateDiagramFromInput(processName, participantsInput, h
           0
         );
       }
+    } else if (auxElement.type === 'Mensagem') {
+
+
+      // Para mensagens, encontra o elemento de referência através de busca por posição
+      let targetElement = null;
+
+      // Encontra a posição da mensagem no array original de elementos
+      const messagePosition = elements.indexOf(auxElement);
+
+
+      if (messagePosition > 0) {
+        // Busca o elemento anterior à mensagem no array original
+        const previousElement = elements[messagePosition - 1];
+        // Se o elemento anterior não é auxiliar, busca ele na lista processada
+        if (!['Data Object', 'Mensagem'].includes(previousElement.type)) {
+          // Encontra o índice do elemento anterior no mainFlowElements
+          const previousIndex = mainFlowElements.indexOf(previousElement);
+          if (previousIndex >= 0 && previousIndex < elementsList.length) {
+            targetElement = elementsList[previousIndex];
+
+          }
+        }
+      }
+
+      // Se não encontrou por posição, usa o último elemento como fallback
+      if (!targetElement && elementsList.length > 0) {
+        targetElement = elementsList[elementsList.length - 1];
+      }
+
+
+      processarElemento(
+        auxElement,
+        moddle,
+        bpmnProcess,
+        bpmnPlane,
+        collaboration,
+        targetElement,
+        participantBounds,
+        participants,
+        laneHeight,
+        externalParticipants,
+        elements, // Passa o array completo para referência
+        0
+      );
+
     }
   });
 

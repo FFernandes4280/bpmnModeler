@@ -1,0 +1,113 @@
+/* Estilos para o visualizador do diagrama */
+.diagram-container {
+  flex-grow: 1;
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.canvas {
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+}
+
+.canvas.dragging {
+  cursor: grabbing !important;
+}
+
+/* Controles do diagrama - mantém o mesmo estilo do CSS original */
+.diagram-controls {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 8px;
+  z-index: 1000;
+}
+
+/* Controles de zoom */
+.zoom-controls {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  z-index: 1000;
+}
+
+.zoom-button {
+  width: 35px !important;
+  height: 35px !important;
+  border-radius: 50% !important;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  margin-bottom: 0 !important;
+  padding: 0;
+}
+
+.zoom-button:hover {
+  background-color: #5a6268;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Instruções de uso */
+.pan-zoom-instructions {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 11px;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.pan-zoom-instructions small {
+  font-size: 11px;
+}
+
+.control-button {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 50% !important;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  margin-bottom: 0 !important;
+  padding: 0;
+}
+
+.control-button:hover {
+  background-color: #0056b3;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Estilos específicos para cada botão */
+.save-button:hover {
+  background-color: #28a745;
+}
+
+.home-button:hover {
+  background-color: #6c757d;
+}

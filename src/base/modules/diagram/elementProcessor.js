@@ -18,6 +18,9 @@ export function processElementsFromUI(elementsContainer) {
 
   // Combina todos os elementos
   const allElements = [...mainElements, ...branchElements];
+  
+  console.log('📊 Total elementos coletados:', allElements.length);
+  console.log('📊 Tipos encontrados:', allElements.map(row => row.querySelector('.element-type').value));
 
   // Processa todos os elementos
   const processedElements = allElements.map((row, index) => {
@@ -28,9 +31,11 @@ export function processElementsFromUI(elementsContainer) {
       // Para elementos de mensagem, usar o tipo de mensagem se disponível
       let name;
       if (type === 'Mensagem') {
+        console.log('💬 Processando mensagem no índice:', index);
         const messageTypeElement = row.querySelector('.element-messageType');
         const messageType = messageTypeElement ? messageTypeElement.value : 'Envio';
         name = messageType + '_Mensagem_' + (index + 1);
+        console.log('💬 Nome da mensagem criada:', name);
       } else if (type === 'Gateway Existente') {
         // Nova abordagem: Gateway Existente com referência por índice
         const existingGatewaySelect = row.querySelector('.element-existingGatewaySelect');
@@ -194,6 +199,9 @@ export function processElementsFromUI(elementsContainer) {
     return element;
   });
 
+  console.log('✅ Elementos finais processados:', finalElements.length);
+  console.log('✅ Mensagens no resultado final:', finalElements.filter(el => el.type === 'Mensagem'));
+  
   return finalElements;
 }
 
@@ -272,17 +280,26 @@ function getBranchFirstElementIndexes(gatewayRow, gatewayIndex) {
  * @returns {Array} Array de elementos processados
  */
 export function processDuplicateElements(elements) {
+  console.log('🔄 Iniciando processDuplicateElements com:', elements.length, 'elementos');
+  console.log('🔄 Mensagens recebidas:', elements.filter(el => el.type === 'Mensagem'));
+  
   let indexesList = [];
+  const result = [...elements]; // Cria cópia do array original
 
   elements.forEach((element, index) => {
     if (indexesList.includes(index)) return;
     indexesList.push(index);
+    
     // Não processa elementos sem índice ou gateways ou mensagens ou Gateway Existente
+    // MAS os mantém no resultado final
     if (element.index === null || 
         element.type === 'Gateway Exclusivo' || 
         element.type === 'Gateway Paralelo' || 
-        element.type === 'Gateway Existente' ||  // CORREÇÃO: Gateway Existente não é duplicata
-        element.type === 'Mensagem') return;
+        element.type === 'Gateway Existente' ||
+        element.type === 'Mensagem') {
+      console.log('🔄 Preservando elemento especial:', element.type, element.name || element.type);
+      return; // Preserva no resultado, mas não processa duplicatas
+    }
 
     // Busca duplicatas apenas entre elementos do mesmo tipo (excluindo Gateway Existente)
     const duplicates = elements
@@ -321,5 +338,8 @@ export function processDuplicateElements(elements) {
     });
   });
 
+  console.log('✅ Resultado processDuplicateElements:', elements.length, 'elementos');
+  console.log('✅ Mensagens no resultado:', elements.filter(el => el.type === 'Mensagem'));
+  
   return elements;
 }

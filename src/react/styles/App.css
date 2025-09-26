@@ -1,0 +1,102 @@
+/* Layout principal - mantém a mesma estrutura do HTML original */
+.app {
+  display: flex;
+  height: 100vh;
+}
+
+/* Painel esquerdo do formulário */
+.form-container {
+  width: 37.5%;
+  background-color: #f4f4f4;
+  border-right: 1px solid #ccc;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-content {
+  padding: 20px;
+  flex: 1;
+}
+
+/* Painel direito do diagrama */
+.diagram-container {
+  flex-grow: 1;
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Estilos dos formulários - mantém compatibilidade com CSS original */
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 5px;
+  margin-top: 10px;
+}
+
+label:first-of-type {
+  margin-top: 0;
+}
+
+input, textarea, select {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 8px;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+select {
+  height: 40px;
+}
+
+button {
+  width: 100%;
+  padding: 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 5px;
+  font-size: 14px;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+button:disabled {
+  background-color: #dee2e6;
+  color: #6c757d;
+  cursor: not-allowed;
+}
+
+/* Container para campos condicionais */
+.conditional-field {
+  margin-bottom: 10px;
+}
+
+/* Estilos para elementos (será usado nos componentes de elementos) */
+.elements-section {
+  margin-top: 20px;
+}
+
+.elements-container {
+  margin-bottom: 15px;
+}
+
+.add-element-button {
+  background-color: #28a745;
+}
+
+.add-element-button:hover {
+  background-color: #218838;
+}

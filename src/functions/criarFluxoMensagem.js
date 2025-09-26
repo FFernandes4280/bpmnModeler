@@ -8,8 +8,14 @@ export default function criarFluxoMensagem(
   name,
   lane
 ) {
+  // Extrair tipo de mensagem do nome
+  const messageType = name.split('_')[0]; // "Envio" ou "Recebimento"
+
+  // Buscar participante externo
   const externalParticipant = collaboration.get('participants').find(
-    (participant) => participant.name === lane
+    (participant) => {
+      return participant.name === lane;
+    }
   );
 
   const prevShape = dictEntry;
@@ -17,8 +23,8 @@ export default function criarFluxoMensagem(
 
   const messageFlow = moddle.create('bpmn:MessageFlow', {
     id: `MessageFlow_${prevElement.id}_to_${externalParticipant.id}`,
-    sourceRef: name === 'Envio' ? prevElement : externalParticipant,
-    targetRef: name === 'Envio' ? externalParticipant : prevElement,
+    sourceRef: messageType === 'Envio' ? prevElement : externalParticipant,
+    targetRef: messageType === 'Envio' ? externalParticipant : prevElement,
   });
 
   if (!collaboration.get('messageFlows')) {
@@ -37,12 +43,12 @@ export default function criarFluxoMensagem(
 
   const messageFlowWaypoints = [
     moddle.create('dc:Point', {
-      x: name === 'Envio' ? elementX : participantX,
-      y: name === 'Envio' ? elementY : participantY
+      x: messageType === 'Envio' ? elementX : participantX,
+      y: messageType === 'Envio' ? elementY : participantY
     }),
     moddle.create('dc:Point', {
-      x: name === 'Envio' ? participantX : elementX,
-      y: name === 'Envio' ? participantY : elementY
+      x: messageType === 'Envio' ? participantX : elementX,
+      y: messageType === 'Envio' ? participantY : elementY
     }),
   ];
 
@@ -55,4 +61,6 @@ export default function criarFluxoMensagem(
 
   // Adiciona o edge ao BPMNPlane
   bpmnPlane.planeElement.push(messageFlowEdge);
+
+  return dictEntry;
 }
