@@ -219,7 +219,7 @@ const DiagramViewer = () => {
         
         document.addEventListener('keydown', handleKeyboard);
         
-        console.log('✅ Zoom e Pan habilitados - Use scroll do mouse para zoom, drag para mover');
+        // Zoom e Pan habilitados
         
         // Cleanup keyboard listener quando componente é desmontado
         return () => {
@@ -232,18 +232,25 @@ const DiagramViewer = () => {
         <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" 
                           xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" 
                           xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" 
+                          xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
                           id="Definitions_1" 
                           targetNamespace="http://bpmn.io/schema/bpmn">
+          <bpmn:collaboration id="Collaboration_1">
+            <bpmn:participant id="Participant_1" processRef="Process_1" />
+          </bpmn:collaboration>
           <bpmn:process id="Process_1" isExecutable="true">
           </bpmn:process>
           <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-            <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
+            <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1">
+              <bpmndi:BPMNShape id="Participant_1_di" bpmnElement="Participant_1" isHorizontal="true">
+                <dc:Bounds x="160" y="80" width="600" height="250" />
+              </bpmndi:BPMNShape>
             </bpmndi:BPMNPlane>
           </bpmndi:BPMNDiagram>
         </bpmn:definitions>`;
       
       viewer.importXML(emptyDiagram).catch(err => {
-        console.error('Erro ao importar diagrama vazio:', err);
+        // Silently handle empty diagram import errors
       });
     }
 
@@ -267,14 +274,14 @@ const DiagramViewer = () => {
         a.click();
         URL.revokeObjectURL(url);
       }).catch(err => {
-        console.error('Erro ao salvar diagrama:', err);
+        // Error saving diagram
       });
     }
   };
 
   const handleReturnHome = () => {
     // Placeholder para funcionalidade de retorno ao início
-    console.log('Retornar ao início');
+    // Return to home
   };
 
   return (

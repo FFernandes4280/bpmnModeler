@@ -1,7 +1,7 @@
 import BpmnModdle from 'bpmn-moddle';
-import processarElemento from '../functions/processarElemento.js';
-import criarParticipantesExternos from '../functions/criarParticipantesExternos.js';
-import { calcularAlturaParticipante } from '../functions/calcularAlturaParticipante.js';
+import processarElemento from './functions/processarElemento.js';
+import criarParticipantesExternos from './functions/criarParticipantesExternos.js';
+import { calcularAlturaParticipante } from './functions/calcularAlturaParticipante.js';
 
 const moddle = new BpmnModdle();
 

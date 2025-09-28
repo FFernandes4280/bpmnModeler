@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
-  root: 'src/base', // Mudando para a nova estrutura React
+  root: 'src/react', // Mudando para a nova estrutura React
   server: {
     proxy: {
       '/sessions': 'http://localhost:3000', // Redireciona para o servidor Express
