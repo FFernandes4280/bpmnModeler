@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useDiagramStore } from '../../store/diagramStore.js';
 
 const ElementRow = ({ element, index }) => {
@@ -20,6 +20,43 @@ const ElementRow = ({ element, index }) => {
     updateElement(element.id, { [field]: value });
   };
 
+  // Auto-seleciona participante se houver apenas um disponível
+  useEffect(() => {
+    if (allParticipants.length === 1 && !element.participant && !['Mensagem', 'Data Object'].includes(element.type)) {
+      handleUpdate('participant', allParticipants[0]);
+    }
+  }, [allParticipants, element.participant, element.type]);
+
+  // Auto-define label inicial para Gateways (apenas na criação)
+  useEffect(() => {
+    if (element.type === 'Gateway' && !element.label) {
+      handleUpdate('label', 'Conv');
+    }
+  }, [element.type]);
+
+  // Função para controlar o contador de convergência
+  const handleConvergenceChange = (direction) => {
+    const currentLabel = element.label || 'Conv';
+    
+    if (direction === 'increment') {
+      if (currentLabel === 'Conv') {
+        handleUpdate('label', '2');
+      } else {
+        const currentNum = parseInt(currentLabel) || 1;
+        handleUpdate('label', (currentNum + 1).toString());
+      }
+    } else if (direction === 'decrement') {
+      if (currentLabel === '2') {
+        handleUpdate('label', 'Conv');
+      } else {
+        const currentNum = parseInt(currentLabel) || 2;
+        if (currentNum > 2) {
+          handleUpdate('label', (currentNum - 1).toString());
+        }
+      }
+    }
+  };
+
   const getSubtypeOptions = () => {
     switch (element.type) {
       case 'Atividade':
@@ -35,6 +72,11 @@ const ElementRow = ({ element, index }) => {
           { value: 'Mensagem', label: 'Mensagem' },
           { value: 'Timer', label: 'Timer' },
           { value: 'Erro', label: 'Erro' }
+        ];
+      case 'Gateway':
+        return [
+          { value: 'Exclusivo', label: 'Exclusivo' },
+          { value: 'Paralelo', label: 'Paralelo' }
         ];
       
       case 'Fim':
@@ -115,16 +157,15 @@ const ElementRow = ({ element, index }) => {
         }}
       >
         <option value="Atividade">Atividade</option>
-        <option value="Gateway Exclusivo">Gateway Exclusivo</option>
-        <option value="Gateway Paralelo">Gateway Paralelo</option>
-        <option value="Gateway Existente">Gateway Existente</option>
         <option value="Evento Intermediario">Evento Intermediário</option>
-        <option value="Fim">Fim</option>
+        <option value="Gateway">Gateway</option>
+        <option value="Gateway Existente">Gateway Existente</option>
         <option value="Mensagem">Mensagem</option>
         <option value="Data Object">Data Object</option>
+        <option value="Fim">Fim</option>
       </select>
 
-      {hasSubtype && (
+      {hasSubtype && element.type !== 'Gateway Existente' && (
         <select
           className="element-subtype"
           value={element.subtype || subtypeOptions[0]?.value || ''}
@@ -138,39 +179,65 @@ const ElementRow = ({ element, index }) => {
         </select>
       )}
 
-      <input
-        type="text"
-        className="element-label"
-        value={element.label || ''}
-        onChange={(e) => handleUpdate('label', e.target.value)}
-        placeholder="Nome/descrição do elemento"
-      />
-
-      {!['Mensagem', 'Data Object'].includes(element.type) && (
-        <select
-          className="element-participant"
-          value={element.participant || ''}
-          onChange={(e) => handleUpdate('participant', e.target.value)}
-        >
-          <option value="">Selecione participante</option>
-          {allParticipants.map(participant => (
-            <option key={participant} value={participant}>
-              {participant}
-            </option>
-          ))}
-        </select>
-      )}
-
-      {element.type === 'Gateway Existente' && (
+      {element.type === 'Gateway Existente' ? (
         <select
           className="element-gateway-ref"
           value={element.refGateway || ''}
           onChange={(e) => handleUpdate('refGateway', parseInt(e.target.value))}
         >
           <option value="">Selecione gateway</option>
-          {getExistingGateways().map((gateway) => (
+          {getExistingGateways().filter(gateway => gateway.id !== element.id).map((gateway) => (
             <option key={gateway.id} value={gateway.index}>
-              Índice {gateway.index} - {gateway.label || gateway.type}
+              Índice {gateway.index}
+            </option>
+          ))}
+        </select>
+      ) : element.type === 'Gateway' ? (
+        <div className="gateway-convergence-container">
+          <button
+            type="button"
+            onClick={() => handleConvergenceChange('decrement')}
+            disabled={element.label === 'Conv'}
+            className="convergence-button"
+            title="Diminuir convergência"
+          >
+            −
+          </button>
+          <div 
+            className="convergence-display"
+            title={element.label === 'Conv' ? 'Convergência' : element.label}
+          >
+            {element.label || 'Conv'}
+          </div>
+          <button
+            type="button"
+            onClick={() => handleConvergenceChange('increment')}
+            className="convergence-button"
+            title="Aumentar convergência"
+          >
+            +
+          </button>
+        </div>
+      ) : element.type !== 'Gateway Existente' ? (
+        <input
+          type="text"
+          className="element-label"
+          value={element.label || ''}
+          onChange={(e) => handleUpdate('label', e.target.value)}
+          placeholder="Nome"
+        />
+      ) : null}
+
+      {!['Mensagem', 'Data Object', 'Gateway Existente'].includes(element.type) && (
+        <select
+          className="element-extra"
+          value={element.participant || (allParticipants.length === 1 ? allParticipants[0] : '')}
+          onChange={(e) => handleUpdate('participant', e.target.value)}
+        >
+          <option value="" disabled>Participante</option>
+          {allParticipants.map(participant => (
+            <option key={participant} value={participant}>
+              {participant}
             </option>
           ))}
         </select>
@@ -182,7 +249,7 @@ const ElementRow = ({ element, index }) => {
         onClick={() => removeElement(element.id)}
         title="Remover elemento"
       >
-        ✕
+        ×
       </button>
     </div>
   );

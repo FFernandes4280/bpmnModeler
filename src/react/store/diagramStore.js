@@ -83,7 +83,7 @@ export const useDiagramStore = create((set, get) => ({
     const { elements } = get();
     return elements
       .map((el, index) => ({ ...el, index: index + 1 }))
-      .filter(el => ['Gateway Exclusivo', 'Gateway Paralelo'].includes(el.type));
+      .filter(el => el.type === 'Gateway');
   },
   
   // Obter elemento por índice
@@ -97,10 +97,12 @@ export const useDiagramStore = create((set, get) => ({
     const { viewer } = get();
     
     if (!processState || !viewer) {
+      console.log('⚠️ Missing processState or viewer, skipping diagram update');
       return;
     }
     
     try {
+      console.log('� Starting diagram update...');
       
       // Converte elementos React para formato do diagramCreator
       const processedElements = processState.elements.map((element, index) => {
@@ -178,6 +180,14 @@ export const useDiagramStore = create((set, get) => ({
         ? processState.externalParticipants.split(',').map(p => p.trim()).filter(p => p)
         : [];
       
+      console.log('📊 Calling diagramCreator with:', {
+        processName: processState.processName,
+        participants: participantsList,
+        hasExternalParticipants: processState.hasExternalParticipants,
+        externalParticipants: externalParticipantsList,
+        elements: allElements.length
+      });
+      console.log('🔍 Elements:', allElements);
       // Chama o diagramCreator
       const diagramXML = await generateDiagramFromInput(
         processState.processName,
@@ -196,8 +206,10 @@ export const useDiagramStore = create((set, get) => ({
         canvas.zoom('fit-viewport', 'auto');
       }, 100);
       
+      console.log('✅ Diagram updated successfully!');
+      
     } catch (error) {
-      // Handle diagram update error silently
+      console.error('❌ Error updating diagram:', error);
     }
   }
 }));

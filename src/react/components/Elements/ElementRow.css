@@ -2,7 +2,7 @@
 
 .element-row {
   display: flex;
-  gap: 10px;
+  gap: 5px;
   margin-bottom: 10px;
   align-items: flex-start;
   position: relative;
@@ -42,7 +42,6 @@
 .element-controls {
   display: flex;
   flex-direction: column;
-  gap: 2px;
   margin-left: 5px;
   height: 40px;
   justify-content: space-between;
@@ -76,25 +75,28 @@
 }
 
 .removeElementRow {
-  width: 25px;
-  height: 25px;
-  margin-bottom: 0;
-  background-color: #ff4d4d; 
+  background-color: #f1172d; 
   color: white; 
-  border: none; 
+  border: none;
   padding: 0;
-  font-size: 12px; 
+  font-size: 16px;
+  font-weight: bold;
   cursor: pointer;
-  border-radius: 3px;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-left: 5px;
-  margin-top: 8px;
+  width: 20px;
+  height: 40px;
+  min-width: 20px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
 
 .removeElementRow:hover {
-  background-color: #cc0000; 
+  background-color: #c82333;
+  transform: scale(1.05);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
 }
 
 .element-row select,
@@ -108,21 +110,77 @@
 }
 
 .element-type {
-  min-width: 120px;
+  min-width: 90px;
 }
 
 .element-subtype {
-  min-width: 100px;
+  min-width: 90px;
 }
 
 .element-label {
-  min-width: 150px;
+  min-width: 90px;
 }
 
 .element-participant {
-  min-width: 120px;
+  min-width: 100px;
 }
 
 .element-gateway-ref {
   min-width: 140px;
+}
+
+.element-extra {
+  min-width: 10px;
+}
+
+.gateway-convergence-container {
+  display: flex;
+  align-items: stretch;
+  height: 40px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #f8f9fa;
+  overflow: hidden;
+  min-width: 90px;
+}
+
+.convergence-button {
+  width: 20px;
+  height: 40px;
+  border: none;
+  background-color: transparent;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  border-radius: 4px;
+}
+
+.convergence-button:disabled {
+  color: #ccc;
+  cursor: not-allowed;
+}
+
+.convergence-button:hover:not(:disabled) {
+  color: #333;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.convergence-button:active:not(:disabled) {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.convergence-display {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: #333;
+  user-select: none;
+  overflow: hidden;
+  white-space: nowrap;
 }

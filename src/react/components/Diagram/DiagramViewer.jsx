@@ -13,7 +13,7 @@ const DiagramViewer = () => {
     if (viewerRef.current) {
       const canvas = viewerRef.current.get('canvas');
       const currentZoom = canvas.zoom();
-      canvas.zoom(currentZoom + 0.1);
+      canvas.zoom(currentZoom + 0.05); // Reduzido de 0.1 para 0.05
     }
   };
 
@@ -21,7 +21,7 @@ const DiagramViewer = () => {
     if (viewerRef.current) {
       const canvas = viewerRef.current.get('canvas');
       const currentZoom = canvas.zoom();
-      canvas.zoom(Math.max(0.1, currentZoom - 0.1));
+      canvas.zoom(Math.max(0.1, currentZoom - 0.05)); // Reduzido de 0.1 para 0.05
     }
   };
 
@@ -42,11 +42,11 @@ const DiagramViewer = () => {
     // Variáveis de controle
     let isPanning = false;
     let lastMousePosition = { x: 0, y: 0 };
-    let dragThreshold = 5; // Distância mínima para iniciar drag
+    let dragThreshold = 8; // Aumentado de 5 para 8 - menos sensível para iniciar drag
     let dragStartPosition = { x: 0, y: 0 };
     let hasMoved = false;
     let currentZoom = 1.0;
-    const zoomStep = 0.2;
+    const zoomStep = 0.08; // Reduzido de 0.2 para 0.08 - zoom mais suave
     const minZoom = 0.2;
     const maxZoom = 3.0;
 
@@ -86,7 +86,7 @@ const DiagramViewer = () => {
         hasMoved = true;
 
         // Aplica fator de amortecimento para tornar dragging menos sensível
-        const dampingFactor = 0.8;
+        const dampingFactor = 0.6; // Reduzido de 0.8 para 0.6 - menos sensível
 
         canvas.scroll({
           dx: deltaX * dampingFactor,
@@ -122,6 +122,18 @@ const DiagramViewer = () => {
     const handleWheel = (event) => {
       event.preventDefault();
 
+      // Normaliza o deltaY para diferentes navegadores e dispositivos
+      let normalizedDelta = event.deltaY;
+      if (event.deltaMode === 1) { // DOM_DELTA_LINE
+        normalizedDelta *= 16;
+      } else if (event.deltaMode === 2) { // DOM_DELTA_PAGE  
+        normalizedDelta *= 16 * 24;
+      }
+
+      // Limita a sensibilidade do scroll
+      const scrollSensitivity = 0.001; // Muito reduzido para suavidade
+      const zoomDelta = Math.sign(normalizedDelta) * Math.min(Math.abs(normalizedDelta * scrollSensitivity), zoomStep);
+
       // Obtém as coordenadas do mouse relativas ao canvas
       const canvasRect = canvasElement.getBoundingClientRect();
       const mouseX = event.clientX - canvasRect.left;
@@ -133,10 +145,9 @@ const DiagramViewer = () => {
       const worldY = viewbox.y + (mouseY / canvasRect.height) * viewbox.height;
 
       const oldZoom = currentZoom;
-      const delta = event.deltaY > 0 ? -zoomStep : zoomStep;
-      const newZoom = Math.max(minZoom, Math.min(maxZoom, currentZoom + delta));
+      const newZoom = Math.max(minZoom, Math.min(maxZoom, currentZoom - zoomDelta)); // Invertido para comportamento natural
 
-      if (oldZoom === newZoom) return;
+      if (Math.abs(oldZoom - newZoom) < 0.001) return; // Evita mudanças muito pequenas
 
       currentZoom = newZoom;
       const scaleFactor = oldZoom / currentZoom;
@@ -219,7 +230,7 @@ const DiagramViewer = () => {
         
         document.addEventListener('keydown', handleKeyboard);
         
-        // Zoom e Pan habilitados
+        console.log('✅ Zoom e Pan habilitados - Use scroll do mouse para zoom, drag para mover');
         
         // Cleanup keyboard listener quando componente é desmontado
         return () => {
@@ -232,25 +243,18 @@ const DiagramViewer = () => {
         <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" 
                           xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" 
                           xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" 
-                          xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
                           id="Definitions_1" 
                           targetNamespace="http://bpmn.io/schema/bpmn">
-          <bpmn:collaboration id="Collaboration_1">
-            <bpmn:participant id="Participant_1" processRef="Process_1" />
-          </bpmn:collaboration>
           <bpmn:process id="Process_1" isExecutable="true">
           </bpmn:process>
           <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-            <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1">
-              <bpmndi:BPMNShape id="Participant_1_di" bpmnElement="Participant_1" isHorizontal="true">
-                <dc:Bounds x="160" y="80" width="600" height="250" />
-              </bpmndi:BPMNShape>
+            <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
             </bpmndi:BPMNPlane>
           </bpmndi:BPMNDiagram>
         </bpmn:definitions>`;
       
       viewer.importXML(emptyDiagram).catch(err => {
-        // Silently handle empty diagram import errors
+        console.error('Erro ao importar diagrama vazio:', err);
       });
     }
 
@@ -274,14 +278,14 @@ const DiagramViewer = () => {
         a.click();
         URL.revokeObjectURL(url);
       }).catch(err => {
-        // Error saving diagram
+        console.error('Erro ao salvar diagrama:', err);
       });
     }
   };
 
   const handleReturnHome = () => {
     // Placeholder para funcionalidade de retorno ao início
-    // Return to home
+    console.log('Retornar ao início');
   };
 
   return (
