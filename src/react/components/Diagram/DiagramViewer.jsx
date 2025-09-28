@@ -13,7 +13,7 @@ const DiagramViewer = () => {
     if (viewerRef.current) {
       const canvas = viewerRef.current.get('canvas');
       const currentZoom = canvas.zoom();
-      canvas.zoom(currentZoom + 0.05); // Reduzido de 0.1 para 0.05
+      canvas.zoom(currentZoom + 0.03); // Ainda mais suave: 0.05 → 0.03
     }
   };
 
@@ -21,7 +21,7 @@ const DiagramViewer = () => {
     if (viewerRef.current) {
       const canvas = viewerRef.current.get('canvas');
       const currentZoom = canvas.zoom();
-      canvas.zoom(Math.max(0.1, currentZoom - 0.05)); // Reduzido de 0.1 para 0.05
+      canvas.zoom(Math.max(0.1, currentZoom - 0.03)); // Ainda mais suave: 0.05 → 0.03
     }
   };
 
@@ -42,11 +42,11 @@ const DiagramViewer = () => {
     // Variáveis de controle
     let isPanning = false;
     let lastMousePosition = { x: 0, y: 0 };
-    let dragThreshold = 8; // Aumentado de 5 para 8 - menos sensível para iniciar drag
+    let dragThreshold = 12; // Aumentado de 8 para 12 - ainda menos sensível
     let dragStartPosition = { x: 0, y: 0 };
     let hasMoved = false;
     let currentZoom = 1.0;
-    const zoomStep = 0.08; // Reduzido de 0.2 para 0.08 - zoom mais suave
+    const zoomStep = 0.05; // Reduzido de 0.08 para 0.05 - zoom ainda mais suave
     const minZoom = 0.2;
     const maxZoom = 3.0;
 
@@ -86,7 +86,7 @@ const DiagramViewer = () => {
         hasMoved = true;
 
         // Aplica fator de amortecimento para tornar dragging menos sensível
-        const dampingFactor = 0.6; // Reduzido de 0.8 para 0.6 - menos sensível
+        const dampingFactor = 0.4; // Reduzido de 0.6 para 0.4 - ainda menos sensível
 
         canvas.scroll({
           dx: deltaX * dampingFactor,
@@ -131,7 +131,7 @@ const DiagramViewer = () => {
       }
 
       // Limita a sensibilidade do scroll
-      const scrollSensitivity = 0.001; // Muito reduzido para suavidade
+      const scrollSensitivity = 0.0005; // Reduzido de 0.001 para 0.0005 - muito mais suave
       const zoomDelta = Math.sign(normalizedDelta) * Math.min(Math.abs(normalizedDelta * scrollSensitivity), zoomStep);
 
       // Obtém as coordenadas do mouse relativas ao canvas
@@ -147,7 +147,7 @@ const DiagramViewer = () => {
       const oldZoom = currentZoom;
       const newZoom = Math.max(minZoom, Math.min(maxZoom, currentZoom - zoomDelta)); // Invertido para comportamento natural
 
-      if (Math.abs(oldZoom - newZoom) < 0.001) return; // Evita mudanças muito pequenas
+      if (Math.abs(oldZoom - newZoom) < 0.002) return; // Threshold aumentado para evitar micro-movimentos
 
       currentZoom = newZoom;
       const scaleFactor = oldZoom / currentZoom;
