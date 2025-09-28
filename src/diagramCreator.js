@@ -145,23 +145,26 @@ export async function generateDiagramFromInput(processName, participantsInput, h
   // Processa elementos auxiliares depois, associando-os aos elementos já criados
   auxiliaryElements.forEach((auxElement) => {
     if (auxElement.type === 'Data Object') {
-      // Encontra o elemento de referência através de uma busca mais direta
+      // Encontra o elemento de referência através de busca por posição no array original
       let targetElement = null;
 
-      if (auxElement.index !== null && auxElement.index !== undefined) {
-        // Percorre o mainFlowElements para encontrar qual elemento tem o mesmo índice
-        for (let i = 0; i < mainFlowElements.length; i++) {
-          if (mainFlowElements[i].index === auxElement.index) {
-            // Usa o elemento processado na mesma posição
-            if (i < elementsList.length) {
-              targetElement = elementsList[i];
-            }
-            break;
+      // Encontra a posição do Data Object no array original de elementos
+      const dataObjectPosition = elements.indexOf(auxElement);
+
+      if (dataObjectPosition > 0) {
+        // Busca o elemento anterior ao Data Object no array original
+        const previousElement = elements[dataObjectPosition - 1];
+        // Se o elemento anterior não é auxiliar, busca ele na lista processada
+        if (!['Data Object', 'Mensagem'].includes(previousElement.type)) {
+          // Encontra o índice do elemento anterior no mainFlowElements
+          const previousIndex = mainFlowElements.indexOf(previousElement);
+          if (previousIndex >= 0 && previousIndex < elementsList.length) {
+            targetElement = elementsList[previousIndex];
           }
         }
       }
 
-      // Se não encontrou por índice, usa o último elemento
+      // Se não encontrou por posição, usa o último elemento como fallback
       if (!targetElement && elementsList.length > 0) {
         targetElement = elementsList[elementsList.length - 1];
       }

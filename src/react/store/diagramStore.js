@@ -180,13 +180,6 @@ export const useDiagramStore = create((set, get) => ({
         ? processState.externalParticipants.split(',').map(p => p.trim()).filter(p => p)
         : [];
       
-      console.log('📊 Calling diagramCreator with:', {
-        processName: processState.processName,
-        participants: participantsList,
-        hasExternalParticipants: processState.hasExternalParticipants,
-        externalParticipants: externalParticipantsList,
-        elements: allElements.length
-      });
       console.log('🔍 Elements:', allElements);
       // Chama o diagramCreator
       const diagramXML = await generateDiagramFromInput(
