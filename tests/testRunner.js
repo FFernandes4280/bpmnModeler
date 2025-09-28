@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { generateDiagramFromInput } from '../src/base/diagramCreator.js';
+import { generateDiagramFromInput } from '../src/diagramCreator.js';
 
 class TestRunner {
   constructor() {

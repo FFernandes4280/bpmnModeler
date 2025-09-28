@@ -129,6 +129,10 @@
   min-width: 140px;
 }
 
+.element-message-participant {
+  min-width: 120px;
+}
+
 .element-extra {
   min-width: 10px;
 }

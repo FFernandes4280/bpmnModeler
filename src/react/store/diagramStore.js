@@ -147,6 +147,7 @@ export const useDiagramStore = create((set, get) => ({
           case 'Mensagem':
             processed.name = `${element.subtype || 'Envio'}_Mensagem_${index + 1}`;
             processed.direction = element.subtype || 'Envio';
+            processed.lane = element.externalParticipant || '';
             break;
             
           case 'Data Object':

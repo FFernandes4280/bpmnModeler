@@ -6,6 +6,8 @@ import './DiagramViewer.css';
 const DiagramViewer = () => {
   const canvasRef = useRef(null);
   const viewerRef = useRef(null);
+  const cleanupDragRef = useRef(null);
+  const keyboardHandlerRef = useRef(null);
   const { setViewer } = useDiagramStore();
 
   // Controles de zoom
@@ -13,7 +15,7 @@ const DiagramViewer = () => {
     if (viewerRef.current) {
       const canvas = viewerRef.current.get('canvas');
       const currentZoom = canvas.zoom();
-      canvas.zoom(currentZoom + 0.03); // Ainda mais suave: 0.05 → 0.03
+      canvas.zoom(currentZoom + 0.08); // Aumentado de 0.05 para 0.08 - mais responsivo
     }
   };
 
@@ -21,7 +23,7 @@ const DiagramViewer = () => {
     if (viewerRef.current) {
       const canvas = viewerRef.current.get('canvas');
       const currentZoom = canvas.zoom();
-      canvas.zoom(Math.max(0.1, currentZoom - 0.03)); // Ainda mais suave: 0.05 → 0.03
+      canvas.zoom(Math.max(0.1, currentZoom - 0.08)); // Aumentado de 0.05 para 0.08 - mais responsivo
     }
   };
 
@@ -42,13 +44,14 @@ const DiagramViewer = () => {
     // Variáveis de controle
     let isPanning = false;
     let lastMousePosition = { x: 0, y: 0 };
-    let dragThreshold = 12; // Aumentado de 8 para 12 - ainda menos sensível
+    let dragThreshold = 8; // Reduzido de 15 para 8 - mais responsivo
     let dragStartPosition = { x: 0, y: 0 };
     let hasMoved = false;
     let currentZoom = 1.0;
-    const zoomStep = 0.05; // Reduzido de 0.08 para 0.05 - zoom ainda mais suave
+    const zoomStep = 0.06; // Aumentado de 0.03 para 0.06 - mais responsivo
     const minZoom = 0.2;
     const maxZoom = 3.0;
+    const dampingFactor = 0.5; // Aumentado de 0.3 para 0.5 - menos amortecimento
 
     // ===================================================================
     // CONTROLES DE ARRASTAR (PAN)
@@ -85,9 +88,7 @@ const DiagramViewer = () => {
       if (totalDistance > dragThreshold) {
         hasMoved = true;
 
-        // Aplica fator de amortecimento para tornar dragging menos sensível
-        const dampingFactor = 0.4; // Reduzido de 0.6 para 0.4 - ainda menos sensível
-
+        // Aplica fator de amortecimento para reduzir sensibilidade drasticamente
         canvas.scroll({
           dx: deltaX * dampingFactor,
           dy: deltaY * dampingFactor,
@@ -122,16 +123,16 @@ const DiagramViewer = () => {
     const handleWheel = (event) => {
       event.preventDefault();
 
-      // Normaliza o deltaY para diferentes navegadores e dispositivos
+      // Normaliza e reduz drasticamente a sensibilidade do scroll
       let normalizedDelta = event.deltaY;
       if (event.deltaMode === 1) { // DOM_DELTA_LINE
         normalizedDelta *= 16;
-      } else if (event.deltaMode === 2) { // DOM_DELTA_PAGE  
+      } else if (event.deltaMode === 2) { // DOM_DELTA_PAGE
         normalizedDelta *= 16 * 24;
       }
 
-      // Limita a sensibilidade do scroll
-      const scrollSensitivity = 0.0005; // Reduzido de 0.001 para 0.0005 - muito mais suave
+      // Aumentar sensibilidade do scroll para nível confortável
+      const scrollSensitivity = 0.001; // Aumentado de 0.0003 para 0.001 - mais responsivo
       const zoomDelta = Math.sign(normalizedDelta) * Math.min(Math.abs(normalizedDelta * scrollSensitivity), zoomStep);
 
       // Obtém as coordenadas do mouse relativas ao canvas
@@ -147,7 +148,7 @@ const DiagramViewer = () => {
       const oldZoom = currentZoom;
       const newZoom = Math.max(minZoom, Math.min(maxZoom, currentZoom - zoomDelta)); // Invertido para comportamento natural
 
-      if (Math.abs(oldZoom - newZoom) < 0.002) return; // Threshold aumentado para evitar micro-movimentos
+      if (Math.abs(oldZoom - newZoom) < 0.005) return; // Aumentado de 0.001 para 0.005 - permite mais responsividade
 
       currentZoom = newZoom;
       const scaleFactor = oldZoom / currentZoom;
@@ -201,11 +202,21 @@ const DiagramViewer = () => {
       
       // Habilita funcionalidades de zoom e pan
       viewer.on('import.done', () => {
+        // Remove event listeners antigos se existirem
+        if (cleanupDragRef.current) {
+          cleanupDragRef.current();
+          cleanupDragRef.current = null;
+        }
+        if (keyboardHandlerRef.current) {
+          document.removeEventListener('keydown', keyboardHandlerRef.current);
+          keyboardHandlerRef.current = null;
+        }
+        
         // Centraliza o diagrama
         viewer.get('canvas').zoom('fit-viewport', 'auto');
         
-        // Setup drag/pan behavior
-        setupCanvasDragBehavior(viewer);
+        // Setup drag/pan behavior e guarda cleanup
+        cleanupDragRef.current = setupCanvasDragBehavior(viewer);
         
         // Adiciona suporte a atalhos de teclado para zoom
         const handleKeyboard = (event) => {
@@ -228,38 +239,26 @@ const DiagramViewer = () => {
           }
         };
         
+        keyboardHandlerRef.current = handleKeyboard;
         document.addEventListener('keydown', handleKeyboard);
         
         console.log('✅ Zoom e Pan habilitados - Use scroll do mouse para zoom, drag para mover');
-        
-        // Cleanup keyboard listener quando componente é desmontado
-        return () => {
-          document.removeEventListener('keydown', handleKeyboard);
-        };
-      });
-      
-      // Importa um diagrama vazio inicial
-      const emptyDiagram = `<?xml version="1.0" encoding="UTF-8"?>
-        <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" 
-                          xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" 
-                          xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" 
-                          id="Definitions_1" 
-                          targetNamespace="http://bpmn.io/schema/bpmn">
-          <bpmn:process id="Process_1" isExecutable="true">
-          </bpmn:process>
-          <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-            <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
-            </bpmndi:BPMNPlane>
-          </bpmndi:BPMNDiagram>
-        </bpmn:definitions>`;
-      
-      viewer.importXML(emptyDiagram).catch(err => {
-        console.error('Erro ao importar diagrama vazio:', err);
       });
     }
 
-    // Cleanup
+    // Cleanup completo
     return () => {
+      // Remove event listeners primeiro
+      if (cleanupDragRef.current) {
+        cleanupDragRef.current();
+        cleanupDragRef.current = null;
+      }
+      if (keyboardHandlerRef.current) {
+        document.removeEventListener('keydown', keyboardHandlerRef.current);
+        keyboardHandlerRef.current = null;
+      }
+      
+      // Depois destroi o viewer
       if (viewerRef.current) {
         viewerRef.current.destroy();
         viewerRef.current = null;

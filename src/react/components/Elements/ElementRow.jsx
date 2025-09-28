@@ -6,12 +6,14 @@ const ElementRow = ({ element, index }) => {
     updateElement, 
     removeElement, 
     moveElement, 
-    getAllParticipants,
+    getParticipantsList,
+    getExternalParticipantsList,
     getExistingGateways,
     elements
   } = useDiagramStore();
 
-  const allParticipants = getAllParticipants();
+  const internalParticipants = getParticipantsList();
+  const externalParticipants = getExternalParticipantsList();
   const elementNumber = index + 1;
   const isFirst = index === 0;
   const isLast = index === elements.length - 1;
@@ -20,12 +22,12 @@ const ElementRow = ({ element, index }) => {
     updateElement(element.id, { [field]: value });
   };
 
-  // Auto-seleciona participante se houver apenas um disponível
+  // Auto-seleciona participante se houver apenas um disponível (apenas internos)
   useEffect(() => {
-    if (allParticipants.length === 1 && !element.participant && !['Mensagem', 'Data Object'].includes(element.type)) {
-      handleUpdate('participant', allParticipants[0]);
+    if (internalParticipants.length === 1 && !element.participant && !['Mensagem', 'Data Object'].includes(element.type)) {
+      handleUpdate('participant', internalParticipants[0]);
     }
-  }, [allParticipants, element.participant, element.type]);
+  }, [internalParticipants, element.participant, element.type]);
 
   // Auto-define label inicial para Gateways (apenas na criação)
   useEffect(() => {
@@ -218,6 +220,19 @@ const ElementRow = ({ element, index }) => {
             +
           </button>
         </div>
+      ) : element.type === 'Mensagem' ? (
+        <select
+          className="element-message-participant"
+          value={element.externalParticipant || ''}
+          onChange={(e) => handleUpdate('externalParticipant', e.target.value)}
+        >
+          <option value="" disabled>Participante Externo</option>
+          {externalParticipants.map(participant => (
+            <option key={participant} value={participant}>
+              {participant}
+            </option>
+          ))}
+        </select>
       ) : element.type !== 'Gateway Existente' ? (
         <input
           type="text"
@@ -231,11 +246,11 @@ const ElementRow = ({ element, index }) => {
       {!['Mensagem', 'Data Object', 'Gateway Existente'].includes(element.type) && (
         <select
           className="element-extra"
-          value={element.participant || (allParticipants.length === 1 ? allParticipants[0] : '')}
+          value={element.participant || (internalParticipants.length === 1 ? internalParticipants[0] : '')}
           onChange={(e) => handleUpdate('participant', e.target.value)}
         >
           <option value="" disabled>Participante</option>
-          {allParticipants.map(participant => (
+          {internalParticipants.map(participant => (
             <option key={participant} value={participant}>
               {participant}
             </option>
