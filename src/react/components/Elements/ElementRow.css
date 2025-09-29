@@ -39,6 +39,78 @@
   cursor: help;
 }
 
+/* Estilos para Gateway Block */
+.gateway-block {
+  border: 2px solid #007bff;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+  background-color: #f8f9fa;
+}
+
+.gateway-divergences {
+  margin-top: 15px;
+}
+
+.divergence-section {
+  margin-bottom: 20px;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 0;
+  background-color: white;
+}
+
+.divergence-header {
+  font-weight: bold;
+  text-align: center;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  margin-bottom: 0;
+  color: #495057;
+  font-size: 14px;
+}
+
+.divergence-add-button {
+  width: 100%;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.divergence-add-button:hover {
+  background-color: #218838;
+}
+
+/* Elementos dentro das divergências mantêm o mesmo tamanho das element-row normais */
+.divergence-section .element-row {
+  margin-bottom: 10px;
+}
+
+/* Gateways aninhados mantêm largura completa sem recuo */
+.nested-gateway-divergences {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* Assegura que divergências aninhadas tenham mesmo tamanho das principais */
+.nested-gateway-divergences .divergence-section {
+  margin-bottom: 20px;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 0;
+  background-color: white;
+  width: 100%;
+}
+
 .element-controls {
   display: flex;
   flex-direction: column;

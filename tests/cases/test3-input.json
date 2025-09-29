@@ -1,0 +1,112 @@
+[
+  {
+    "type": "Atividade",
+    "name": "Default_Testar a peça",
+    "lane": "Default",
+    "index": 1
+  },
+  {
+    "type": "Gateway Exclusivo",
+    "name": "Gateway",
+    "lane": "Default",
+    "diverge": [],
+    "index": 2
+  },
+  {
+    "type": "Atividade",
+    "name": "Default_Retrabalhar a peça",
+    "lane": "Default",
+    "index": 3
+  },
+  {
+    "type": "Gateway Exclusivo",
+    "name": "Gateway",
+    "lane": "Default",
+    "diverge": [
+      1
+    ],
+    "index": 4
+  },
+  {
+    "type": "Inicio",
+    "name": "Padrão_Pedido do formato",
+    "lane": "Default"
+  },
+  {
+    "type": "Atividade",
+    "name": "Default_Pintar a peça",
+    "lane": "Default",
+    "index": 5
+  },
+  {
+    "type": "Gateway Paralelo",
+    "name": "Gateway",
+    "lane": "Default",
+    "diverge": [
+      11,
+      12
+    ],
+    "index": 6
+  },
+  {
+    "type": "Atividade",
+    "name": "Default_Etiquetar a peça",
+    "lane": "Default",
+    "index": 7
+  },
+  {
+    "type": "Atividade",
+    "name": "Default_Checar a fixação da etiqueta",
+    "lane": "Default",
+    "index": 8
+  },
+  {
+    "type": "Gateway Exclusivo",
+    "name": "Gateway",
+    "lane": "Default",
+    "diverge": [],
+    "index": 9
+  },
+  {
+    "type": "Atividade",
+    "name": "Default_Retirar a etiqueta",
+    "lane": "Default",
+    "index": 10
+  },
+  {
+    "type": "Gateway Exclusivo",
+    "name": "Gateway",
+    "lane": "Default",
+    "diverge": [
+      7
+    ],
+    "index": 11
+  },
+  {
+    "type": "Atividade",
+    "name": "Default_Registrar a peça no sistema",
+    "lane": "Default",
+    "index": 12
+  },
+  {
+    "type": "Gateway Paralelo",
+    "name": "Gateway",
+    "lane": "Default",
+    "diverge": [
+      14
+    ],
+    "index": 13
+  },
+  {
+    "type": "Atividade",
+    "name": "Default_Embalar a peça",
+    "lane": "Default",
+    "index": 14
+  },
+  {
+    "type": "Fim",
+    "name": "Padrão_Peça embalada",
+    "lane": "Default",
+    "index": 15
+  }
+]

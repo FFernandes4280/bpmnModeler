@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn2:definitions xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_test4" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn2:process id="mainProcess" isExecutable="false">
+    <bpmn2:laneSet id="LaneSet">
+      <bpmn2:lane id="Lane_1" name="Default" />
+    </bpmn2:laneSet>
+    
+    <!-- Evento Inicial -->
+    <bpmn2:startEvent id="StartEvent_1" name="Pedido do formato" />
+    
+    <!-- Atividades e Gateways -->
+    <bpmn2:task id="Task_Testar_a_peca" name="Testar a peça" />
+    <bpmn2:exclusiveGateway id="ExclusiveGateway_1" />
+    <bpmn2:task id="Task_Retrabalhar_a_peca" name="Retrabalhar a peça" />
+    <bpmn2:exclusiveGateway id="ExclusiveGateway_2" />
+    <bpmn2:task id="Task_Pintar_a_peca" name="Pintar a peça" />
+    <bpmn2:parallelGateway id="ParallelGateway_1" />
+    <bpmn2:task id="Task_Etiquetar_a_peca" name="Etiquetar a peça" />
+    <bpmn2:task id="Task_Checar_fixacao" name="Checar a fixação da etiqueta" />
+    <bpmn2:exclusiveGateway id="ExclusiveGateway_3" />
+    <bpmn2:task id="Task_Retirar_etiqueta" name="Retirar a etiqueta" />
+    <bpmn2:exclusiveGateway id="ExclusiveGateway_4" />
+    <bpmn2:task id="Task_Registrar_peca" name="Registrar a peça no sistema" />
+    <bpmn2:parallelGateway id="ParallelGateway_2" />
+    <bpmn2:task id="Task_Embalar_peca" name="Embalar a peça" />
+    <bpmn2:endEvent id="EndEvent_1" name="Peça embalada" />
+    
+    <!-- Sequence Flows -->
+    <bpmn2:sequenceFlow id="Flow_Start_Task1" sourceRef="StartEvent_1" targetRef="Task_Testar_a_peca" />
+    <bpmn2:sequenceFlow id="Flow_Task1_Gateway1" sourceRef="Task_Testar_a_peca" targetRef="ExclusiveGateway_1" />
+    <bpmn2:sequenceFlow id="Flow_Gateway1_Task2" sourceRef="ExclusiveGateway_1" targetRef="Task_Retrabalhar_a_peca" />
+    <bpmn2:sequenceFlow id="Flow_Task2_Gateway2" sourceRef="Task_Retrabalhar_a_peca" targetRef="ExclusiveGateway_2" />
+    <bpmn2:sequenceFlow id="Flow_Gateway2_Task3" sourceRef="ExclusiveGateway_2" targetRef="Task_Pintar_a_peca" />
+    <bpmn2:sequenceFlow id="Flow_Task3_ParallelGW1" sourceRef="Task_Pintar_a_peca" targetRef="ParallelGateway_1" />
+    <bpmn2:sequenceFlow id="Flow_ParallelGW1_Task4" sourceRef="ParallelGateway_1" targetRef="Task_Etiquetar_a_peca" />
+    <bpmn2:sequenceFlow id="Flow_Task4_Task5" sourceRef="Task_Etiquetar_a_peca" targetRef="Task_Checar_fixacao" />
+    <bpmn2:sequenceFlow id="Flow_Task5_Gateway3" sourceRef="Task_Checar_fixacao" targetRef="ExclusiveGateway_3" />
+    <bpmn2:sequenceFlow id="Flow_Gateway3_Task6" sourceRef="ExclusiveGateway_3" targetRef="Task_Retirar_etiqueta" />
+    <bpmn2:sequenceFlow id="Flow_Task6_Gateway4" sourceRef="Task_Retirar_etiqueta" targetRef="ExclusiveGateway_4" />
+    <bpmn2:sequenceFlow id="Flow_Gateway4_Task7" sourceRef="ExclusiveGateway_4" targetRef="Task_Registrar_peca" />
+    <bpmn2:sequenceFlow id="Flow_Task7_ParallelGW2" sourceRef="Task_Registrar_peca" targetRef="ParallelGateway_2" />
+    <bpmn2:sequenceFlow id="Flow_ParallelGW2_Task8" sourceRef="ParallelGateway_2" targetRef="Task_Embalar_peca" />
+    <bpmn2:sequenceFlow id="Flow_Task8_End" sourceRef="Task_Embalar_peca" targetRef="EndEvent_1" />
+    
+  </bpmn2:process>
+  
+  <bpmn2:collaboration id="Collaboration">
+    <bpmn2:participant id="Participant" name="Fabricação e Controle de Peças" processRef="mainProcess" />
+  </bpmn2:collaboration>
+  
+  <bpmndi:BPMNDiagram id="BPMNDiagram">
+    <bpmndi:BPMNPlane id="BPMNPlane" bpmnElement="Collaboration">
+      <bpmndi:BPMNShape id="Participant_di" bpmnElement="Participant" isHorizontal="true">
+        <dc:Bounds x="160" y="80" width="3000" height="400" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_1_di" bpmnElement="Lane_1" isHorizontal="true">
+        <dc:Bounds x="190" y="80" width="2970" height="400" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn2:definitions>

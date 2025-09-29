@@ -1,0 +1,10 @@
+{
+  "name": "Test 3 - Fabricação de Peças com Gateways Aninhados",
+  "description": "Teste avançado com múltiplos gateways (Exclusivo e Paralelo) e divergências complexas",
+  "processName": "Fabricação e Controle de Peças",
+  "participants": ["Default"],
+  "hasExternalParticipants": false,
+  "externalParticipants": [],
+  "inputFile": "test3-input.json",
+  "expectedFile": "test3-expected.bpmn"
+}

@@ -51,7 +51,7 @@ const DiagramViewer = () => {
     const zoomStep = 0.06; // Aumentado de 0.03 para 0.06 - mais responsivo
     const minZoom = 0.2;
     const maxZoom = 3.0;
-    const dampingFactor = 0.5; // Aumentado de 0.3 para 0.5 - menos amortecimento
+    const dampingFactor = 0.7; // Aumentado de 0.3 para 0.5 - menos amortecimento
 
     // ===================================================================
     // CONTROLES DE ARRASTAR (PAN)
