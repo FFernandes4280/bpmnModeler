@@ -17,6 +17,14 @@ const ElementsContainer = () => {
     addElement(newElement);
   };
 
+  // Verifica se o último elemento é um Gateway com divergências ativas
+  const lastElement = elements[elements.length - 1];
+  const shouldShowAddButton = !lastElement || 
+    lastElement.type !== 'Gateway' || 
+    lastElement.label === 'Conv' || 
+    !lastElement.label ||
+    isNaN(parseInt(lastElement.label));
+
   return (
     <div className="elements-section">
       <label>Elementos:</label>
@@ -37,13 +45,15 @@ const ElementsContainer = () => {
         )}
       </div>
       
-      <button 
-        type="button" 
-        className="add-element-button"
-        onClick={handleAddElement}
-      >
-        Adicionar Linha
-      </button>
+      {shouldShowAddButton && (
+        <button 
+          type="button" 
+          className="add-element-button"
+          onClick={handleAddElement}
+        >
+          Adicionar Linha
+        </button>
+      )}
     </div>
   );
 };

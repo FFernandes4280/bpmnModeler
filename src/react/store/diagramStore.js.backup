@@ -37,6 +37,154 @@ export const useDiagramStore = create((set, get) => ({
   addElement: (element) => set((state) => ({
     elements: [...state.elements, { ...element, id: Date.now() + Math.random() }]
   })),
+  
+  // Função auxiliar para converter estrutura aninhada em flat com índices
+  convertToFlatStructure: (elements) => {
+    const flatElements = [];
+    let currentIndex = 0;
+    
+    const processElement = (element, isInDivergence = false) => {
+      const elementIndex = currentIndex++;
+      const processed = {
+        type: element.type,
+        label: element.label || '',
+        participant: element.participant || '',
+        index: elementIndex
+      };
+      
+      // Adiciona propriedades específicas baseadas no tipo
+      switch (element.type) {
+        case 'Atividade':
+          processed.name = `${element.subtype || 'Default'}_${element.label || `Atividade_${elementIndex + 1}`}`;
+          processed.lane = element.participant;
+          break;
+          
+        case 'Evento Intermediario':
+          processed.name = `${element.subtype || 'Padrão'}_${element.label || `Evento_${elementIndex + 1}`}`;
+          processed.lane = element.participant;
+          break;
+          
+        case 'Fim':
+          processed.name = `${element.subtype || 'Padrão'}_${element.label || `Fim_${elementIndex + 1}`}`;
+          processed.lane = element.participant;
+          break;
+          
+        case 'Gateway':
+          const gatewaySubtype = element.subtype;
+          const gatewayLabel = element.label || 'Conv';
+          processed.type = `Gateway ${gatewaySubtype}`;
+          processed.lane = element.participant;
+          processed.name = `following${element.label || ''}_${element.participant || 'Gateway'}`;
+          
+          // Se não for convergência, processar divergências
+          if (gatewayLabel !== 'Conv' && !isNaN(parseInt(gatewayLabel))) {
+            const numDivergences = parseInt(gatewayLabel);
+            processed.diverge = [];
+            
+            // Reserva espaço para o gateway atual
+            flatElements.push(processed);
+            
+            // Processa cada divergência
+            for (let divIndex = 1; divIndex <= numDivergences; divIndex++) {
+              const divergenceElements = element.divergences?.[divIndex] || [];
+              
+              if (divergenceElements.length > 0) {
+                // Índice do primeiro elemento desta divergência
+                processed.diverge.push(currentIndex);
+                
+                // Processa todos os elementos desta divergência
+                divergenceElements.forEach(divEl => {
+                  processElement(divEl, true);
+                });
+              }
+            }
+            
+            // Retorna null pois já adicionamos o elemento
+            return null;
+          }
+          break;
+          
+        case 'Gateway Existente':
+          processed.refGateway = element.refGateway;
+          processed.type = 'Gateway Existente';
+          processed.originalType = 'Gateway Exclusivo'; // ou Paralelo, baseado no original
+          processed.lane = element.participant;
+          break;
+          
+        case 'Mensagem':
+          processed.name = `${element.subtype || 'Envio'}_Mensagem_${elementIndex + 1}`;
+          processed.direction = element.subtype || 'Envio';
+          processed.lane = element.externalParticipant || '';
+          break;
+          
+        case 'Data Object':
+          processed.name = `${element.subtype || 'Envio'}_${element.label || `Data_${elementIndex + 1}`}`;
+          processed.direction = element.subtype || 'Envio';
+          break;
+          
+        default:
+          processed.name = element.label || `${element.type}_${elementIndex + 1}`;
+      }
+      
+      return processed;
+    };
+    
+    // Processa todos os elementos principais
+    elements.forEach(element => {
+      const processed = processElement(element, false);
+      if (processed) {
+        flatElements.push(processed);
+      }
+    });
+    
+    return flatElements;
+  },
+  
+  // Função para atualizar diagrama
+  updateDiagram: async (processState) => {
+    const { viewer, convertToFlatStructure } = get();
+    
+    if (!processState || !viewer) {
+      console.log('⚠️ Missing processState or viewer, skipping diagram update');
+      return;
+    }
+    
+    try {
+      console.log('🔄 Starting diagram update...');
+      
+      // Converte elementos React para formato flat do diagramCreator
+      const processedElements = convertToFlatStructure(processState.elements);articipants: 'Não',
+  externalParticipants: '',
+  
+  // Evento Inicial
+  initialEventName: '',
+  initialEventType: 'Padrão',
+  initialEventLane: '',
+  
+  // Elementos
+  elements: [],
+  
+  // Estado do Diagrama
+  viewer: null,
+  
+  // Actions para configuração do processo
+  setProcessName: (name) => set({ processName: name }),
+  setParticipants: (participants) => set({ participants }),
+  setHasExternalParticipants: (hasExternal) => set({ hasExternalParticipants: hasExternal }),
+  setExternalParticipants: (external) => set({ externalParticipants: external }),
+  
+  // Actions para evento inicial
+  setInitialEventName: (name) => set({ initialEventName: name }),
+  setInitialEventType: (type) => set({ initialEventType: type }),
+  setInitialEventLane: (lane) => set({ initialEventLane: lane }),
+  
+  // Actions para o viewer
+  setViewer: (viewer) => set({ viewer }),
+  
+  // Actions para elementos
+  addElement: (element) => set((state) => ({
+    elements: [...state.elements, { ...element, id: Date.now() + Math.random() }]
+  })),
 
   // Action para adicionar elemento a uma divergência (com suporte a aninhamento)
   addElementToDivergence: (gatewayId, divergenceIndex, newElement) => set((state) => {
@@ -225,108 +373,6 @@ export const useDiagramStore = create((set, get) => ({
     return elements[index - 1] || null;
   },
   
-  // Função auxiliar para converter estrutura aninhada em flat com índices
-  convertToFlatStructure: (elements) => {
-    const flatElements = [];
-    let currentIndex = 0;
-    
-    const processElement = (element, isInDivergence = false) => {
-      const elementIndex = currentIndex++;
-      const processed = {
-        type: element.type,
-        label: element.label || '',
-        participant: element.participant || '',
-        index: elementIndex
-      };
-      
-      // Adiciona propriedades específicas baseadas no tipo
-      switch (element.type) {
-        case 'Atividade':
-          processed.name = `${element.subtype || 'Default'}_${element.label || `Atividade_${elementIndex + 1}`}`;
-          processed.lane = element.participant;
-          break;
-          
-        case 'Evento Intermediario':
-          processed.name = `${element.subtype || 'Padrão'}_${element.label || `Evento_${elementIndex + 1}`}`;
-          processed.lane = element.participant;
-          break;
-          
-        case 'Fim':
-          processed.name = `${element.subtype || 'Padrão'}_${element.label || `Fim_${elementIndex + 1}`}`;
-          processed.lane = element.participant;
-          break;
-          
-        case 'Gateway':
-          const gatewaySubtype = element.subtype;
-          const gatewayLabel = element.label || 'Conv';
-          processed.type = `Gateway ${gatewaySubtype}`;
-          processed.lane = element.participant;
-          processed.name = `following${element.label || ''}_${element.participant || 'Gateway'}`;
-          
-          // Se não for convergência, processar divergências
-          if (gatewayLabel !== 'Conv' && !isNaN(parseInt(gatewayLabel))) {
-            const numDivergences = parseInt(gatewayLabel);
-            processed.diverge = [];
-            
-            // Reserva espaço para o gateway atual
-            flatElements.push(processed);
-            
-            // Processa cada divergência
-            for (let divIndex = 1; divIndex <= numDivergences; divIndex++) {
-              const divergenceElements = element.divergences?.[divIndex] || [];
-              
-              if (divergenceElements.length > 0) {
-                // Índice do primeiro elemento desta divergência
-                processed.diverge.push(currentIndex);
-                
-                // Processa todos os elementos desta divergência
-                divergenceElements.forEach(divEl => {
-                  processElement(divEl, true);
-                });
-              }
-            }
-            
-            // Retorna null pois já adicionamos o elemento
-            return null;
-          }
-          break;
-          
-        case 'Gateway Existente':
-          processed.refGateway = element.refGateway;
-          processed.type = 'Gateway Existente';
-          processed.originalType = 'Gateway Exclusivo'; // ou Paralelo, baseado no original
-          processed.lane = element.participant;
-          break;
-          
-        case 'Mensagem':
-          processed.name = `${element.subtype || 'Envio'}_Mensagem_${elementIndex + 1}`;
-          processed.direction = element.subtype || 'Envio';
-          processed.lane = element.externalParticipant || '';
-          break;
-          
-        case 'Data Object':
-          processed.name = `${element.subtype || 'Envio'}_${element.label || `Data_${elementIndex + 1}`}`;
-          processed.direction = element.subtype || 'Envio';
-          break;
-          
-        default:
-          processed.name = element.label || `${element.type}_${elementIndex + 1}`;
-      }
-      
-      return processed;
-    };
-    
-    // Processa todos os elementos principais
-    elements.forEach(element => {
-      const processed = processElement(element, false);
-      if (processed) {
-        flatElements.push(processed);
-      }
-    });
-    
-    return flatElements;
-  },
-  
   // Função para atualizar diagrama
   updateDiagram: async (processState) => {
     const { viewer, convertToFlatStructure } = get();
@@ -362,6 +408,7 @@ export const useDiagramStore = create((set, get) => ({
         : [];
       
       console.log('🔍 Elements:', allElements);
+      
       // Chama o diagramCreator
       const diagramXML = await generateDiagramFromInput(
         processState.processName,

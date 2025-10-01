@@ -2,10 +2,10 @@ import React, { useEffect } from 'react';
 import { useDiagramStore } from '../../store/diagramStore.js';
 
 const ElementRow = ({ element, index }) => {
-  const { 
-    updateElement, 
-    removeElement, 
-    moveElement, 
+  const {
+    updateElement,
+    removeElement,
+    moveElement,
     addElement,
     addElementToDivergence,
     updateElementInDivergence,
@@ -48,68 +48,45 @@ const ElementRow = ({ element, index }) => {
     addElementToDivergence(element.id, divergenceIndex, newElement);
   };
 
-  // Função para calcular numeração sequencial global verdadeira
-  const getNextGlobalNumber = () => {
-    let counter = 1; // Evento inicial sempre é 1
-    
-    // Conta todos os elementos principais
-    elements.forEach((el, idx) => {
-      if (idx < index) {
-        counter++; // Conta elemento principal
-        
-        // Se é gateway com divergências, conta todos os elementos das divergências
-        if (el.type === 'Gateway' && el.divergences) {
-          const gatewayValue = el.label || 'Conv';
-          if (gatewayValue !== 'Conv' && !isNaN(parseInt(gatewayValue))) {
-            const numDivergences = parseInt(gatewayValue);
-            for (let d = 1; d <= numDivergences; d++) {
-              const divElements = el.divergences[d] || [];
-              counter += divElements.length;
-            }
+  // Função utilitária para "flatten" dos elementos (inclui divergências recursivamente)
+  function flattenElements(elementsList) {
+    let flat = [];
+    for (const el of elementsList) {
+      flat.push(el);
+      if (el.type === 'Gateway' && el.divergences) {
+        const gatewayValue = el.label || 'Conv';
+        if (gatewayValue !== 'Conv' && !isNaN(parseInt(gatewayValue))) {
+          const numDivergences = parseInt(gatewayValue);
+          for (let d = 1; d <= numDivergences; d++) {
+            const divs = el.divergences[d] || [];
+            flat = flat.concat(flattenElements(divs));
           }
         }
       }
-    });
-    
-    // Se estamos no elemento atual (gateway), conta ele
-    if (element.type === 'Gateway') {
-      counter++;
     }
-    
-    return counter;
-  };
-  
-  // Função para calcular número de elemento dentro de divergência
-  const getDivergenceElementNumber = (divIndex, divElementIndex) => {
-    let counter = getNextGlobalNumber(); // Começa depois do gateway
-    
-    // Conta elementos de divergências anteriores do mesmo gateway
-    const gatewayValue = element.label || 'Conv';
-    if (gatewayValue !== 'Conv' && !isNaN(parseInt(gatewayValue))) {
-      for (let d = 1; d < divIndex; d++) {
-        const divElements = element.divergences?.[d] || [];
-        counter += divElements.length;
-      }
-    }
-    
-    // Adiciona a posição na divergência atual
-    counter += divElementIndex;
-    
-    return counter;
+    return flat;
+  }
+
+  // Lista linear de todos os elementos (incluindo aninhados)
+  const flatElements = flattenElements(elements);
+
+  // Função para obter o índice absoluto do elemento atual
+  const getAbsoluteIndex = (elementId) => {
+    return flatElements.findIndex(el => el.id === elementId) + 1;
   };
 
   // Função recursiva para renderizar elementos (incluindo gateways aninhados)
   const renderDivergenceElement = (divElement, divElementIndex, parentGateway, parentDivIndex, depth = 0) => {
     const divSubtypeOptions = getSubtypeOptions(divElement.type);
     const divHasSubtype = divSubtypeOptions.length > 0;
-    const globalNumber = getDivergenceElementNumber(parentDivIndex, divElementIndex + 1);
-    
+    const globalNumber = getAbsoluteIndex(divElement.id);
+
     return (
       <div key={divElement.id} className="element-container">
         {/* Element row principal */}
         <div className="element-row">
           <div className="element-number">{globalNumber}</div>
-          
+
           <div className="element-controls">
             <button type="button" className="move-button">▲</button>
             <button type="button" className="move-button">▼</button>
@@ -121,14 +98,14 @@ const ElementRow = ({ element, index }) => {
             onChange={(e) => {
               const newType = e.target.value;
               const updates = { type: newType, subtype: '' };
-              
+
               // Auto-inicializar subtipo e label para gateways
               if (newType === 'Gateway') {
                 updates.subtype = 'Exclusivo';
                 updates.label = 'Conv';
                 updates.divergences = { 1: [], 2: [] }; // Inicializa divergências
               }
-              
+
               updateElementInDivergence(parentGateway.id, parentDivIndex, divElement.id, updates);
             }}
           >
@@ -182,7 +159,7 @@ const ElementRow = ({ element, index }) => {
               >
                 −
               </button>
-              <div 
+              <div
                 className="convergence-display"
                 title={divElement.label === 'Conv' ? 'Convergência' : divElement.label}
               >
@@ -243,44 +220,64 @@ const ElementRow = ({ element, index }) => {
           </button>
         </div>
 
-        {/* Se for um gateway aninhado, renderiza suas divergências */}
-        {divElement.type === 'Gateway' && divElement.divergences && (
-          <div className="nested-gateway-divergences">
-            {[1, 2].map(nestedDivIndex => {
-              const nestedDivergenceElements = divElement.divergences?.[nestedDivIndex] || [];
-              
-              return (
-                <div key={nestedDivIndex} className="divergence-section">
-                  <div className="divergence-header">
-                    Divergência {nestedDivIndex} Gateway {globalNumber}
+        {/* Se for um gateway aninhado com divergências ativas, renderiza suas divergências */}
+        {divElement.type === 'Gateway' && (() => {
+          const gatewayLabel = divElement.label || 'Conv';
+          const numDivergences = parseInt(gatewayLabel);
+          
+          // Só renderiza divergências se não for convergência e tiver número válido
+          if (gatewayLabel === 'Conv' || isNaN(numDivergences) || numDivergences <= 0) {
+            return null;
+          }
+
+          return (
+            <div className="nested-gateway-divergences">
+              {Array.from({ length: numDivergences }, (_, i) => i + 1).map(nestedDivIndex => {
+                const nestedDivergenceElements = divElement.divergences?.[nestedDivIndex] || [];
+                
+                // Verifica se o último elemento da divergência aninhada é um Gateway com divergências ativas
+                const lastNestedElement = nestedDivergenceElements[nestedDivergenceElements.length - 1];
+                const shouldShowNestedAddButton = !lastNestedElement || 
+                  lastNestedElement.type !== 'Gateway' || 
+                  lastNestedElement.label === 'Conv' || 
+                  !lastNestedElement.label ||
+                  isNaN(parseInt(lastNestedElement.label));
+
+                return (
+                  <div key={nestedDivIndex} className="divergence-section">
+                    <div className="divergence-header">
+                      Divergência {nestedDivIndex} Gateway {globalNumber}
+                    </div>
+
+                    {/* Elementos da divergência aninhada */}
+                    {nestedDivergenceElements.map((nestedElement, nestedElementIndex) =>
+                      renderDivergenceElement(nestedElement, nestedElementIndex, divElement, nestedDivIndex, depth + 1)
+                    )}
+
+                    {shouldShowNestedAddButton && (
+                      <button
+                        type="button"
+                        className="add-element-button divergence-add-button"
+                        onClick={() => {
+                          const newElement = {
+                            type: 'Atividade',
+                            subtype: 'Default',
+                            label: '',
+                            participant: '',
+                            direction: ''
+                          };
+                          addElementToDivergence(divElement.id, nestedDivIndex, newElement);
+                        }}
+                      >
+                        Adicionar Linha
+                      </button>
+                    )}
                   </div>
-                  
-                  {/* Elementos da divergência aninhada */}
-                  {nestedDivergenceElements.map((nestedElement, nestedElementIndex) => 
-                    renderDivergenceElement(nestedElement, nestedElementIndex, divElement, nestedDivIndex, depth + 1)
-                  )}
-                  
-                  <button 
-                    type="button" 
-                    className="add-element-button divergence-add-button"
-                    onClick={() => {
-                      const newElement = {
-                        type: 'Atividade',
-                        subtype: 'Default',
-                        label: '',
-                        participant: '',
-                        direction: ''
-                      };
-                      addElementToDivergence(divElement.id, nestedDivIndex, newElement);
-                    }}
-                  >
-                    Adicionar Linha
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        )}
+                );
+              })}
+            </div>
+          );
+        })()}
       </div>
     );
   };
@@ -312,16 +309,16 @@ const ElementRow = ({ element, index }) => {
         const numDivergences = parseInt(gatewayValue);
         const currentDivergences = element.divergences || {};
         const newDivergences = {};
-        
+
         // Preserva divergências existentes e cria novas se necessário
         for (let i = 1; i <= numDivergences; i++) {
           newDivergences[i] = currentDivergences[i] || [];
         }
-        
+
         // Só atualiza se houver mudança
         const needsUpdate = Object.keys(currentDivergences).length !== numDivergences ||
           !Object.keys(newDivergences).every(key => currentDivergences[key]);
-        
+
         if (needsUpdate) {
           handleUpdate('divergences', newDivergences);
         }
@@ -334,7 +331,7 @@ const ElementRow = ({ element, index }) => {
   // Função para controlar o contador de convergência
   const handleConvergenceChange = (direction) => {
     const currentLabel = element.label || 'Conv';
-    
+
     if (direction === 'increment') {
       if (currentLabel === 'Conv') {
         handleUpdate('label', '2');
@@ -362,7 +359,7 @@ const ElementRow = ({ element, index }) => {
           { value: 'In', label: 'Recebimento' },
           { value: 'Out', label: 'Envio' }
         ];
-      
+
       case 'Evento Intermediario':
         return [
           { value: 'Padrão', label: 'Padrão' },
@@ -375,7 +372,7 @@ const ElementRow = ({ element, index }) => {
           { value: 'Exclusivo', label: 'Exclusivo' },
           { value: 'Paralelo', label: 'Paralelo' }
         ];
-      
+
       case 'Fim':
         return [
           { value: 'Padrão', label: 'Padrão' },
@@ -389,19 +386,19 @@ const ElementRow = ({ element, index }) => {
           { value: 'Terminar', label: 'Terminar' },
           { value: 'Link', label: 'Link' }
         ];
-      
+
       case 'Data Object':
         return [
           { value: 'Envio', label: 'Envio' },
           { value: 'Recebimento', label: 'Recebimento' }
         ];
-      
+
       case 'Mensagem':
         return [
           { value: 'Envio', label: 'Envio' },
           { value: 'Recebimento', label: 'Recebimento' }
         ];
-      
+
       default:
         return [];
     }
@@ -414,12 +411,12 @@ const ElementRow = ({ element, index }) => {
 
   // Renderização especial para Gateways
   if (isGateway) {
+    const gatewayValue = element.label || 'Conv';
     return (
       <div className="gateway-block">
         {/* Controles do Gateway */}
         <div className="element-row">
           <div className="element-number">{elementNumber}</div>
-          
           <div className="element-controls">
             <button
               type="button"
@@ -440,7 +437,6 @@ const ElementRow = ({ element, index }) => {
               ▼
             </button>
           </div>
-
           <select
             className="element-type"
             value={element.type || 'Atividade'}
@@ -458,7 +454,6 @@ const ElementRow = ({ element, index }) => {
             <option value="Data Object">Data Object</option>
             <option value="Fim">Fim</option>
           </select>
-
           <select
             className="element-subtype"
             value={element.subtype || subtypeOptions[0]?.value || ''}
@@ -470,7 +465,6 @@ const ElementRow = ({ element, index }) => {
               </option>
             ))}
           </select>
-
           <div className="gateway-convergence-container">
             <button
               type="button"
@@ -481,7 +475,7 @@ const ElementRow = ({ element, index }) => {
             >
               −
             </button>
-            <div 
+            <div
               className="convergence-display"
               title={element.label === 'Conv' ? 'Convergência' : element.label}
             >
@@ -496,7 +490,6 @@ const ElementRow = ({ element, index }) => {
               +
             </button>
           </div>
-
           <select
             className="element-extra"
             value={element.participant || (internalParticipants.length === 1 ? internalParticipants[0] : '')}
@@ -509,7 +502,6 @@ const ElementRow = ({ element, index }) => {
               </option>
             ))}
           </select>
-
           <button
             type="button"
             className="removeElementRow"
@@ -519,49 +511,45 @@ const ElementRow = ({ element, index }) => {
             ×
           </button>
         </div>
-
         {/* Divergências dinâmicas baseadas no valor do gateway */}
         <div className="gateway-divergences">
           {(() => {
-            const gatewayValue = element.label || 'Conv';
-            
-            // Se valor é 'Conv', não criar divergências
-            if (gatewayValue === 'Conv') {
+            const numDivergencesLocal = parseInt(gatewayValue);
+            if (gatewayValue === 'Conv' || isNaN(numDivergencesLocal) || numDivergencesLocal <= 0) {
               return null;
             }
-            
-            // Se valor é numérico, criar N divergências
-            const numDivergences = parseInt(gatewayValue);
-            if (isNaN(numDivergences) || numDivergences <= 0) {
-              return null;
-            }
-            
-            // Criar array de índices de divergência baseado no valor
-            const divergenceIndexes = Array.from({ length: numDivergences }, (_, i) => i + 1);
-            
+            const divergenceIndexes = Array.from({ length: numDivergencesLocal }, (_, i) => i + 1);
             return divergenceIndexes.map(divIndex => {
               const divergenceElements = element.divergences?.[divIndex] || [];
-            
-            return (
-              <div key={divIndex} className="divergence-section">
-                <div className="divergence-header">
-                  Divergência {divIndex} Gateway {getNextGlobalNumber() - 1}
+              
+              // Verifica se o último elemento da divergência é um Gateway com divergências ativas
+              const lastDivElement = divergenceElements[divergenceElements.length - 1];
+              const shouldShowDivAddButton = !lastDivElement || 
+                lastDivElement.type !== 'Gateway' || 
+                lastDivElement.label === 'Conv' || 
+                !lastDivElement.label ||
+                isNaN(parseInt(lastDivElement.label));
+              
+              return (
+                <div key={divIndex} className="divergence-section">
+                  <div className="divergence-header">
+                    Divergência {divIndex} Gateway {elementNumber}
+                  </div>
+                  {/* Elementos da divergência */}
+                  {divergenceElements.map((divElement, divElementIndex) =>
+                    renderDivergenceElement(divElement, divElementIndex, element, divIndex)
+                  )}
+                  {shouldShowDivAddButton && (
+                    <button
+                      type="button"
+                      className="add-element-button divergence-add-button"
+                      onClick={() => handleAddElementToDivergence(divIndex)}
+                    >
+                      Adicionar Linha
+                    </button>
+                  )}
                 </div>
-                
-                {/* Elementos da divergência */}
-                {divergenceElements.map((divElement, divElementIndex) => 
-                  renderDivergenceElement(divElement, divElementIndex, element, divIndex)
-                )}
-                
-                <button 
-                  type="button" 
-                  className="add-element-button divergence-add-button"
-                  onClick={() => handleAddElementToDivergence(divIndex)}
-                >
-                  Adicionar Linha
-                </button>
-              </div>
-            );
+              );
             });
           })()}
         </div>
@@ -572,14 +560,14 @@ const ElementRow = ({ element, index }) => {
   return (
     <div className="element-row">
       <div className="element-number">{elementNumber}</div>
-      
+
       {/* Mostrar indicador especial para gateways */}
       {['Gateway Exclusivo', 'Gateway Paralelo'].includes(element.type) && (
         <div className="gateway-indicator" title={`Este gateway pode ser referenciado pelo índice ${elementNumber}`}>
           🔗
         </div>
       )}
-      
+
       <div className="element-controls">
         <button
           type="button"
@@ -658,7 +646,7 @@ const ElementRow = ({ element, index }) => {
           >
             −
           </button>
-          <div 
+          <div
             className="convergence-display"
             title={element.label === 'Conv' ? 'Convergência' : element.label}
           >
