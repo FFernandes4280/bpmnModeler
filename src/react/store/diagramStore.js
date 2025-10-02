@@ -327,20 +327,168 @@ export const useDiagramStore = create((set, get) => ({
     return flatElements;
   },
   
+    // Função auxiliar para converter estrutura aninhada em flat com índices
+  convertToFlatStructure: (elements) => {
+    const flatElements = [];
+    let currentIndex = 0;
+    let previousElementName = ''; // Rastreia o nome do elemento anterior
+    
+    // Obtém o primeiro participante como padrão
+    const { getParticipantsList } = get();
+    const participantsList = getParticipantsList();
+    const defaultParticipant = participantsList.length > 0 ? participantsList[0] : '';
+    
+    const processElement = (element) => {
+      const elementIndex = currentIndex;
+      currentIndex++; // Incrementa para o próximo elemento
+      const processed = {};
+      
+      // Adiciona propriedades específicas baseadas no tipo
+      switch (element.type) {
+        case 'Atividade':
+          processed.type = 'Atividade';
+          processed.name = `${element.subtype || 'Default'}_${element.label || `Atividade_${elementIndex + 1}`}`;
+          processed.lane = element.participant || defaultParticipant;
+          previousElementName = element.label || `Atividade_${elementIndex + 1}`;
+          break;
+          
+        case 'Evento Intermediario':
+          processed.type = 'Evento Intermediario';
+          processed.name = `${element.subtype || 'Padrão'}_${element.label || `Evento_${elementIndex + 1}`}`;
+          processed.lane = element.participant || defaultParticipant;
+          previousElementName = element.label || `Evento_${elementIndex + 1}`;
+          break;
+          
+        case 'Fim':
+          processed.type = 'Fim';
+          processed.name = `${element.subtype || 'Padrão'}_${element.label || `Fim_${elementIndex + 1}`}`;
+          processed.lane = element.participant || defaultParticipant;
+          previousElementName = element.label || `Fim_${elementIndex + 1}`;
+          break;
+          
+        case 'Gateway':
+          const gatewaySubtype = element.subtype;
+          const gatewayLabel = element.label || 'Conv';
+          processed.type = `Gateway ${gatewaySubtype}`;
+          processed.lane = element.participant || defaultParticipant;
+          // Usa o nome do elemento anterior, normalizado
+          const normalizedPrevName = previousElementName.replace(/\s+/g, '_').replace(/[^\w]/g, '');
+          processed.name = `following${element.subtype || 'Exclusivo'}_${normalizedPrevName}`;
+          previousElementName = `Gateway_${elementIndex + 1}`;
+          
+          // Se não for convergência, processar divergências
+          if (gatewayLabel !== 'Conv' && !isNaN(parseInt(gatewayLabel))) {
+            const numDivergences = parseInt(gatewayLabel);
+            processed.diverge = [];
+            
+            // Reserva espaço para o gateway atual
+            flatElements.push(processed);
+            
+            // Processa cada divergência
+            for (let divIndex = 1; divIndex <= numDivergences; divIndex++) {
+              const divergenceElements = element.divergences?.[divIndex] || [];
+              
+              if (divergenceElements.length > 0) {
+                // Índice do primeiro elemento desta divergência
+                processed.diverge.push(currentIndex);
+                
+                // Processa todos os elementos desta divergência
+                divergenceElements.forEach(divEl => {
+                  const processedDivEl = processElement(divEl);
+                  if (processedDivEl) {
+                    flatElements.push(processedDivEl);
+                  }
+                });
+              }
+            }
+            
+            // Retorna null pois já adicionamos o elemento
+            return null;
+          } else {
+            // Gateway de convergência - será preenchido depois
+            processed._needsDiverge = true;
+            processed._gatewayIndex = elementIndex;
+          }
+          break;
+          
+        case 'Gateway Existente':
+          processed.type = 'Gateway Existente';
+          processed.name = element.name || `Gateway_Existente_${elementIndex + 1}`;
+          processed.lane = element.participant || defaultParticipant;
+          processed.originalType = `Gateway ${element.originalSubtype || 'Exclusivo'}`;
+          if (element.refGateway !== undefined) {
+            processed.index = element.refGateway;
+          }
+          previousElementName = `Gateway_Existente_${elementIndex + 1}`;
+          break;
+          
+        case 'Mensagem':
+          processed.type = 'Mensagem';
+          processed.name = `${element.subtype || 'Envio'}_${element.label || `Mensagem_${elementIndex + 1}`}`;
+          processed.lane = element.externalParticipant || '';
+          previousElementName = element.label || `Mensagem_${elementIndex + 1}`;
+          break;
+          
+        case 'Data Object':
+          processed.type = 'Data Object';
+          processed.name = `${element.subtype || 'Envio'}_${element.label || `Data_${elementIndex + 1}`}`;
+          previousElementName = element.label || `Data_${elementIndex + 1}`;
+          break;
+          
+        default:
+          processed.type = element.type;
+          processed.name = element.label || `${element.type}_${elementIndex + 1}`;
+          processed.lane = element.participant || defaultParticipant;
+          previousElementName = element.label || `${element.type}_${elementIndex + 1}`;
+      }
+      
+      return processed;
+    };
+    
+    // Processa todos os elementos principais
+    elements.forEach(element => {
+      const processed = processElement(element);
+      if (processed) {
+        flatElements.push(processed);
+      }
+    });
+    
+    // Atualiza diverge dos gateways de convergência após processar tudo
+    flatElements.forEach((el, index) => {
+      if (el._needsDiverge) {
+        const nextIndex = index + 1;
+        if (nextIndex < flatElements.length) {
+          el.diverge = [nextIndex];
+        } else {
+          el.diverge = [];
+        }
+        // Remove propriedades temporárias
+        delete el._needsDiverge;
+        delete el._gatewayIndex;
+      }
+    });
+    
+    return flatElements;
+  },
+  
   // Função para atualizar diagrama
   updateDiagram: async (processState) => {
     const { viewer, convertToFlatStructure } = get();
     
     if (!processState || !viewer) {
-      console.log('⚠️ Missing processState or viewer, skipping diagram update');
       return;
     }
     
     try {
-      console.log('🔄 Starting diagram update...');
-      
       // Converte elementos React para formato flat do diagramCreator
       const processedElements = convertToFlatStructure(processState.elements);
+      
+      // Ajusta os índices do diverge para considerar o elemento inicial que será adicionado
+      processedElements.forEach(el => {
+        if (el.diverge && Array.isArray(el.diverge) && el.diverge.length > 0) {
+          el.diverge = el.diverge.map(idx => idx + 1); // +1 porque o elemento inicial será o índice 0
+        }
+      });
       
       // Adiciona elemento inicial
       const initialElement = {
@@ -362,6 +510,7 @@ export const useDiagramStore = create((set, get) => ({
         : [];
       
       console.log('🔍 Elements:', allElements);
+      
       // Chama o diagramCreator
       const diagramXML = await generateDiagramFromInput(
         processState.processName,

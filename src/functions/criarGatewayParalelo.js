@@ -13,6 +13,9 @@ export default function criarGatewayParalelo(
     index,
     elementsList,
   ) {
+    // Normaliza o ID removendo espaços e caracteres especiais
+    const normalizedId = gatewayName.replace(/\s+/g, '_').replace(/[^\w]/g, '');
+
     // Obtém o elemento anterior da lista usando o índice
     const prevShape = elementsList[index - 1];
     const sourceElement = prevShape ? prevShape.bpmnElement : null;
@@ -45,7 +48,7 @@ export default function criarGatewayParalelo(
   
     // Cria o gateway como um elemento BPMN
     const gateway = moddle.create('bpmn:ParallelGateway', {
-      id: `ParallelGateway_${gatewayName}`, // ID único para o gateway
+      id: `ParallelGateway_${normalizedId}`, // ID único para o gateway
     });
   
     // Adiciona o gateway ao processo
@@ -53,7 +56,7 @@ export default function criarGatewayParalelo(
   
     // Cria o BPMNShape para o gateway
     const gatewayShape = moddle.create('bpmndi:BPMNShape', {
-      id: `ParallelGateway_${gatewayName}_di`, // ID único para o shape do gateway
+      id: `ParallelGateway_${normalizedId}_di`, // ID único para o shape do gateway
       bpmnElement: gateway, // Referência ao elemento BPMN do gateway
       bounds: moddle.create('dc:Bounds', gatewayBounds), // Define os limites do gateway
       isMarkerVisible: true, // Torna o marcador visível

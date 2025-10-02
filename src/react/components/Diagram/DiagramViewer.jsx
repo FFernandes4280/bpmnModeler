@@ -241,8 +241,6 @@ const DiagramViewer = () => {
         
         keyboardHandlerRef.current = handleKeyboard;
         document.addEventListener('keydown', handleKeyboard);
-        
-        console.log('✅ Zoom e Pan habilitados - Use scroll do mouse para zoom, drag para mover');
       });
     }
 

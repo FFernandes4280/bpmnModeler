@@ -12,6 +12,8 @@ export default function criarGatewayExclusivo(
   dictEntry,
   yOffset
 ) {
+  // Normaliza o ID removendo espaços e caracteres especiais
+  const normalizedId = gatewayName.replace(/\s+/g, '_').replace(/[^\w]/g, '');
 
   // Obtém o elemento anterior da lista usando o índice
   const sourceElement = dictEntry.bpmnElement;
@@ -38,7 +40,7 @@ export default function criarGatewayExclusivo(
 
   // Cria o gateway como um elemento BPMN
   const gateway = moddle.create('bpmn:ExclusiveGateway', {
-    id: `ExclusiveGateway_${gatewayName}`, // ID único para o gateway
+    id: `ExclusiveGateway_${normalizedId}`, // ID único para o gateway
   });
 
   // Adiciona o gateway ao processo
@@ -46,7 +48,7 @@ export default function criarGatewayExclusivo(
 
   // Cria o BPMNShape para o gateway
   const gatewayShape = moddle.create('bpmndi:BPMNShape', {
-    id: `ExclusiveGateway_${gatewayName}_di`, // ID único para o shape do gateway
+    id: `ExclusiveGateway_${normalizedId}_di`, // ID único para o shape do gateway
     bpmnElement: gateway, // Referência ao elemento BPMN do gateway
     bounds: moddle.create('dc:Bounds', gatewayBounds), // Define os limites do gateway
     isMarkerVisible: true, // Torna o marcador visível
