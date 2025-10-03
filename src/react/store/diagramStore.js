@@ -413,12 +413,38 @@ export const useDiagramStore = create((set, get) => ({
           
         case 'Gateway Existente':
           processed.type = 'Gateway Existente';
-          processed.name = element.name || `Gateway_Existente_${elementIndex + 1}`;
-          processed.lane = element.participant || defaultParticipant;
-          processed.originalType = `Gateway ${element.originalSubtype || 'Exclusivo'}`;
+          
+          // Busca o gateway referenciado no array original para copiar EXATAMENTE seus dados
           if (element.refGateway !== undefined) {
-            processed.index = element.refGateway;
+            const { elements } = get();
+            const refGatewayIndex = element.refGateway - 1; // Converte para índice 0-based (React array)
+            const referencedGateway = elements[refGatewayIndex];
+            
+            if (referencedGateway && referencedGateway.type === 'Gateway') {
+              // Busca o elemento ANTERIOR ao gateway referenciado para gerar o nome correto
+              const elementBeforeGateway = refGatewayIndex > 0 ? elements[refGatewayIndex - 1] : null;
+              const prevLabel = elementBeforeGateway?.label || '';
+              const normalizedPrevLabel = prevLabel.replace(/\s+/g, '_').replace(/[^\w]/g, '');
+              
+              // Copia EXATAMENTE o mesmo padrão de nome do gateway referenciado
+              processed.name = `following${referencedGateway.subtype || 'Exclusivo'}_${normalizedPrevLabel}`;
+              processed.lane = element.participant || referencedGateway.participant || defaultParticipant;
+              processed.originalType = `Gateway ${referencedGateway.subtype || 'Exclusivo'}`;
+              processed.index = element.refGateway;
+            } else {
+              // Fallback se não encontrar o gateway referenciado
+              processed.name = element.name || `Gateway_Existente_${elementIndex + 1}`;
+              processed.lane = element.participant || defaultParticipant;
+              processed.originalType = `Gateway ${element.originalSubtype || 'Exclusivo'}`;
+              processed.index = element.refGateway;
+            }
+          } else {
+            // Sem referência - gera nome genérico
+            processed.name = element.name || `Gateway_Existente_${elementIndex + 1}`;
+            processed.lane = element.participant || defaultParticipant;
+            processed.originalType = `Gateway ${element.originalSubtype || 'Exclusivo'}`;
           }
+          
           previousElementName = `Gateway_Existente_${elementIndex + 1}`;
           break;
           
@@ -529,10 +555,8 @@ export const useDiagramStore = create((set, get) => ({
         canvas.zoom('fit-viewport', 'auto');
       }, 100);
       
-      console.log('✅ Diagram updated successfully!');
-      
     } catch (error) {
-      console.error('❌ Error updating diagram:', error);
+      // Silently handle errors
     }
   }
 }));

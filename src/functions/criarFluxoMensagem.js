@@ -8,14 +8,11 @@ export default function criarFluxoMensagem(
   name,
   lane
 ) {
-  console.log('🔍 criarFluxoMensagem - Debug:', { name, lane, externalParticipants });
-  
   // Extrair tipo de mensagem do nome
   const messageType = name.split('_')[0]; // "Envio" ou "Recebimento"
 
   // Buscar participante externo
   const availableParticipants = collaboration.get('participants');
-  console.log('🔍 Available participants:', availableParticipants.map(p => ({ id: p.id, name: p.name })));
   
   const externalParticipant = availableParticipants.find(
     (participant) => {
@@ -23,12 +20,8 @@ export default function criarFluxoMensagem(
     }
   );
 
-  console.log('🔍 Found external participant:', externalParticipant);
-
   // Verificar se o participante externo foi encontrado
   if (!externalParticipant) {
-    console.error(`❌ Participante externo '${lane}' não encontrado na colaboração`);
-    console.error('Available participants:', availableParticipants.map(p => p.name));
     return dictEntry;
   }
 

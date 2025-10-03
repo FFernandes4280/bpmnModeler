@@ -115,10 +115,32 @@ export async function generateDiagramFromInput(processName, participantsInput, h
   // Separa elementos do fluxo principal dos auxiliares (Data Object, Mensagem)
   const mainFlowElements = elements.filter(el => !['Data Object', 'Mensagem'].includes(el.type));
   const auxiliaryElements = elements.filter(el => ['Data Object', 'Mensagem'].includes(el.type));
+  
+  // Cria um mapa de índices: índice original -> índice no mainFlowElements
+  const indexMap = new Map();
+  let mainFlowIndex = 0;
+  elements.forEach((el, originalIndex) => {
+    if (!['Data Object', 'Mensagem'].includes(el.type)) {
+      indexMap.set(originalIndex, mainFlowIndex);
+      mainFlowIndex++;
+    }
+  });
+  
+  // Ajusta os índices de diverge nos elementos do fluxo principal
+  const adjustedMainFlowElements = mainFlowElements.map(el => {
+    if (el.diverge && Array.isArray(el.diverge)) {
+      const adjustedDiverge = el.diverge.map(originalIndex => indexMap.get(originalIndex)).filter(idx => idx !== undefined);
+      return {
+        ...el,
+        diverge: adjustedDiverge
+      };
+    }
+    return el;
+  });
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   // Processa primeiro o fluxo principal (sem elementos auxiliares)
-  mainFlowElements.some((element, index) => {
+  adjustedMainFlowElements.some((element, index) => {
     const resultado = processarElemento(
       element,
       moddle,
@@ -130,7 +152,7 @@ export async function generateDiagramFromInput(processName, participantsInput, h
       participants,
       laneHeight,
       externalParticipants,
-      mainFlowElements, // Passa apenas elementos do fluxo principal
+      adjustedMainFlowElements, // Passa elementos com índices ajustados
       0
     );
 

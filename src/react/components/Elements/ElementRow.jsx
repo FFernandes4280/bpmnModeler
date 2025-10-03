@@ -134,7 +134,20 @@ const ElementRow = ({ element, index }) => {
           )}
 
           {/* Label ou convergência para elementos da divergência */}
-          {divElement.type === 'Gateway' ? (
+          {divElement.type === 'Gateway Existente' ? (
+            <select
+              className="element-gateway-ref"
+              value={divElement.refGateway || ''}
+              onChange={(e) => updateElementInDivergence(parentGateway.id, parentDivIndex, divElement.id, { refGateway: parseInt(e.target.value) })}
+            >
+              <option value="">Selecione gateway</option>
+              {getExistingGateways().filter(gateway => gateway.id !== divElement.id).map((gateway) => (
+                <option key={gateway.id} value={gateway.index}>
+                  Índice {gateway.index}
+                </option>
+              ))}
+            </select>
+          ) : divElement.type === 'Gateway' ? (
             <div className="gateway-convergence-container">
               <button
                 type="button"
@@ -184,6 +197,19 @@ const ElementRow = ({ element, index }) => {
                 +
               </button>
             </div>
+          ) : divElement.type === 'Mensagem' ? (
+            <select
+              className="element-message-participant"
+              value={divElement.externalParticipant || ''}
+              onChange={(e) => updateElementInDivergence(parentGateway.id, parentDivIndex, divElement.id, { externalParticipant: e.target.value })}
+            >
+              <option value="" disabled>Participante Externo</option>
+              {externalParticipants.map(participant => (
+                <option key={participant} value={participant}>
+                  {participant}
+                </option>
+              ))}
+            </select>
           ) : (
             <input
               type="text"

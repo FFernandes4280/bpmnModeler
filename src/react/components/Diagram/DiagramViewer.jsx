@@ -275,14 +275,13 @@ const DiagramViewer = () => {
         a.click();
         URL.revokeObjectURL(url);
       }).catch(err => {
-        console.error('Erro ao salvar diagrama:', err);
+        // Silently handle error
       });
     }
   };
 
   const handleReturnHome = () => {
     // Placeholder para funcionalidade de retorno ao início
-    console.log('Retornar ao início');
   };
 
   return (

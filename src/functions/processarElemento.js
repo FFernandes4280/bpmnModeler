@@ -107,11 +107,8 @@ export default function processarElemento(
 
       diverge.forEach((branchIndex, divergeIndex) => {
         if (!elements[branchIndex]) {
-          console.error('❌ Elemento undefined no índice:', branchIndex, 'de', elements.length);
           return; // Skip este branch
         }
-        
-        console.log('🔀 Processando branch índice:', branchIndex, 'elemento:', elements[branchIndex].type);
         
         const branchYOffset = pontos[divergeIndex];
         divergeEntry.push(processarElemento(
@@ -251,14 +248,8 @@ export default function processarElemento(
               reverseWaypoints,
               true // isReturnFlow = true para gateways existentes
             );
-          } else {
-            console.warn('sourceDict ou bounds não encontrados para Gateway Existente');
           }
-        } else {
-          console.warn('Elemento ou shape do gateway de destino não encontrados:', targetName);
         }
-      } else {
-        console.warn('Gateway de destino não encontrado:', targetName, 'na lane:', element.lane);
       }
 
       break;
@@ -281,7 +272,7 @@ export default function processarElemento(
       break;
 
     default:
-      console.error('Unknown element type:', type);
+      break;
   }
 
   return dictEntry;
