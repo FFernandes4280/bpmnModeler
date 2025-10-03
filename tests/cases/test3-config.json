@@ -1,10 +1,10 @@
 {
-  "name": "Test 3 - Fabricação de Peças com Gateways Aninhados",
-  "description": "Teste avançado com múltiplos gateways (Exclusivo e Paralelo) e divergências complexas",
-  "processName": "Fabricação e Controle de Peças",
-  "participants": ["Default"],
-  "hasExternalParticipants": false,
-  "externalParticipants": [],
+  "name": "Test 3 - Confecção de peças",
+  "description": "Teste complexo com mensagem, gateways aninhados profundamente e múltiplos gateways existentes",
+  "processName": "Confecção de peças",
+  "participants": ["Setor de montagem"],
+  "hasExternalParticipants": true,
+  "externalParticipants": ["Planejamento"],
   "inputFile": "test3-input.json",
   "expectedFile": "test3-expected.bpmn"
 }

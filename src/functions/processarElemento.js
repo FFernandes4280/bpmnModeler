@@ -32,7 +32,8 @@ export default function processarElemento(
   laneHeight,
   externalParticipants,
   elements,
-  yOffset
+  yOffset,
+  maxProcessingIndex = elements.length // Limite máximo de processamento para esta branch
 ) {
 
   let { type, name, lane, diverge } = element;
@@ -110,6 +111,11 @@ export default function processarElemento(
           yOffset
         ));
 
+        // Se não tem diverge, é um gateway de convergência - apenas retorna o gateway criado
+        if (!diverge || diverge.length === 0) {
+          return divergeEntry[0];
+        }
+
         // Encontra o índice do gateway atual no array de elementos
         const currentGatewayIndex = elements.findIndex(el =>
           el.type === element.type &&
@@ -124,9 +130,25 @@ export default function processarElemento(
             return; // Skip este branch
           }
           
+          // Valida que a branch não aponta para o próprio gateway (evita recursão infinita)
+          if (branchIndex === currentGatewayIndex) {
+            console.warn(`⚠️ Gateway "${element.name}" tem diverge apontando para si mesmo (índice ${branchIndex}). Pulando branch.`);
+            return;
+          }
+          
           const branchYOffset = pontos[divergeIndex];
+          const firstBranchElement = elements[branchIndex];
+          
+          // Calcula o limite de processamento para esta branch:
+          // - Se não for a última branch, o limite é o início da próxima branch
+          // - Se for a última branch, usa o maxProcessingIndex recebido como parâmetro
+          const branchLimit = divergeIndex < diverge.length - 1 
+            ? diverge[divergeIndex + 1]  // Início da próxima branch
+            : maxProcessingIndex;         // Limite do gateway pai
+          
+          // Processa o primeiro elemento da branch
           divergeEntry.push(processarElemento(
-            elements[branchIndex],
+            firstBranchElement,
             moddle,
             bpmnProcess,
             bpmnPlane,
@@ -137,10 +159,18 @@ export default function processarElemento(
             laneHeight,
             externalParticipants,
             elements,
-            branchYOffset
+            branchYOffset,
+            branchLimit // Passa o limite para o elemento filho
           ));
+          
+          // Se o primeiro elemento é um gateway, ele já processou todos os seus elementos recursivamente
+          // Então não devemos processar os elementos seguintes nesta branch
+          if (isGatewayType(firstBranchElement.type)) {
+            return; // Pula o loop - gateway já processou tudo
+          }
+          
           const startIndex = branchIndex + 1;
-          const endIndex = findElementToStop(elements, diverge[0] - 1, divergeIndex, diverge.length);
+          const endIndex = Math.min(branchLimit, findElementToStop(elements, diverge[0] - 1, divergeIndex, diverge.length));
 
           for (let i = startIndex; i < endIndex; i++) {
             const currentEntry = processarElemento(
@@ -155,14 +185,19 @@ export default function processarElemento(
               laneHeight,
               externalParticipants,
               elements,
-              branchYOffset
+              branchYOffset,
+              branchLimit // Passa o limite para elementos subsequentes
             );
             if (Array.isArray(currentEntry)) {
               divergeEntry.push(...currentEntry);
             } else {
               divergeEntry.push(currentEntry);
             }
-            if (isGatewayType(elements[i].type)) break;
+            // Para apenas se encontrar um gateway DE DIVERGÊNCIA (com diverge)
+            // Gateways de convergência (sem diverge) devem continuar o fluxo
+            if (isGatewayType(elements[i].type) && elements[i].diverge && elements[i].diverge.length > 0) {
+              break;
+            }
           }
         });
 
@@ -203,6 +238,12 @@ export default function processarElemento(
       break;
 
     case 'Gateway Existente':
+      // Gateway Existente será processado em uma segunda passada
+      // Por enquanto, apenas retorna o dictEntry sem criar conexão
+      // Isso evita problemas de ordem quando o gateway de destino ainda não foi criado
+      break;
+
+    case 'Gateway Existente (segunda passada)':
       // Gateway Existente agora vem com o nome correto do gateway de destino
       const targetName = element.name;
       

@@ -144,6 +144,7 @@ export async function generateDiagramFromInput(processName, participantsInput, h
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   // Processa primeiro o fluxo principal (sem elementos auxiliares)
+  // Gateways Existentes serão processados em uma segunda passada
   adjustedMainFlowElements.some((element, index) => {
     const resultado = processarElemento(
       element,
@@ -157,7 +158,8 @@ export async function generateDiagramFromInput(processName, participantsInput, h
       laneHeight,
       externalParticipants,
       adjustedMainFlowElements, // Passa elementos com índices ajustados
-      0
+      0,
+      adjustedMainFlowElements.length // Limite padrão: todos os elementos
     );
 
     if (Array.isArray(resultado)) {
@@ -165,7 +167,70 @@ export async function generateDiagramFromInput(processName, participantsInput, h
     } else {
       elementsList.push(resultado);
     }
-    return element.type.includes('Gateway') ? true : false;
+    
+    // Para o loop apenas se for um gateway DE DIVERGÊNCIA (que tem campo diverge)
+    // Gateways de convergência (sem diverge) continuam o fluxo normalmente
+    const isGatewayWithDiverge = element.type.includes('Gateway') && element.diverge && element.diverge.length > 0;
+    return isGatewayWithDiverge;
+  });
+
+  // Segunda passada: processa Gateways Existentes agora que todos os elementos foram criados
+  adjustedMainFlowElements.forEach((element, index) => {
+    if (element.type === 'Gateway Existente') {
+      // Procura o elemento anterior ao Gateway Existente no array original
+      const previousElement = index > 0 ? adjustedMainFlowElements[index - 1] : null;
+      
+      if (!previousElement) {
+        console.warn(`⚠️ Gateway Existente sem elemento anterior: ${element.name}`);
+        return;
+      }
+      
+      // Procura o shape correspondente ao elemento anterior na lista processada
+      let sourceElement = null;
+      
+      // Busca no bpmnPlane pelo elemento anterior já criado
+      const planeElements = bpmnPlane.planeElement;
+      for (let planeElement of planeElements) {
+        if (planeElement.bpmnElement) {
+          const bpmnEl = planeElement.bpmnElement;
+          // Verifica se é o elemento anterior baseado no nome
+          if (bpmnEl.name && previousElement.name) {
+            const previousName = previousElement.name.split('_').pop(); // Remove prefixo Default_/Padrão_
+            if (bpmnEl.name === previousName || bpmnEl.name.includes(previousName)) {
+              sourceElement = planeElement;
+              break;
+            }
+          }
+        }
+      }
+      
+      if (!sourceElement) {
+        console.warn(`⚠️ Elemento source não encontrado para Gateway Existente: ${element.name}`);
+        return;
+      }
+      
+      // Cria um elemento temporário com type modificado para processar na segunda passada
+      const elementoSegundaPassada = {
+        ...element,
+        type: 'Gateway Existente (segunda passada)'
+      };
+      
+      processarElemento(
+        elementoSegundaPassada,
+        moddle,
+        bpmnProcess,
+        bpmnPlane,
+        collaboration,
+        sourceElement,
+        participantBounds,
+        participants,
+        laneHeight,
+        externalParticipants,
+        adjustedMainFlowElements,
+        0,
+        adjustedMainFlowElements.length
+      );
+    }
   });
 
   // Processa elementos auxiliares depois, associando-os aos elementos já criados
@@ -208,7 +273,8 @@ export async function generateDiagramFromInput(processName, participantsInput, h
           laneHeight,
           externalParticipants,
           elements, // Passa o array completo para referência
-          0
+          0,
+          elements.length // Limite padrão para elementos auxiliares
         );
       }
     } else if (auxElement.type === 'Mensagem') {
@@ -253,7 +319,8 @@ export async function generateDiagramFromInput(processName, participantsInput, h
         laneHeight,
         externalParticipants,
         elements, // Passa o array completo para referência
-        0
+        0,
+        elements.length // Limite padrão para mensagens
       );
 
     }

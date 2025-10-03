@@ -157,19 +157,33 @@ export const useDiagramStore = create((set, get) => ({
     };
   }),
 
-  // Action para remover elemento de uma divergência
-  removeElementFromDivergence: (gatewayId, divergenceIndex, elementId) => set((state) => ({
-    elements: state.elements.map(el => {
-      if (el.id === gatewayId && el.type === 'Gateway') {
-        const updatedElement = { ...el };
-        if (updatedElement.divergences && updatedElement.divergences[divergenceIndex]) {
-          updatedElement.divergences[divergenceIndex] = updatedElement.divergences[divergenceIndex].filter(divEl => divEl.id !== elementId);
+  // Action para remover elemento de uma divergência (com suporte a aninhamento)
+  removeElementFromDivergence: (gatewayId, divergenceIndex, elementId) => set((state) => {
+    const removeRecursively = (elements) => {
+      return elements.map(el => {
+        if (el.id === gatewayId && el.type === 'Gateway') {
+          const updatedElement = { ...el };
+          if (updatedElement.divergences && updatedElement.divergences[divergenceIndex]) {
+            updatedElement.divergences[divergenceIndex] = updatedElement.divergences[divergenceIndex].filter(divEl => divEl.id !== elementId);
+          }
+          return updatedElement;
+        } else if (el.type === 'Gateway' && el.divergences) {
+          // Busca recursivamente em gateways aninhados
+          const updatedElement = { ...el };
+          updatedElement.divergences = {};
+          Object.keys(el.divergences).forEach(divIndex => {
+            updatedElement.divergences[divIndex] = removeRecursively(el.divergences[divIndex] || []);
+          });
+          return updatedElement;
         }
-        return updatedElement;
-      }
-      return el;
-    })
-  })),
+        return el;
+      });
+    };
+
+    return {
+      elements: removeRecursively(state.elements)
+    };
+  }),
   
   updateElement: (id, updates) => set((state) => ({
     elements: state.elements.map(el => 
