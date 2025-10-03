@@ -2,27 +2,23 @@
 import calcularWaypointsSequenceFlow from './calcularWaypointsSequenceFlow.js';
 
 export default function criarGatewayParalelo(
-    moddle,
-    bpmnProcess,
-    bpmnPlane,
-    participantBounds,
-    participants,
-    laneHeight,
-    gatewayName,
-    gatewayLane,
-    index,
-    elementsList,
-  ) {
-    // Normaliza o ID removendo espaços e caracteres especiais
-    const normalizedId = gatewayName.replace(/\s+/g, '_').replace(/[^\w]/g, '');
+  moddle,
+  bpmnProcess,
+  bpmnPlane,
+  participantBounds,
+  participants,
+  laneHeight,
+  gatewayName,
+  gatewayLane,
+  dictEntry,
+  yOffset
+) {
+  // Normaliza o ID removendo espaços e caracteres especiais
+  const normalizedId = gatewayName.replace(/\s+/g, '_').replace(/[^\w]/g, '');
 
-    // Obtém o elemento anterior da lista usando o índice
-    const prevShape = elementsList[index - 1];
-    const sourceElement = prevShape ? prevShape.bpmnElement : null;
-
-    if (!sourceElement || !prevShape) {
-      throw new Error(`Elemento anterior não encontrado para o gateway "${gatewayName}"`);
-    }
+  // Obtém o elemento anterior da lista usando dictEntry
+  const sourceElement = dictEntry.bpmnElement;
+  const prevShape = dictEntry;
 
     // Localiza o índice da lane correspondente ao participante
     const gatewayLaneIndex = participants.indexOf(gatewayLane);
@@ -33,11 +29,9 @@ export default function criarGatewayParalelo(
     // Calcula os limites da lane correspondente
     const gatewayLaneY = participantBounds.y + gatewayLaneIndex * laneHeight;
     
-    // Calcula posição base
+    // Calcula posição base com yOffset
     let baseX = prevShape.bounds.x + 150; // Desloca o gateway horizontalmente
-    let baseY = gatewayLaneY + (laneHeight - 36) / 2; // Centraliza verticalmente na lane
-
-
+    let baseY = gatewayLaneY + (laneHeight - 36) / 2 + yOffset; // Centraliza verticalmente na lane com offset
 
     const gatewayBounds = {
       x: baseX,
@@ -76,11 +70,17 @@ export default function criarGatewayParalelo(
     bpmnProcess.get('flowElements').push(sequenceFlow);
   
     // Calcula waypoints usando a nova função
+    // Detecta se o elemento anterior é um gateway
+    const isFromGateway = sourceElement.id && (
+      sourceElement.id.includes('ExclusiveGateway') || 
+      sourceElement.id.includes('ParallelGateway')
+    );
+    
     const sequenceFlowWaypoints = calcularWaypointsSequenceFlow(
       moddle,
       prevShape.bounds,
       gatewayBounds,
-      false // Fluxo PARA o gateway usa lógica normal
+      isFromGateway // Usa lógica de gateway se vem de um gateway
     );
   
     // Cria o BPMNEdge para o fluxo de sequência
@@ -92,9 +92,6 @@ export default function criarGatewayParalelo(
   
     // Adiciona o edge ao BPMNPlane
     bpmnPlane.planeElement.push(sequenceFlowEdge);
-
-    // Adiciona o gateway à lista de elementos
-    elementsList.push(gatewayShape);
   
     return gatewayShape; // Retorna o shape do gateway
-  }
+}

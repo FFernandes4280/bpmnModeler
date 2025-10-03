@@ -2,6 +2,11 @@
  * Funções para calcular altura de participantes baseada no espaçamento dos gateways
  */
 
+// Constantes de altura e margens (valores pares para cálculos inteiros)
+const HEIGHT_PER_PARTICIPANT = 200;
+const MARGIN_PER_GATEWAY = 80;
+const MARGIN_BASE = 100;
+
 /**
  * Calcula a altura do participante baseada no somatório dos espaçamentos de todos os gateways
  * considerando a lógica de espaçamento progressivo (gateways pais têm mais espaçamento)
@@ -10,7 +15,7 @@
  * @returns {number} Altura calculada do participante
  */
 export function calcularAlturaParticipante(elements, participantNumber) {
-  const defaultHeight = participantNumber * 200;
+  const defaultHeight = participantNumber * HEIGHT_PER_PARTICIPANT;
   
   if (!elements || elements.length === 0) {
     return defaultHeight;
@@ -28,11 +33,12 @@ export function calcularAlturaParticipante(elements, participantNumber) {
         // Calcula quantos gateways filhos este gateway terá
         const gatewaysFilhos = calculateGatewaysAfter(elements, index);
         
+        // Constantes de espaçamento (sincronizadas com distribuirPontosDivergencia)
+        const SPACING_BASE = 120; // Base: 120px (par)
+        const SPACING_INCREMENT = 60; // Incremento: 60px por gateway filho (par)
+        
         // Calcula o espaçamento que este gateway usará (lógica progressiva)
-        // Usa valores pares para garantir cálculos sempre inteiros
-        const baseSpacing = 120; // Base: 120px (par)
-        const spacingIncrement = 60; // Incremento: 60px por gateway filho (par)
-        const spacing = baseSpacing + (gatewaysFilhos * spacingIncrement);
+        const spacing = SPACING_BASE + (gatewaysFilhos * SPACING_INCREMENT);
         
         // Calcula a extensão total dos branches deste gateway
         const branchCount = element.diverge.length;
@@ -50,14 +56,10 @@ export function calcularAlturaParticipante(elements, participantNumber) {
   }
 
   // Calcula altura baseada no somatório dos espaçamentos
-  // Usa valores pares para garantir que divisões por 2 sejam sempre inteiras
-  const margemPorGateway = 80; // Valor par para evitar frações
-  const margemBase = 100; // Valor par
-  
   const alturaCalculada = defaultHeight + 
     (somatorioEspacamentos * 2) + // Multiplica por 2 (para cima e para baixo)
-    (totalGateways * margemPorGateway) + 
-    margemBase;
+    (totalGateways * MARGIN_PER_GATEWAY) + 
+    MARGIN_BASE;
   
   const altura = Math.max(defaultHeight, alturaCalculada);
   

@@ -193,16 +193,21 @@ export const useDiagramStore = create((set, get) => ({
     return { elements };
   }),
   
+  // Helper para processar lista de participantes
+  _parseParticipantsList: (participantString) => {
+    return participantString.split(',').map(p => p.trim()).filter(p => p);
+  },
+
   // Helpers para obter dados processados
   getParticipantsList: () => {
-    const { participants } = get();
-    return participants.split(',').map(p => p.trim()).filter(p => p);
+    const { participants, _parseParticipantsList } = get();
+    return _parseParticipantsList(participants);
   },
   
   getExternalParticipantsList: () => {
-    const { hasExternalParticipants, externalParticipants } = get();
+    const { hasExternalParticipants, externalParticipants, _parseParticipantsList } = get();
     return hasExternalParticipants === 'Sim' 
-      ? externalParticipants.split(',').map(p => p.trim()).filter(p => p)
+      ? _parseParticipantsList(externalParticipants)
       : [];
   },
   

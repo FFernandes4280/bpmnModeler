@@ -10,6 +10,16 @@ import { distribuirPontosDivergencia } from './distribuirPontosDivergencia.js';
 import criarFluxoSequencia from './criarFluxoSequencia.js';
 import calcularWaypointsFluxoReverso from './calcularWaypointsFluxoReverso.js';
 
+// Constantes para tipos de elementos
+const GATEWAY_TYPES = {
+  EXCLUSIVE: 'Gateway Exclusivo',
+  PARALLEL: 'Gateway Paralelo'
+};
+
+// Helper para verificar se é um tipo de gateway
+const isGatewayType = (type) => 
+  type === GATEWAY_TYPES.EXCLUSIVE || type === GATEWAY_TYPES.PARALLEL;
+
 export default function processarElemento(
   element,
   moddle,
@@ -80,83 +90,89 @@ export default function processarElemento(
       );
       break;
 
-    case 'Gateway Exclusivo':
-      const divergeEntry = [];
+    case GATEWAY_TYPES.EXCLUSIVE:
+    case GATEWAY_TYPES.PARALLEL:
+      // Função auxiliar para processar gateways (exclusivo ou paralelo)
+      const processGateway = (gatewayCreator) => {
+        const divergeEntry = [];
 
-      divergeEntry.push(criarGatewayExclusivo(
-        moddle,
-        bpmnProcess,
-        bpmnPlane,
-        participantBounds,
-        participants,
-        laneHeight,
-        name,
-        lane,
-        dictEntry,
-        yOffset
-      ));
-
-      // Encontra o índice do gateway atual no array de elementos
-      const currentGatewayIndex = elements.findIndex(el =>
-        el.type === element.type &&
-        el.name === element.name &&
-        el.lane === element.lane
-      );
-
-      const pontos = distribuirPontosDivergencia(diverge.length, yOffset, elements, currentGatewayIndex);
-
-      diverge.forEach((branchIndex, divergeIndex) => {
-        if (!elements[branchIndex]) {
-          return; // Skip este branch
-        }
-        
-        const branchYOffset = pontos[divergeIndex];
-        divergeEntry.push(processarElemento(
-          elements[branchIndex],
+        // Cria o gateway inicial (exclusivo ou paralelo)
+        divergeEntry.push(gatewayCreator(
           moddle,
           bpmnProcess,
           bpmnPlane,
-          collaboration,
-          divergeEntry[0],
           participantBounds,
           participants,
           laneHeight,
-          externalParticipants,
-          elements,
-          branchYOffset
+          name,
+          lane,
+          dictEntry,
+          yOffset
         ));
-        const startIndex = branchIndex + 1;
-        const endIndex = findElementToStop(elements, diverge[0] - 1, divergeIndex, diverge.length);
 
-        for (let i = startIndex; i < endIndex; i++) {
-          const currentEntry = processarElemento(
-            elements[i],
+        // Encontra o índice do gateway atual no array de elementos
+        const currentGatewayIndex = elements.findIndex(el =>
+          el.type === element.type &&
+          el.name === element.name &&
+          el.lane === element.lane
+        );
+
+        const pontos = distribuirPontosDivergencia(diverge.length, yOffset, elements, currentGatewayIndex);
+
+        diverge.forEach((branchIndex, divergeIndex) => {
+          if (!elements[branchIndex]) {
+            return; // Skip este branch
+          }
+          
+          const branchYOffset = pontos[divergeIndex];
+          divergeEntry.push(processarElemento(
+            elements[branchIndex],
             moddle,
             bpmnProcess,
             bpmnPlane,
             collaboration,
-            divergeEntry[divergeEntry.length - 1],
+            divergeEntry[0],
             participantBounds,
             participants,
             laneHeight,
             externalParticipants,
             elements,
             branchYOffset
-          );
-          if (Array.isArray(currentEntry)) {
-            divergeEntry.push(...currentEntry);
-          } else {
-            divergeEntry.push(currentEntry);
+          ));
+          const startIndex = branchIndex + 1;
+          const endIndex = findElementToStop(elements, diverge[0] - 1, divergeIndex, diverge.length);
+
+          for (let i = startIndex; i < endIndex; i++) {
+            const currentEntry = processarElemento(
+              elements[i],
+              moddle,
+              bpmnProcess,
+              bpmnPlane,
+              collaboration,
+              divergeEntry[divergeEntry.length - 1],
+              participantBounds,
+              participants,
+              laneHeight,
+              externalParticipants,
+              elements,
+              branchYOffset
+            );
+            if (Array.isArray(currentEntry)) {
+              divergeEntry.push(...currentEntry);
+            } else {
+              divergeEntry.push(currentEntry);
+            }
+            if (isGatewayType(elements[i].type)) break;
           }
-          if (elements[i].type === 'Gateway Exclusivo' ||
-            elements[i].type === 'Gateway Paralelo') break;
-        }
-      });
+        });
 
-      dictEntry = divergeEntry;
-      break;
+        return divergeEntry;
+      };
 
-    case 'Gateway Paralelo':
+      // Chama a função auxiliar com o criador apropriado
+      dictEntry = type === GATEWAY_TYPES.EXCLUSIVE
+        ? processGateway(criarGatewayExclusivo)
+        : processGateway(criarGatewayParalelo);
       break;
 
     case 'Data Object':
@@ -189,16 +205,11 @@ export default function processarElemento(
     case 'Gateway Existente':
       // Gateway Existente agora vem com o nome correto do gateway de destino
       const targetName = element.name;
-      let targetIndex = -1;
-
+      
       // Busca o gateway de destino pelo nome
-      for (let i = 0; i < elements.length; i++) {
-        if ((elements[i].type === 'Gateway Exclusivo' || elements[i].type === 'Gateway Paralelo') &&
-          elements[i].name === targetName && elements[i].lane === element.lane) {
-          targetIndex = i;
-          break;
-        }
-      }
+      const targetIndex = elements.findIndex((el) => 
+        isGatewayType(el.type) && el.name === targetName && el.lane === element.lane
+      );
 
       if (targetIndex !== -1 && dictEntry) {
         // Busca o elemento já processado no bpmnProcess

@@ -112,15 +112,19 @@ export async function generateDiagramFromInput(processName, participantsInput, h
 
   const elementsList = [];
 
+  // Constantes para tipos auxiliares
+  const AUXILIARY_TYPES = ['Data Object', 'Mensagem'];
+  const isAuxiliaryElement = (type) => AUXILIARY_TYPES.includes(type);
+
   // Separa elementos do fluxo principal dos auxiliares (Data Object, Mensagem)
-  const mainFlowElements = elements.filter(el => !['Data Object', 'Mensagem'].includes(el.type));
-  const auxiliaryElements = elements.filter(el => ['Data Object', 'Mensagem'].includes(el.type));
+  const mainFlowElements = elements.filter(el => !isAuxiliaryElement(el.type));
+  const auxiliaryElements = elements.filter(el => isAuxiliaryElement(el.type));
   
   // Cria um mapa de índices: índice original -> índice no mainFlowElements
   const indexMap = new Map();
   let mainFlowIndex = 0;
   elements.forEach((el, originalIndex) => {
-    if (!['Data Object', 'Mensagem'].includes(el.type)) {
+    if (!isAuxiliaryElement(el.type)) {
       indexMap.set(originalIndex, mainFlowIndex);
       mainFlowIndex++;
     }
