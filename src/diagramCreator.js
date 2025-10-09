@@ -113,10 +113,10 @@ export async function generateDiagramFromInput(processName, participantsInput, h
   const elementsList = [];
 
   // Constantes para tipos auxiliares
-  const AUXILIARY_TYPES = ['Data Object', 'Mensagem'];
+  const AUXILIARY_TYPES = ['Data Object', 'Mensagem', 'Gateway Existente'];
   const isAuxiliaryElement = (type) => AUXILIARY_TYPES.includes(type);
 
-  // Separa elementos do fluxo principal dos auxiliares (Data Object, Mensagem)
+  // Separa elementos do fluxo principal dos auxiliares (Data Object, Mensagem, Gateway Existente)
   const mainFlowElements = elements.filter(el => !isAuxiliaryElement(el.type));
   const auxiliaryElements = elements.filter(el => isAuxiliaryElement(el.type));
   
@@ -168,69 +168,74 @@ export async function generateDiagramFromInput(processName, participantsInput, h
       elementsList.push(resultado);
     }
     
-    // Para o loop apenas se for um gateway DE DIVERGÊNCIA (que tem campo diverge)
-    // Gateways de convergência (sem diverge) continuam o fluxo normalmente
-    const isGatewayWithDiverge = element.type.includes('Gateway') && element.diverge && element.diverge.length > 0;
-    return isGatewayWithDiverge;
+    // Para o loop apenas se for um gateway DE DIVERGÊNCIA REAL (diverge com mais de 1 branch)
+    // Gateways de convergência (diverge com apenas 1 elemento) continuam o fluxo normalmente
+    const isGatewayWithMultipleBranches = element.type.includes('Gateway') && element.diverge && element.diverge.length > 1;
+    return isGatewayWithMultipleBranches;
   });
 
   // Segunda passada: processa Gateways Existentes agora que todos os elementos foram criados
-  adjustedMainFlowElements.forEach((element, index) => {
-    if (element.type === 'Gateway Existente') {
-      // Procura o elemento anterior ao Gateway Existente no array original
-      const previousElement = index > 0 ? adjustedMainFlowElements[index - 1] : null;
-      
-      if (!previousElement) {
-        console.warn(`⚠️ Gateway Existente sem elemento anterior: ${element.name}`);
-        return;
-      }
-      
-      // Procura o shape correspondente ao elemento anterior na lista processada
-      let sourceElement = null;
-      
-      // Busca no bpmnPlane pelo elemento anterior já criado
-      const planeElements = bpmnPlane.planeElement;
-      for (let planeElement of planeElements) {
-        if (planeElement.bpmnElement) {
-          const bpmnEl = planeElement.bpmnElement;
-          // Verifica se é o elemento anterior baseado no nome
-          if (bpmnEl.name && previousElement.name) {
-            const previousName = previousElement.name.split('_').pop(); // Remove prefixo Default_/Padrão_
-            if (bpmnEl.name === previousName || bpmnEl.name.includes(previousName)) {
-              sourceElement = planeElement;
-              break;
-            }
-          }
+  const gatewayExistentes = elements.filter(el => el.type === 'Gateway Existente');
+  
+  gatewayExistentes.forEach((element, index) => {
+    // Encontra o índice original deste Gateway Existente
+    const originalIndex = elements.findIndex(el => 
+      el.type === 'Gateway Existente' && 
+      el.name === element.name && 
+      el.lane === element.lane
+    );
+    
+    // Procura o elemento anterior no array original
+    const previousElement = originalIndex > 0 ? elements[originalIndex - 1] : null;
+    
+    if (!previousElement) {
+      console.warn(`⚠️ Gateway Existente sem elemento anterior: ${element.name}`);
+      return;
+    }
+    
+    // Busca o elemento source (elemento anterior) já processado
+    let sourceElement = null;
+    const flowElements = bpmnProcess.get('flowElements');
+    
+    for (let flowElement of flowElements) {
+      if (flowElement.name) {
+        const previousName = previousElement.name.includes('_') 
+          ? previousElement.name.split('_').slice(1).join(' ') // Remove prefixo Default_/Padrão_
+          : previousElement.name;
+          
+        if (flowElement.name === previousName) {
+          sourceElement = flowElement;
+          break;
         }
       }
-      
-      if (!sourceElement) {
-        console.warn(`⚠️ Elemento source não encontrado para Gateway Existente: ${element.name}`);
-        return;
-      }
-      
-      // Cria um elemento temporário com type modificado para processar na segunda passada
-      const elementoSegundaPassada = {
-        ...element,
-        type: 'Gateway Existente (segunda passada)'
-      };
-      
-      processarElemento(
-        elementoSegundaPassada,
-        moddle,
-        bpmnProcess,
-        bpmnPlane,
-        collaboration,
-        sourceElement,
-        participantBounds,
-        participants,
-        laneHeight,
-        externalParticipants,
-        adjustedMainFlowElements,
-        0,
-        adjustedMainFlowElements.length
-      );
     }
+    
+    if (!sourceElement) {
+      console.warn(`⚠️ Elemento source não encontrado para Gateway Existente: ${element.name}`);
+      return;
+    }
+    
+    // Cria um elemento temporário com type modificado para processar na segunda passada
+    const elementoSegundaPassada = {
+      ...element,
+      type: 'Gateway Existente (segunda passada)'
+    };
+    
+    processarElemento(
+      elementoSegundaPassada,
+      moddle,
+      bpmnProcess,
+      bpmnPlane,
+      collaboration,
+      sourceElement, // Passa o elemento source BPMN, não o shape
+      participantBounds,
+      participants,
+      laneHeight,
+      externalParticipants,
+      elements, // Usa o array original
+      0,
+      elements.length
+    );
   });
 
   // Processa elementos auxiliares depois, associando-os aos elementos já criados

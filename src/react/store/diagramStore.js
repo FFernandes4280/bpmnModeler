@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { generateDiagramFromInput } from '../../diagramCreator.js';
+import { testElements } from '../../testData/elementsInput.js';
 
 export const useDiagramStore = create((set, get) => ({
   // Configuração do Processo
@@ -230,10 +231,33 @@ export const useDiagramStore = create((set, get) => ({
     return [...getParticipantsList(), ...getExternalParticipantsList()];
   },
   
-  // Obter gateways existentes com seus índices
+  // Obter gateways existentes com seus índices (incluindo gateways aninhados em divergências)
   getExistingGateways: () => {
     const { elements } = get();
-    return elements
+    
+    // Função para "flatten" dos elementos (mesma lógica do ElementRow.jsx)
+    function flattenElements(elementsList) {
+      let flat = [];
+      for (const el of elementsList) {
+        flat.push(el);
+        if (el.type === 'Gateway' && el.divergences) {
+          const gatewayValue = el.label || 'Conv';
+          if (gatewayValue !== 'Conv' && !isNaN(parseInt(gatewayValue))) {
+            const numDivergences = parseInt(gatewayValue);
+            for (let d = 1; d <= numDivergences; d++) {
+              const divs = el.divergences[d] || [];
+              flat = flat.concat(flattenElements(divs));
+            }
+          }
+        }
+      }
+      return flat;
+    }
+    
+    const flatElements = flattenElements(elements);
+    
+    // Filtra apenas gateways (tanto divergência quanto convergência) e adiciona o índice correto
+    return flatElements
       .map((el, index) => ({ ...el, index: index + 1 }))
       .filter(el => el.type === 'Gateway');
   },
@@ -432,35 +456,17 @@ export const useDiagramStore = create((set, get) => ({
           
         case 'Gateway Existente':
           processed.type = 'Gateway Existente';
+          processed.lane = element.participant || defaultParticipant;
           
-          // Busca o gateway referenciado no array original para copiar EXATAMENTE seus dados
+          // Marca para processamento na segunda passada
           if (element.refGateway !== undefined) {
-            const { elements } = get();
-            const refGatewayIndex = element.refGateway - 1; // Converte para índice 0-based (React array)
-            const referencedGateway = elements[refGatewayIndex];
-            
-            if (referencedGateway && referencedGateway.type === 'Gateway') {
-              // Busca o elemento ANTERIOR ao gateway referenciado para gerar o nome correto
-              const elementBeforeGateway = refGatewayIndex > 0 ? elements[refGatewayIndex - 1] : null;
-              const prevLabel = elementBeforeGateway?.label || '';
-              const normalizedPrevLabel = prevLabel.replace(/\s+/g, '_').replace(/[^\w]/g, '');
-              
-              // Copia EXATAMENTE o mesmo padrão de nome do gateway referenciado
-              processed.name = `following${referencedGateway.subtype || 'Exclusivo'}_${normalizedPrevLabel}`;
-              processed.lane = element.participant || referencedGateway.participant || defaultParticipant;
-              processed.originalType = `Gateway ${referencedGateway.subtype || 'Exclusivo'}`;
-              processed.index = element.refGateway;
-            } else {
-              // Fallback se não encontrar o gateway referenciado
-              processed.name = element.name || `Gateway_Existente_${elementIndex + 1}`;
-              processed.lane = element.participant || defaultParticipant;
-              processed.originalType = `Gateway ${element.originalSubtype || 'Exclusivo'}`;
-              processed.index = element.refGateway;
-            }
+            processed._refGatewayIndex = element.refGateway;
+            // Valores temporários que serão substituídos na segunda passada
+            processed.name = `Gateway_Existente_${elementIndex + 1}`;
+            processed.originalType = 'Gateway Exclusivo';
           } else {
             // Sem referência - gera nome genérico
             processed.name = element.name || `Gateway_Existente_${elementIndex + 1}`;
-            processed.lane = element.participant || defaultParticipant;
             processed.originalType = `Gateway ${element.originalSubtype || 'Exclusivo'}`;
           }
           
@@ -495,6 +501,28 @@ export const useDiagramStore = create((set, get) => ({
       const processed = processElement(element);
       if (processed) {
         flatElements.push(processed);
+      }
+    });
+    
+    // Segunda passada: atualiza os Gateways Existentes com os dados corretos dos gateways referenciados
+    flatElements.forEach((el, index) => {
+      if (el.type === 'Gateway Existente' && el._refGatewayIndex !== undefined) {
+        const refGatewayIndex = el._refGatewayIndex - 1; // Converte para índice 0-based do array flat
+        const referencedGateway = flatElements[refGatewayIndex];
+        
+        if (referencedGateway) {
+          // Copia EXATAMENTE os dados do gateway referenciado
+          el.name = referencedGateway.name;
+          el.lane = el.lane || referencedGateway.lane;
+          
+          // Extrai o tipo do gateway referenciado
+          if (referencedGateway.type && referencedGateway.type.startsWith('Gateway ')) {
+            el.originalType = referencedGateway.type;
+          }
+        }
+        
+        // Remove propriedade temporária
+        delete el._refGatewayIndex;
       }
     });
     
@@ -542,7 +570,9 @@ export const useDiagramStore = create((set, get) => ({
         lane: processState.initialEventLane
       };
       
+      // 🧪 MODO DE TESTE: Para usar dados de teste, comente a linha de baixo e descomente as duas seguintes
       const allElements = [initialElement, ...processedElements];
+      //const allElements = testElements;
       
       // Processa participantes
       const participantsList = processState.participants

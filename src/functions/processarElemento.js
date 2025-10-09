@@ -111,8 +111,9 @@ export default function processarElemento(
           yOffset
         ));
 
-        // Se não tem diverge, é um gateway de convergência - apenas retorna o gateway criado
-        if (!diverge || diverge.length === 0) {
+        // Se não tem diverge ou tem apenas 1 elemento, é um gateway de convergência
+        // Apenas retorna o gateway criado para que o fluxo continue normalmente
+        if (!diverge || diverge.length <= 1) {
           return divergeEntry[0];
         }
 
@@ -147,7 +148,7 @@ export default function processarElemento(
             : maxProcessingIndex;         // Limite do gateway pai
           
           // Processa o primeiro elemento da branch
-          divergeEntry.push(processarElemento(
+          const firstElementResult = processarElemento(
             firstBranchElement,
             moddle,
             bpmnProcess,
@@ -161,16 +162,19 @@ export default function processarElemento(
             elements,
             branchYOffset,
             branchLimit // Passa o limite para o elemento filho
-          ));
+          );
           
-          // Se o primeiro elemento é um gateway, ele já processou todos os seus elementos recursivamente
-          // Então não devemos processar os elementos seguintes nesta branch
-          if (isGatewayType(firstBranchElement.type)) {
-            return; // Pula o loop - gateway já processou tudo
+          divergeEntry.push(firstElementResult);
+          
+          // Se o primeiro elemento é um gateway DE DIVERGÊNCIA REAL (diverge.length > 1), 
+          // ele já processou todos os seus elementos recursivamente
+          // Gateways de convergência (diverge.length <= 1) devem continuar o fluxo
+          if (isGatewayType(firstBranchElement.type) && firstBranchElement.diverge && firstBranchElement.diverge.length > 1) {
+            return; // Pula o loop - gateway de divergência já processou tudo
           }
           
           const startIndex = branchIndex + 1;
-          const endIndex = Math.min(branchLimit, findElementToStop(elements, diverge[0] - 1, divergeIndex, diverge.length));
+          const endIndex = branchLimit;
 
           for (let i = startIndex; i < endIndex; i++) {
             const currentEntry = processarElemento(
@@ -193,9 +197,9 @@ export default function processarElemento(
             } else {
               divergeEntry.push(currentEntry);
             }
-            // Para apenas se encontrar um gateway DE DIVERGÊNCIA (com diverge)
-            // Gateways de convergência (sem diverge) devem continuar o fluxo
-            if (isGatewayType(elements[i].type) && elements[i].diverge && elements[i].diverge.length > 0) {
+            // Para apenas se encontrar um gateway DE DIVERGÊNCIA REAL (com diverge.length > 1)
+            // Gateways de convergência (diverge.length <= 1) devem continuar o fluxo
+            if (isGatewayType(elements[i].type) && elements[i].diverge && elements[i].diverge.length > 1) {
               break;
             }
           }
@@ -247,62 +251,76 @@ export default function processarElemento(
       // Gateway Existente agora vem com o nome correto do gateway de destino
       const targetName = element.name;
       
-      // Busca o gateway de destino pelo nome
-      const targetIndex = elements.findIndex((el) => 
-        isGatewayType(el.type) && el.name === targetName && el.lane === element.lane
-      );
+      // Busca o gateway de destino pelo nome no processo BPMN
+      let targetDict = null;
+      let targetShape = null;
+      
+      // Busca no processo BPMN pelo elemento já criado
+      const flowElements = bpmnProcess.get('flowElements');
+      for (let flowElement of flowElements) {
+        // Busca pelo ID que contém o nome do gateway
+        if (flowElement.id && flowElement.id.includes(targetName)) {
+          targetDict = flowElement;
+          break;
+        }
+      }
 
-      if (targetIndex !== -1 && dictEntry) {
-        // Busca o elemento já processado no bpmnProcess
-        const targetElement = elements[targetIndex];
-        let targetDict = null;
-        let targetShape = null;
-
-        // Busca no processo BPMN pelo elemento já criado
-        const flowElements = bpmnProcess.get('flowElements');
-        for (let flowElement of flowElements) {
-          if (flowElement.name === targetElement.name || flowElement.id.includes(targetElement.name)) {
-            targetDict = flowElement;
+      // Busca a shape do target no bpmnPlane para obter bounds
+      if (targetDict) {
+        const planeElements = bpmnPlane.planeElement;
+        for (let planeElement of planeElements) {
+          if (planeElement.bpmnElement && planeElement.bpmnElement.id === targetDict.id) {
+            targetShape = planeElement;
             break;
           }
         }
-
-        // Busca a shape do target no bpmnPlane para obter bounds
-        if (targetDict) {
-          const planeElements = bpmnPlane.planeElement;
-          for (let planeElement of planeElements) {
-            if (planeElement.bpmnElement && planeElement.bpmnElement.id === targetDict.id) {
-              targetShape = planeElement;
-              break;
-            }
-          }
-        }
-
-        if (targetDict && targetShape) {
-          const sourceDict = Array.isArray(dictEntry) ? dictEntry[dictEntry.length - 1] : dictEntry;
-          
-          // sourceDict já é um BPMNShape que contém bounds e bpmnElement
-          if (sourceDict && sourceDict.bounds) {
-            // Calcula waypoints para fluxo reverso (Gateway Existente)
-            const reverseWaypoints = calcularWaypointsFluxoReverso(
-              moddle,
-              sourceDict.bounds,
-              targetShape.bounds
-            );
-
-            // Cria o fluxo de sequência com waypoints calculados
-            criarFluxoSequencia(
-              moddle,
-              bpmnProcess,
-              bpmnPlane,
-              sourceDict.bpmnElement,
-              targetDict,
-              reverseWaypoints,
-              true // isReturnFlow = true para gateways existentes
-            );
-          }
-        }
       }
+
+      if (targetDict && targetShape && dictEntry) {
+        console.log(`🔗 Criando conexão Gateway Existente: ${dictEntry.name || dictEntry.id} -> ${targetDict.id}`);
+        
+        // dictEntry deve ser o elemento source BPMN (elemento anterior ao Gateway Existente)
+        const sourceElement = dictEntry;
+        
+        // Busca a shape do source no bpmnPlane
+        let sourceShape = null;
+        const planeElements = bpmnPlane.planeElement;
+        for (let planeElement of planeElements) {
+          if (planeElement.bpmnElement && planeElement.bpmnElement.id === sourceElement.id) {
+            sourceShape = planeElement;
+            break;
+          }
+        }
+        
+        if (sourceShape && sourceShape.bounds) {
+          // Calcula waypoints para fluxo reverso (Gateway Existente)
+          const reverseWaypoints = calcularWaypointsFluxoReverso(
+            moddle,
+            sourceShape.bounds,
+            targetShape.bounds
+          );
+
+          // Cria o fluxo de sequência com waypoints calculados
+          criarFluxoSequencia(
+            moddle,
+            bpmnProcess,
+            bpmnPlane,
+            sourceElement,
+            targetDict,
+            reverseWaypoints,
+            true // isReturnFlow = true para gateways existentes
+          );
+        } else {
+          console.warn(`⚠️ Source shape não encontrada para: ${sourceElement.id}`);
+        }
+      } else {
+        console.warn(`⚠️ Não foi possível criar conexão Gateway Existente para: ${targetName}`);
+        if (!targetDict) console.warn(`  - Target não encontrado: ${targetName}`);
+        if (!targetShape) console.warn(`  - Target shape não encontrada`);
+        if (!dictEntry) console.warn(`  - Source element não fornecido`);
+      }
+
+      break;
 
       break;
     case 'Fim':
