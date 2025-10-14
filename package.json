@@ -10,7 +10,8 @@
     "test:specific": "node tests/testRunner.js",
     "test:create": "node tests/createTest.js",
     "test:status": "node tests/testUtils.js status",
-    "test:validate": "node tests/testUtils.js validate"
+    "test:validate": "node tests/testUtils.js validate",
+    "test:clean": "node tests/testUtils.js clean"
   },
   "keywords": [],
   "author": "",

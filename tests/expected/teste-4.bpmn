@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn2:definitions xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1a88msi" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn2:process id="mainProcess" isExecutable="false">
+    <bpmn2:laneSet id="LaneSet">
+      <bpmn2:lane id="Lane_1" name="Comissão julgadora" />
+    </bpmn2:laneSet>
+    <bpmn2:startEvent id="StartEvent_1" name="Artgo recebido" />
+    <bpmn2:exclusiveGateway id="ExclusiveGateway_followingExclusivo_">
+      <bpmn2:incoming>Flow_ecebido_lusivo_</bpmn2:incoming>
+    </bpmn2:exclusiveGateway>
+    <bpmn2:sequenceFlow id="SequenceFlow_StartEvent_1_ExclusiveGateway_followingExclusivo_" sourceRef="StartEvent_1" targetRef="ExclusiveGateway_followingExclusivo_" />
+    <bpmn2:task id="Task_Checar_formatao" name="Checar formatação">
+      <bpmn2:dataOutputAssociation id="DataOutputAssociation_Task_Checar_formatao_to_DataObjectReference_Norma_de_formatao">
+        <bpmn2:targetRef>DataObjectReference_Norma_de_formatao</bpmn2:targetRef>
+      </bpmn2:dataOutputAssociation>
+    </bpmn2:task>
+    <bpmn2:sequenceFlow id="SequenceFlow_ExclusiveGateway_followingExclusivo__Task_Checar_formatao" sourceRef="ExclusiveGateway_followingExclusivo_" targetRef="Task_Checar_formatao" />
+    <bpmn2:exclusiveGateway id="ExclusiveGateway_followingExclusivo_Norma_de_formatao" />
+    <bpmn2:sequenceFlow id="SequenceFlow_Task_Checar_formatao_ExclusiveGateway_followingExclusivo_Norma_de_formatao" sourceRef="Task_Checar_formatao" targetRef="ExclusiveGateway_followingExclusivo_Norma_de_formatao" />
+    <bpmn2:intermediateThrowEvent id="IntermediateThrowEvent_Artigo_com_formatao_aprovada" name="Artigo com formatação aprovada">
+      <bpmn2:outgoing>Flow_provada__falhas</bpmn2:outgoing>
+    </bpmn2:intermediateThrowEvent>
+    <bpmn2:sequenceFlow id="SequenceFlow_ExclusiveGateway_followingExclusivo_Norma_de_formatao_IntermediateThrowEvent_Artigo_com_formatao_aprovada" sourceRef="ExclusiveGateway_followingExclusivo_Norma_de_formatao" targetRef="IntermediateThrowEvent_Artigo_com_formatao_aprovada" />
+    <bpmn2:intermediateThrowEvent id="IntermediateThrowEvent_Identidicadas_pequenas_falhas_de_formatao" name="Identidicadas pequenas falhas de formatação" />
+    <bpmn2:sequenceFlow id="SequenceFlow_ExclusiveGateway_followingExclusivo_Norma_de_formatao_IntermediateThrowEvent_Identidicadas_pequenas_falhas_de_formatao" sourceRef="ExclusiveGateway_followingExclusivo_Norma_de_formatao" targetRef="IntermediateThrowEvent_Identidicadas_pequenas_falhas_de_formatao" />
+    <bpmn2:task id="Task_Corrigir_falhas" name="Corrigir falhas" />
+    <bpmn2:sequenceFlow id="SequenceFlow_IntermediateThrowEvent_Identidicadas_pequenas_falhas_de_formatao_Task_Corrigir_falhas" sourceRef="IntermediateThrowEvent_Identidicadas_pequenas_falhas_de_formatao" targetRef="Task_Corrigir_falhas" />
+    <bpmn2:exclusiveGateway id="ExclusiveGateway_followingExclusivo_Corrigir_falhas">
+      <bpmn2:incoming>Flow_provada__falhas</bpmn2:incoming>
+    </bpmn2:exclusiveGateway>
+    <bpmn2:sequenceFlow id="SequenceFlow_Task_Corrigir_falhas_ExclusiveGateway_followingExclusivo_Corrigir_falhas" sourceRef="Task_Corrigir_falhas" targetRef="ExclusiveGateway_followingExclusivo_Corrigir_falhas" />
+    <bpmn2:task id="Task_Avaliar_o_artigo" name="Avaliar o artigo" />
+    <bpmn2:sequenceFlow id="SequenceFlow_ExclusiveGateway_followingExclusivo_Corrigir_falhas_Task_Avaliar_o_artigo" sourceRef="ExclusiveGateway_followingExclusivo_Corrigir_falhas" targetRef="Task_Avaliar_o_artigo" />
+    <bpmn2:exclusiveGateway id="ExclusiveGateway_followingExclusivo_Avaliar_o_artigo" />
+    <bpmn2:sequenceFlow id="SequenceFlow_Task_Avaliar_o_artigo_ExclusiveGateway_followingExclusivo_Avaliar_o_artigo" sourceRef="Task_Avaliar_o_artigo" targetRef="ExclusiveGateway_followingExclusivo_Avaliar_o_artigo" />
+    <bpmn2:endEvent id="EndEvent_Artigo_indicado_para_apresentao_oral" name="Artigo indicado para apresentação oral" />
+    <bpmn2:sequenceFlow id="SequenceFlow_ExclusiveGateway_followingExclusivo_Avaliar_o_artigo_EndEvent_Artigo_indicado_para_apresentao_oral" sourceRef="ExclusiveGateway_followingExclusivo_Avaliar_o_artigo" targetRef="EndEvent_Artigo_indicado_para_apresentao_oral" />
+    <bpmn2:endEvent id="EndEvent_Artigo_indicado_para_apresentao_em_poster" name="Artigo indicado para apresentação em poster" />
+    <bpmn2:sequenceFlow id="SequenceFlow_ExclusiveGateway_followingExclusivo_Avaliar_o_artigo_EndEvent_Artigo_indicado_para_apresentao_em_poster" sourceRef="ExclusiveGateway_followingExclusivo_Avaliar_o_artigo" targetRef="EndEvent_Artigo_indicado_para_apresentao_em_poster" />
+    <bpmn2:intermediateThrowEvent id="IntermediateThrowEvent_Artigo_com_formatao_reprovada" name="Artigo com formatação reprovada" />
+    <bpmn2:sequenceFlow id="SequenceFlow_ExclusiveGateway_followingExclusivo_Norma_de_formatao_IntermediateThrowEvent_Artigo_com_formatao_reprovada" sourceRef="ExclusiveGateway_followingExclusivo_Norma_de_formatao" targetRef="IntermediateThrowEvent_Artigo_com_formatao_reprovada" />
+    <bpmn2:task id="Task_Solicitar_adequao__formatao_exigida" name="Solicitar adequação à formatação exigida" />
+    <bpmn2:sequenceFlow id="SequenceFlow_IntermediateThrowEvent_Artigo_com_formatao_reprovada_Task_Solicitar_adequao__formatao_exigida" sourceRef="IntermediateThrowEvent_Artigo_com_formatao_reprovada" targetRef="Task_Solicitar_adequao__formatao_exigida" />
+    <bpmn2:intermediateThrowEvent id="IntermediateThrowEvent_Artigo_reformatado_recebido" name="Artigo reformatado recebido">
+      <bpmn2:outgoing>Flow_ecebido_lusivo_</bpmn2:outgoing>
+    </bpmn2:intermediateThrowEvent>
+    <bpmn2:sequenceFlow id="SequenceFlow_Task_Solicitar_adequao__formatao_exigida_IntermediateThrowEvent_Artigo_reformatado_recebido" sourceRef="Task_Solicitar_adequao__formatao_exigida" targetRef="IntermediateThrowEvent_Artigo_reformatado_recebido" />
+    <bpmn2:sequenceFlow id="Flow_provada__falhas" sourceRef="IntermediateThrowEvent_Artigo_com_formatao_aprovada" targetRef="ExclusiveGateway_followingExclusivo_Corrigir_falhas" />
+    <bpmn2:sequenceFlow id="Flow_ecebido_lusivo_" sourceRef="IntermediateThrowEvent_Artigo_reformatado_recebido" targetRef="ExclusiveGateway_followingExclusivo_" />
+    <bpmn2:dataObject id="DataObject_Norma_de_formatao" name="Norma de formatação" />
+    <bpmn2:dataObjectReference id="DataObjectReference_Norma_de_formatao" name="Norma de formatação" dataObjectRef="DataObject_Norma_de_formatao" />
+  </bpmn2:process>
+  <bpmn2:collaboration id="Collaboration">
+    <bpmn2:participant id="Participant" name="Aprovação de artigos" processRef="mainProcess" />
+  </bpmn2:collaboration>
+  <bpmndi:BPMNDiagram id="BPMNDiagram">
+    <bpmndi:BPMNPlane id="BPMNPlane" bpmnElement="Collaboration">
+      <bpmndi:BPMNShape id="Participant_di" bpmnElement="Participant" isHorizontal="true">
+        <dc:Bounds x="160" y="80" width="3800" height="1220" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_1_di" bpmnElement="Lane_1" isHorizontal="true">
+        <dc:Bounds x="190" y="80" width="3770" height="1220" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="240" y="672.5" width="35" height="35" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ExclusiveGateway_followingExclusivo__di" bpmnElement="ExclusiveGateway_followingExclusivo_" isMarkerVisible="true">
+        <dc:Bounds x="390" y="672" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_StartEvent_1_ExclusiveGateway_followingExclusivo__di" bpmnElement="SequenceFlow_StartEvent_1_ExclusiveGateway_followingExclusivo_">
+        <di:waypoint x="275" y="690" />
+        <di:waypoint x="275" y="690" />
+        <di:waypoint x="390" y="690" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Task_Checar_formatao_di" bpmnElement="Task_Checar_formatao">
+        <dc:Bounds x="540" y="650" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_ExclusiveGateway_followingExclusivo__Task_Checar_formatao_di" bpmnElement="SequenceFlow_ExclusiveGateway_followingExclusivo__Task_Checar_formatao">
+        <di:waypoint x="426" y="690" />
+        <di:waypoint x="426" y="690" />
+        <di:waypoint x="540" y="690" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ExclusiveGateway_followingExclusivo_Norma_de_formatao_di" bpmnElement="ExclusiveGateway_followingExclusivo_Norma_de_formatao" isMarkerVisible="true">
+        <dc:Bounds x="690" y="672" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_Task_Checar_formatao_ExclusiveGateway_followingExclusivo_Norma_de_formatao_di" bpmnElement="SequenceFlow_Task_Checar_formatao_ExclusiveGateway_followingExclusivo_Norma_de_formatao">
+        <di:waypoint x="640" y="690" />
+        <di:waypoint x="640" y="690" />
+        <di:waypoint x="690" y="690" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="IntermediateThrowEvent_Artigo_com_formatao_aprovada_di" bpmnElement="IntermediateThrowEvent_Artigo_com_formatao_aprovada">
+        <dc:Bounds x="840" y="432" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_ExclusiveGateway_followingExclusivo_Norma_de_formatao_IntermediateThrowEvent_Artigo_com_formatao_aprovada_di" bpmnElement="SequenceFlow_ExclusiveGateway_followingExclusivo_Norma_de_formatao_IntermediateThrowEvent_Artigo_com_formatao_aprovada">
+        <di:waypoint x="708" y="672" />
+        <di:waypoint x="708" y="450" />
+        <di:waypoint x="840" y="450" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="IntermediateThrowEvent_Identidicadas_pequenas_falhas_de_formatao_di" bpmnElement="IntermediateThrowEvent_Identidicadas_pequenas_falhas_de_formatao">
+        <dc:Bounds x="840" y="672" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_ExclusiveGateway_followingExclusivo_Norma_de_formatao_IntermediateThrowEvent_Identidicadas_pequenas_falhas_de_formatao_di" bpmnElement="SequenceFlow_ExclusiveGateway_followingExclusivo_Norma_de_formatao_IntermediateThrowEvent_Identidicadas_pequenas_falhas_de_formatao">
+        <di:waypoint x="726" y="690" />
+        <di:waypoint x="726" y="690" />
+        <di:waypoint x="840" y="690" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Task_Corrigir_falhas_di" bpmnElement="Task_Corrigir_falhas">
+        <dc:Bounds x="990" y="650" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_IntermediateThrowEvent_Identidicadas_pequenas_falhas_de_formatao_Task_Corrigir_falhas_di" bpmnElement="SequenceFlow_IntermediateThrowEvent_Identidicadas_pequenas_falhas_de_formatao_Task_Corrigir_falhas">
+        <di:waypoint x="876" y="690" />
+        <di:waypoint x="876" y="690" />
+        <di:waypoint x="990" y="690" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ExclusiveGateway_followingExclusivo_Corrigir_falhas_di" bpmnElement="ExclusiveGateway_followingExclusivo_Corrigir_falhas" isMarkerVisible="true">
+        <dc:Bounds x="1140" y="672" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_Task_Corrigir_falhas_ExclusiveGateway_followingExclusivo_Corrigir_falhas_di" bpmnElement="SequenceFlow_Task_Corrigir_falhas_ExclusiveGateway_followingExclusivo_Corrigir_falhas">
+        <di:waypoint x="1090" y="690" />
+        <di:waypoint x="1090" y="690" />
+        <di:waypoint x="1140" y="690" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Task_Avaliar_o_artigo_di" bpmnElement="Task_Avaliar_o_artigo">
+        <dc:Bounds x="1290" y="650" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_ExclusiveGateway_followingExclusivo_Corrigir_falhas_Task_Avaliar_o_artigo_di" bpmnElement="SequenceFlow_ExclusiveGateway_followingExclusivo_Corrigir_falhas_Task_Avaliar_o_artigo">
+        <di:waypoint x="1176" y="690" />
+        <di:waypoint x="1176" y="690" />
+        <di:waypoint x="1290" y="690" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ExclusiveGateway_followingExclusivo_Avaliar_o_artigo_di" bpmnElement="ExclusiveGateway_followingExclusivo_Avaliar_o_artigo" isMarkerVisible="true">
+        <dc:Bounds x="1440" y="672" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_Task_Avaliar_o_artigo_ExclusiveGateway_followingExclusivo_Avaliar_o_artigo_di" bpmnElement="SequenceFlow_Task_Avaliar_o_artigo_ExclusiveGateway_followingExclusivo_Avaliar_o_artigo">
+        <di:waypoint x="1390" y="690" />
+        <di:waypoint x="1390" y="690" />
+        <di:waypoint x="1440" y="690" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="EndEvent_Artigo_indicado_para_apresentao_oral_di" bpmnElement="EndEvent_Artigo_indicado_para_apresentao_oral">
+        <dc:Bounds x="1590" y="612.5" width="35" height="35" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_ExclusiveGateway_followingExclusivo_Avaliar_o_artigo_EndEvent_Artigo_indicado_para_apresentao_oral_di" bpmnElement="SequenceFlow_ExclusiveGateway_followingExclusivo_Avaliar_o_artigo_EndEvent_Artigo_indicado_para_apresentao_oral">
+        <di:waypoint x="1458" y="672" />
+        <di:waypoint x="1458" y="630" />
+        <di:waypoint x="1590" y="630" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="EndEvent_Artigo_indicado_para_apresentao_em_poster_di" bpmnElement="EndEvent_Artigo_indicado_para_apresentao_em_poster">
+        <dc:Bounds x="1590" y="732.5" width="35" height="35" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_ExclusiveGateway_followingExclusivo_Avaliar_o_artigo_EndEvent_Artigo_indicado_para_apresentao_em_poster_di" bpmnElement="SequenceFlow_ExclusiveGateway_followingExclusivo_Avaliar_o_artigo_EndEvent_Artigo_indicado_para_apresentao_em_poster">
+        <di:waypoint x="1458" y="708" />
+        <di:waypoint x="1458" y="750" />
+        <di:waypoint x="1590" y="750" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="IntermediateThrowEvent_Artigo_com_formatao_reprovada_di" bpmnElement="IntermediateThrowEvent_Artigo_com_formatao_reprovada">
+        <dc:Bounds x="840" y="912" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_ExclusiveGateway_followingExclusivo_Norma_de_formatao_IntermediateThrowEvent_Artigo_com_formatao_reprovada_di" bpmnElement="SequenceFlow_ExclusiveGateway_followingExclusivo_Norma_de_formatao_IntermediateThrowEvent_Artigo_com_formatao_reprovada">
+        <di:waypoint x="708" y="708" />
+        <di:waypoint x="708" y="930" />
+        <di:waypoint x="840" y="930" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Task_Solicitar_adequao__formatao_exigida_di" bpmnElement="Task_Solicitar_adequao__formatao_exigida">
+        <dc:Bounds x="990" y="890" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_IntermediateThrowEvent_Artigo_com_formatao_reprovada_Task_Solicitar_adequao__formatao_exigida_di" bpmnElement="SequenceFlow_IntermediateThrowEvent_Artigo_com_formatao_reprovada_Task_Solicitar_adequao__formatao_exigida">
+        <di:waypoint x="876" y="930" />
+        <di:waypoint x="876" y="930" />
+        <di:waypoint x="990" y="930" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="IntermediateThrowEvent_Artigo_reformatado_recebido_di" bpmnElement="IntermediateThrowEvent_Artigo_reformatado_recebido">
+        <dc:Bounds x="1140" y="912" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_Task_Solicitar_adequao__formatao_exigida_IntermediateThrowEvent_Artigo_reformatado_recebido_di" bpmnElement="SequenceFlow_Task_Solicitar_adequao__formatao_exigida_IntermediateThrowEvent_Artigo_reformatado_recebido">
+        <di:waypoint x="1090" y="930" />
+        <di:waypoint x="1090" y="930" />
+        <di:waypoint x="1140" y="930" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_provada__falhas_di" bpmnElement="Flow_provada__falhas">
+        <di:waypoint x="858" y="432" />
+        <di:waypoint x="858" y="402" />
+        <di:waypoint x="1158" y="402" />
+        <di:waypoint x="1158" y="672" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ecebido_lusivo__di" bpmnElement="Flow_ecebido_lusivo_">
+        <di:waypoint x="1158" y="948" />
+        <di:waypoint x="1158" y="978" />
+        <di:waypoint x="408" y="978" />
+        <di:waypoint x="408" y="708" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="DataObjectReference_Norma_de_formatao_di" bpmnElement="DataObjectReference_Norma_de_formatao" isExpanded="true">
+        <dc:Bounds x="572" y="580" width="36" height="48" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="523.5" y="564" width="133" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="DataOutputAssociation_Task_Checar_formatao_to_DataObjectReference_Norma_de_formatao_di" bpmnElement="DataOutputAssociation_Task_Checar_formatao_to_DataObjectReference_Norma_de_formatao">
+        <di:waypoint x="590" y="650" />
+        <di:waypoint x="590" y="628" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn2:definitions>

@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn2:definitions xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1a88msi" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn2:process id="mainProcess" isExecutable="false">
+    <bpmn2:laneSet id="LaneSet">
+      <bpmn2:lane id="Lane_1" name="Execução de projetos" />
+    </bpmn2:laneSet>
+    <bpmn2:startEvent id="StartEvent_1" name="Demanda">
+      <bpmn2:messageEventDefinition />
+    </bpmn2:startEvent>
+    <bpmn2:exclusiveGateway id="ExclusiveGateway_followingExclusivo_Mensagem_1">
+      <bpmn2:incoming>Flow_jeitado_sagem_1</bpmn2:incoming>
+    </bpmn2:exclusiveGateway>
+    <bpmn2:sequenceFlow id="SequenceFlow_StartEvent_1_ExclusiveGateway_followingExclusivo_Mensagem_1" sourceRef="StartEvent_1" targetRef="ExclusiveGateway_followingExclusivo_Mensagem_1" />
+    <bpmn2:task id="Task_Definir_escopo" name="Definir escopo" />
+    <bpmn2:sequenceFlow id="SequenceFlow_ExclusiveGateway_followingExclusivo_Mensagem_1_Task_Definir_escopo" sourceRef="ExclusiveGateway_followingExclusivo_Mensagem_1" targetRef="Task_Definir_escopo" />
+    <bpmn2:sendTask id="Task_Solicitar_a_avaliao_de_escopo" name="Solicitar a avaliação de escopo" />
+    <bpmn2:sequenceFlow id="SequenceFlow_Task_Definir_escopo_Task_Solicitar_a_avaliao_de_escopo" sourceRef="Task_Definir_escopo" targetRef="Task_Solicitar_a_avaliao_de_escopo" />
+    <bpmn2:intermediateThrowEvent id="IntermediateThrowEvent_Escopo_avaliado" name="Escopo avaliado">
+      <bpmn2:messageEventDefinition />
+    </bpmn2:intermediateThrowEvent>
+    <bpmn2:sequenceFlow id="SequenceFlow_Task_Solicitar_a_avaliao_de_escopo_IntermediateThrowEvent_Escopo_avaliado" sourceRef="Task_Solicitar_a_avaliao_de_escopo" targetRef="IntermediateThrowEvent_Escopo_avaliado" />
+    <bpmn2:task id="Task_Analisar_o_escopo" name="Analisar o escopo" />
+    <bpmn2:sequenceFlow id="SequenceFlow_IntermediateThrowEvent_Escopo_avaliado_Task_Analisar_o_escopo" sourceRef="IntermediateThrowEvent_Escopo_avaliado" targetRef="Task_Analisar_o_escopo" />
+    <bpmn2:exclusiveGateway id="ExclusiveGateway_followingExclusivo_Analisar_o_escopo" />
+    <bpmn2:sequenceFlow id="SequenceFlow_Task_Analisar_o_escopo_ExclusiveGateway_followingExclusivo_Analisar_o_escopo" sourceRef="Task_Analisar_o_escopo" targetRef="ExclusiveGateway_followingExclusivo_Analisar_o_escopo" />
+    <bpmn2:intermediateThrowEvent id="IntermediateThrowEvent_Escopo_aprovado" name="Escopo aprovado" />
+    <bpmn2:sequenceFlow id="SequenceFlow_ExclusiveGateway_followingExclusivo_Analisar_o_escopo_IntermediateThrowEvent_Escopo_aprovado" sourceRef="ExclusiveGateway_followingExclusivo_Analisar_o_escopo" targetRef="IntermediateThrowEvent_Escopo_aprovado" />
+    <bpmn2:task id="Task_Solicitar_avalisao_financeira" name="Solicitar avalisação financeira" />
+    <bpmn2:sequenceFlow id="SequenceFlow_IntermediateThrowEvent_Escopo_aprovado_Task_Solicitar_avalisao_financeira" sourceRef="IntermediateThrowEvent_Escopo_aprovado" targetRef="Task_Solicitar_avalisao_financeira" />
+    <bpmn2:intermediateThrowEvent id="IntermediateThrowEvent_Financeiro_avaliado" name="Financeiro avaliado">
+      <bpmn2:messageEventDefinition />
+    </bpmn2:intermediateThrowEvent>
+    <bpmn2:sequenceFlow id="SequenceFlow_Task_Solicitar_avalisao_financeira_IntermediateThrowEvent_Financeiro_avaliado" sourceRef="Task_Solicitar_avalisao_financeira" targetRef="IntermediateThrowEvent_Financeiro_avaliado" />
+    <bpmn2:endEvent id="EndEvent_Solicitante_avisado" name="Solicitante avisado">
+      <bpmn2:messageEventDefinition />
+    </bpmn2:endEvent>
+    <bpmn2:sequenceFlow id="SequenceFlow_IntermediateThrowEvent_Financeiro_avaliado_EndEvent_Solicitante_avisado" sourceRef="IntermediateThrowEvent_Financeiro_avaliado" targetRef="EndEvent_Solicitante_avisado" />
+    <bpmn2:intermediateThrowEvent id="IntermediateThrowEvent_Escopo_rejeitado" name="Escopo rejeitado">
+      <bpmn2:outgoing>Flow_jeitado_sagem_1</bpmn2:outgoing>
+    </bpmn2:intermediateThrowEvent>
+    <bpmn2:sequenceFlow id="SequenceFlow_ExclusiveGateway_followingExclusivo_Analisar_o_escopo_IntermediateThrowEvent_Escopo_rejeitado" sourceRef="ExclusiveGateway_followingExclusivo_Analisar_o_escopo" targetRef="IntermediateThrowEvent_Escopo_rejeitado" />
+    <bpmn2:sequenceFlow id="Flow_jeitado_sagem_1" sourceRef="IntermediateThrowEvent_Escopo_rejeitado" targetRef="ExclusiveGateway_followingExclusivo_Mensagem_1" />
+  </bpmn2:process>
+  <bpmn2:collaboration id="Collaboration">
+    <bpmn2:participant id="Participant" name="Execução de projetos" processRef="mainProcess" />
+    <bpmn2:participant id="ExternalParticipant_1" name="Solicitante" processRef="blackBox_0" />
+    <bpmn2:participant id="ExternalParticipant_2" name="Direção" processRef="blackBox_1" />
+    <bpmn2:messageFlow id="MessageFlow_StartEvent_1_to_ExternalParticipant_1" sourceRef="ExternalParticipant_1" targetRef="StartEvent_1" />
+    <bpmn2:messageFlow id="MessageFlow_Task_Solicitar_a_avaliao_de_escopo_to_ExternalParticipant_1" sourceRef="Task_Solicitar_a_avaliao_de_escopo" targetRef="ExternalParticipant_1" />
+    <bpmn2:messageFlow id="MessageFlow_IntermediateThrowEvent_Escopo_avaliado_to_ExternalParticipant_1" sourceRef="ExternalParticipant_1" targetRef="IntermediateThrowEvent_Escopo_avaliado" />
+    <bpmn2:messageFlow id="MessageFlow_Task_Solicitar_avalisao_financeira_to_ExternalParticipant_2" sourceRef="Task_Solicitar_avalisao_financeira" targetRef="ExternalParticipant_2" />
+    <bpmn2:messageFlow id="MessageFlow_IntermediateThrowEvent_Financeiro_avaliado_to_ExternalParticipant_2" sourceRef="ExternalParticipant_2" targetRef="IntermediateThrowEvent_Financeiro_avaliado" />
+    <bpmn2:messageFlow id="MessageFlow_EndEvent_Solicitante_avisado_to_ExternalParticipant_1" sourceRef="EndEvent_Solicitante_avisado" targetRef="ExternalParticipant_1" />
+  </bpmn2:collaboration>
+  <bpmn2:process id="blackBox_0" isExecutable="false" />
+  <bpmn2:process id="blackBox_1" isExecutable="false" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram">
+    <bpmndi:BPMNPlane id="BPMNPlane" bpmnElement="Collaboration">
+      <bpmndi:BPMNShape id="Participant_di" bpmnElement="Participant" isHorizontal="true">
+        <dc:Bounds x="160" y="530" width="4000" height="580" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ExternalParticipant_1_di" bpmnElement="ExternalParticipant_1" isHorizontal="true">
+        <dc:Bounds x="160" y="80" width="4000" height="150" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ExternalParticipant_2_di" bpmnElement="ExternalParticipant_2" isHorizontal="true">
+        <dc:Bounds x="160" y="280" width="4000" height="150" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_1_di" bpmnElement="Lane_1" isHorizontal="true">
+        <dc:Bounds x="190" y="530" width="3970" height="580" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="240" y="802.5" width="35" height="35" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ExclusiveGateway_followingExclusivo_Mensagem_1_di" bpmnElement="ExclusiveGateway_followingExclusivo_Mensagem_1" isMarkerVisible="true">
+        <dc:Bounds x="390" y="802" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_StartEvent_1_ExclusiveGateway_followingExclusivo_Mensagem_1_di" bpmnElement="SequenceFlow_StartEvent_1_ExclusiveGateway_followingExclusivo_Mensagem_1">
+        <di:waypoint x="275" y="820" />
+        <di:waypoint x="275" y="820" />
+        <di:waypoint x="390" y="820" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Task_Definir_escopo_di" bpmnElement="Task_Definir_escopo">
+        <dc:Bounds x="540" y="780" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_ExclusiveGateway_followingExclusivo_Mensagem_1_Task_Definir_escopo_di" bpmnElement="SequenceFlow_ExclusiveGateway_followingExclusivo_Mensagem_1_Task_Definir_escopo">
+        <di:waypoint x="426" y="820" />
+        <di:waypoint x="426" y="820" />
+        <di:waypoint x="540" y="820" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Task_Solicitar_a_avaliao_de_escopo_di" bpmnElement="Task_Solicitar_a_avaliao_de_escopo">
+        <dc:Bounds x="690" y="780" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_Task_Definir_escopo_Task_Solicitar_a_avaliao_de_escopo_di" bpmnElement="SequenceFlow_Task_Definir_escopo_Task_Solicitar_a_avaliao_de_escopo">
+        <di:waypoint x="640" y="820" />
+        <di:waypoint x="640" y="820" />
+        <di:waypoint x="690" y="820" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="IntermediateThrowEvent_Escopo_avaliado_di" bpmnElement="IntermediateThrowEvent_Escopo_avaliado">
+        <dc:Bounds x="840" y="802" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_Task_Solicitar_a_avaliao_de_escopo_IntermediateThrowEvent_Escopo_avaliado_di" bpmnElement="SequenceFlow_Task_Solicitar_a_avaliao_de_escopo_IntermediateThrowEvent_Escopo_avaliado">
+        <di:waypoint x="790" y="820" />
+        <di:waypoint x="790" y="820" />
+        <di:waypoint x="840" y="820" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Task_Analisar_o_escopo_di" bpmnElement="Task_Analisar_o_escopo">
+        <dc:Bounds x="990" y="780" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_IntermediateThrowEvent_Escopo_avaliado_Task_Analisar_o_escopo_di" bpmnElement="SequenceFlow_IntermediateThrowEvent_Escopo_avaliado_Task_Analisar_o_escopo">
+        <di:waypoint x="876" y="820" />
+        <di:waypoint x="876" y="820" />
+        <di:waypoint x="990" y="820" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ExclusiveGateway_followingExclusivo_Analisar_o_escopo_di" bpmnElement="ExclusiveGateway_followingExclusivo_Analisar_o_escopo" isMarkerVisible="true">
+        <dc:Bounds x="1140" y="802" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_Task_Analisar_o_escopo_ExclusiveGateway_followingExclusivo_Analisar_o_escopo_di" bpmnElement="SequenceFlow_Task_Analisar_o_escopo_ExclusiveGateway_followingExclusivo_Analisar_o_escopo">
+        <di:waypoint x="1090" y="820" />
+        <di:waypoint x="1090" y="820" />
+        <di:waypoint x="1140" y="820" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="IntermediateThrowEvent_Escopo_aprovado_di" bpmnElement="IntermediateThrowEvent_Escopo_aprovado">
+        <dc:Bounds x="1290" y="742" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_ExclusiveGateway_followingExclusivo_Analisar_o_escopo_IntermediateThrowEvent_Escopo_aprovado_di" bpmnElement="SequenceFlow_ExclusiveGateway_followingExclusivo_Analisar_o_escopo_IntermediateThrowEvent_Escopo_aprovado">
+        <di:waypoint x="1158" y="802" />
+        <di:waypoint x="1158" y="760" />
+        <di:waypoint x="1290" y="760" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Task_Solicitar_avalisao_financeira_di" bpmnElement="Task_Solicitar_avalisao_financeira">
+        <dc:Bounds x="1440" y="720" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_IntermediateThrowEvent_Escopo_aprovado_Task_Solicitar_avalisao_financeira_di" bpmnElement="SequenceFlow_IntermediateThrowEvent_Escopo_aprovado_Task_Solicitar_avalisao_financeira">
+        <di:waypoint x="1326" y="760" />
+        <di:waypoint x="1326" y="760" />
+        <di:waypoint x="1440" y="760" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="IntermediateThrowEvent_Financeiro_avaliado_di" bpmnElement="IntermediateThrowEvent_Financeiro_avaliado">
+        <dc:Bounds x="1590" y="742" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_Task_Solicitar_avalisao_financeira_IntermediateThrowEvent_Financeiro_avaliado_di" bpmnElement="SequenceFlow_Task_Solicitar_avalisao_financeira_IntermediateThrowEvent_Financeiro_avaliado">
+        <di:waypoint x="1540" y="760" />
+        <di:waypoint x="1540" y="760" />
+        <di:waypoint x="1590" y="760" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="EndEvent_Solicitante_avisado_di" bpmnElement="EndEvent_Solicitante_avisado">
+        <dc:Bounds x="1740" y="742.5" width="35" height="35" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_IntermediateThrowEvent_Financeiro_avaliado_EndEvent_Solicitante_avisado_di" bpmnElement="SequenceFlow_IntermediateThrowEvent_Financeiro_avaliado_EndEvent_Solicitante_avisado">
+        <di:waypoint x="1626" y="760" />
+        <di:waypoint x="1626" y="760" />
+        <di:waypoint x="1740" y="760" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="IntermediateThrowEvent_Escopo_rejeitado_di" bpmnElement="IntermediateThrowEvent_Escopo_rejeitado">
+        <dc:Bounds x="1290" y="862" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_ExclusiveGateway_followingExclusivo_Analisar_o_escopo_IntermediateThrowEvent_Escopo_rejeitado_di" bpmnElement="SequenceFlow_ExclusiveGateway_followingExclusivo_Analisar_o_escopo_IntermediateThrowEvent_Escopo_rejeitado">
+        <di:waypoint x="1158" y="838" />
+        <di:waypoint x="1158" y="880" />
+        <di:waypoint x="1290" y="880" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_jeitado_sagem_1_di" bpmnElement="Flow_jeitado_sagem_1">
+        <di:waypoint x="1308" y="898" />
+        <di:waypoint x="1308" y="928" />
+        <di:waypoint x="408" y="928" />
+        <di:waypoint x="408" y="838" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="MessageFlow_StartEvent_1_to_ExternalParticipant_1_di" bpmnElement="MessageFlow_StartEvent_1_to_ExternalParticipant_1">
+        <di:waypoint x="257.5" y="230" />
+        <di:waypoint x="257.5" y="802.5" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="MessageFlow_Task_Solicitar_a_avaliao_de_escopo_to_ExternalParticipant_1_di" bpmnElement="MessageFlow_Task_Solicitar_a_avaliao_de_escopo_to_ExternalParticipant_1">
+        <di:waypoint x="740" y="780" />
+        <di:waypoint x="740" y="230" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="MessageFlow_IntermediateThrowEvent_Escopo_avaliado_to_ExternalParticipant_1_di" bpmnElement="MessageFlow_IntermediateThrowEvent_Escopo_avaliado_to_ExternalParticipant_1">
+        <di:waypoint x="858" y="230" />
+        <di:waypoint x="858" y="802" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="MessageFlow_Task_Solicitar_avalisao_financeira_to_ExternalParticipant_2_di" bpmnElement="MessageFlow_Task_Solicitar_avalisao_financeira_to_ExternalParticipant_2">
+        <di:waypoint x="1490" y="720" />
+        <di:waypoint x="1490" y="430" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="MessageFlow_IntermediateThrowEvent_Financeiro_avaliado_to_ExternalParticipant_2_di" bpmnElement="MessageFlow_IntermediateThrowEvent_Financeiro_avaliado_to_ExternalParticipant_2">
+        <di:waypoint x="1608" y="430" />
+        <di:waypoint x="1608" y="742" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="MessageFlow_EndEvent_Solicitante_avisado_to_ExternalParticipant_1_di" bpmnElement="MessageFlow_EndEvent_Solicitante_avisado_to_ExternalParticipant_1">
+        <di:waypoint x="1757.5" y="742.5" />
+        <di:waypoint x="1757.5" y="230" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn2:definitions>

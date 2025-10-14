@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { generateDiagramFromInput } from '../../diagramCreator.js';
-import { testElements } from '../../testData/elementsInput.js';
+import { testElements } from '../../debug/elementsInput.js';
 
 export const useDiagramStore = create((set, get) => ({
   // Configuração do Processo
