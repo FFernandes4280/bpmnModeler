@@ -5,6 +5,8 @@
   "main": "index.html",
   "scripts": {
     "start": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview",
     "test": "node tests/testRunner.js",
     "test:watch": "nodemon tests/testRunner.js",
     "test:specific": "node tests/testRunner.js",
